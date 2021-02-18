@@ -8,11 +8,10 @@ output:
     keep_md: true
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval = F)
-```
 
-```{r}
+
+
+```r
 library(data.table)
 library(lubridate)
 library(sf)
@@ -34,7 +33,8 @@ According to email correspondence with Dr. Xuyang Zhang at CDPR on 2/17/2021, la
 
 #### Load Data
 
-```{r}
+
+```r
 ### Read SURF Tables
 SURF.Sed <- fread("Data/SURF_SED.csv")
 SURF.Sed.sf <- st_as_sf(SURF.Sed, coords = c("Longitude", "Latitude"), remove = F, crs = "WGS84")
@@ -62,7 +62,8 @@ USFE.RiskRegions <- unzip_shape(USFE.RiskRegions.z) # CRS is WGS 84
 
 #### Spatial/Temporal Query
 
-```{r}
+
+```r
 # SURF Sed
 SURF.Sed.sf <- st_join(SURF.Sed.sf, USFE.RiskRegions[1], left = T) %>%
   filter(!is.na(Subregion)) %>%
@@ -86,7 +87,8 @@ write_csv(SURF.Sed.sf, "Data/Output/SURFMod_SED.csv") # Note: coerces empty data
 
 #### Check CEDEN & SURF for Duplicate Data
 
-```{r}
+
+```r
 # Load CEDEN Data
 CEDENMod_Tox <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_Toxicity.csv")
 CEDENMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_WQ.csv")
