@@ -12,7 +12,6 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 ```{r, warning=F, message=F}
 library(data.table)
 library(lubridate)
@@ -58,7 +57,6 @@ SURFMod_WQ$Source <- rep("SURF", times=nrow(SURFMod_WQ))
 More investigating will probably be better, but for now we can simply remove those data defined in SURF as sourced from CEDEN
 
 ```{r}
-
 SURFMod_WQ <- filter(SURFMod_WQ, Data.source != "CEDEN")
 ```
 
@@ -232,3 +230,130 @@ nrow(CEDENSURF_DupChecked)
 ```
 
 Assuming records that have the exact same station name, date, analyte, and result are duplicates, there were `r nrow(CEDENSURF_WQSED) - nrow(CEDENSURF_DupChecked)` duplicates in the merged data
+
+< br >
+
+## Investigating data first (late)
+
+Due to the structure of the tox data, I have a feeling it involves biological assays that were then related to WQ data sampled on that date (and already present in the CEDEN_WQ dataset)
+
+I can look to see if this is true by merging the two ceden datasets following the same method as before, and assessing differences in sample length. 
+
+### Original Data {.tabset}
+
+```{r}
+# Load CEDEN Data
+CEDENMod_Tox <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_Toxicity.csv")
+
+CEDENMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_WQ.csv")
+```
+
+There are `r nrow(CEDENMod_WQ)` records in the WQ dataset
+and `r nrow(CEDENMod_Tox)` in the Tox dataset. 
+
+#### Tox Data
+
+In the tox dataset, there were several records related to a single species assessment - by creating a group identifier by the location, date, and organism assessed, I calculated that there were 2430 unique samples.
+
+Within the Tox dataset, `r length(unique(CEDENMod_Tox$OrganismName))` different species are represented.
+
+**Duplication within Tox data**
+
+Does the method of assuming differences *between the datasets* detect anomalies within the dataset? YES - 25989 records, to be specific.
+
+```{r}
+# Remove duplicate rows of the dataframe using multiple variables
+
+Check <- distinct(CEDENMod_Tox, Date, Analyte, StationName, Result, .keep_all= TRUE)
+
+nrow(CEDENMod_Tox) - nrow(Check)
+
+Check <- distinct(CEDENMod_Tox, Date, StationName, OrganismName, Analyte, Result, .keep_all= TRUE)
+
+nrow(CEDENMod_Tox) - nrow(Check)
+```
+Even assuming that multiple species may be checked on the same day, so WQ parameters would be replicated for each species assessed on that day, there are still `r nrow(CEDENMod_Tox) - nrow(Check)` duplicates, which should not be included.
+
+#### WQ Data
+
+**Duplication within WQ data**
+
+Does the method of assuming differences *between the datasets* detect anomalies within the dataset? YES - 1719 records, to be specific.
+
+```{r}
+# Remove duplicate rows of the dataframe using multiple variables
+
+Check <- distinct(CEDENMod_WQ, Date, Analyte, StationName, Result, .keep_all= TRUE)
+
+nrow(CEDENMod_WQ) - nrow(Check)
+```
+
+
+### Repeat Merge with only CEDEN data frames
+
+Due to the detections described above, further sleuthing should be done before using this merge. But, for the record, here would be the process.
+
+```{r}
+WQ <- names(CEDENMod_WQ)
+TOX <- names(CEDENMod_Tox)
+
+DIF<- setdiff(TOX, WQ) # gives items in T that are not in W
+
+#Add missing columns to CEDEN WQ
+
+CEDENMod_WQ[, DIF] <- NA
+
+#Add missing columns to CEDEN TOX
+
+DIF<- setdiff(WQ, TOX) # gives items in W that are not in T
+
+CEDENMod_Tox[, DIF] <- NA
+
+# Finishing touches before merge; order columns to match - is this really necessary for merge? IDK
+
+WQ <- sort(names(CEDENMod_WQ))
+TOX <- sort(names(CEDENMod_Tox))
+
+CEDENMod_Tox <- CEDENMod_Tox %>% select(TOX)
+
+CEDENMod_WQ <- CEDENMod_WQ %>% select(WQ)
+
+# Check once all columns have perfect matches?
+tibble(SURF = names(CEDENMod_Tox), CEDEN = names(CEDENMod_WQ))
+
+# MERGE
+
+CEDEN_ALL <- rbind(CEDENMod_WQ,CEDENMod_Tox)
+```
+
+### Detect differences
+
+```{r}
+CEDENMod_Tox$ID <- paste(CEDENMod_Tox$Date, CEDENMod_Tox$StationCode, CEDENMod_Tox$OrganismName, sep= ",")
+
+length(unique(CEDENMod_Tox$ID))
+```
+```{r}
+# Ideas from: https://www.datasciencemadesimple.com/remove-duplicate-rows-r-using-dplyr-distinct-function/
+
+# Remove duplicate rows of the dataframe using multiple variables
+
+CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL, Date, Analyte, StationName, Result, .keep_all= TRUE)
+
+nrow(CEDEN_ALL_DupChecked)
+```
+Assuming records that have the exact same station name, date, analyte, and result are duplicates, there were `r nrow(CEDEN_ALL) - nrow(CEDEN_ALL_DupChecked)` duplicates in the merged data, leaving `r nrow(CEDEN_ALL_DupChecked)` total records in the merged df.
+
+That suggests that only `r nrow(CEDEN_ALL_DupChecked) - nrow(CEDENMod_WQ)` unique records were brought over from the tox dataset
+
+### Further refining - what is left?
+
+If we remove records that assess 'survival' and 'biomass' (since we aren't using this for biotic parameters in our model)...
+
+```{r}
+CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked[CEDEN_ALL_DupChecked$Analyte != "Survival"]
+
+CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked[CEDEN_ALL_DupChecked$Analyte != "Biomass (wt/orig indiv)"]
+```
+
+We're left with `r nrow(CEDEN_ALL_DupChecked) - nrow(CEDENMod_WQ)` unique records brought over out of all `r nrow(CEDENMod_Tox)` records in the Tox dataset 

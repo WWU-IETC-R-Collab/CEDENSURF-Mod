@@ -11,7 +11,6 @@ output:
 
 
 
-
 ```r
 library(data.table)
 library(lubridate)
@@ -279,7 +278,9 @@ CEDENSURF_WQSED <- rbind(CEDENSURF_WQ, SURFMod_SED)
 
 ## Remove duplicate data
 
-An alternate method might be to look for data that match in three specific columns, following the merge; like date, stationname, and result
+### Removal from final merged document
+
+distinct() allows us to remove data that matches in specific columns, following the merge; like Date, StationName, Analyte, and Result. It keeps the first record and removes all subsequent matches. 
 
 
 ```r
@@ -305,4 +306,143 @@ nrow(CEDENSURF_DupChecked)
 ```
 ## [1] 198374
 ```
+
 Assuming records that have the exact same station name, date, analyte, and result are duplicates, there were 37643 duplicates in the merged data
+
+## Investigating data first (late)
+
+Due to the structure of the tox data, I have a feeling it involves biological assays that were then related to WQ data sampled on that date (and already present in the CEDEN_WQ dataset)
+
+I can look to see if this is true by merging the two ceden datasets following the same method as before, and assessing differences in sample length. 
+
+### Repeat Merge with only CEDEN data frames
+
+Start with original Mod Data (pre merge)
+
+
+```r
+# Load CEDEN Data
+CEDENMod_Tox <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_Toxicity.csv")
+
+CEDENMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_WQ.csv")
+```
+
+```r
+WQ <- names(CEDENMod_WQ)
+TOX <- names(CEDENMod_Tox)
+
+DIF<- setdiff(TOX, WQ) # gives items in T that are not in W
+
+#Add missing columns to CEDEN WQ
+
+CEDENMod_WQ[, DIF] <- NA
+
+#Add missing columns to CEDEN TOX
+
+DIF<- setdiff(WQ, TOX) # gives items in W that are not in T
+
+CEDENMod_Tox[, DIF] <- NA
+
+# Finishing touches before merge; order columns to match - is this really necessary for merge? IDK
+
+WQ <- sort(names(CEDENMod_WQ))
+TOX <- sort(names(CEDENMod_Tox))
+
+CEDENMod_Tox <- CEDENMod_Tox %>% select(TOX)
+```
+
+```
+## Note: Using an external vector in selections is ambiguous.
+## i Use `all_of(TOX)` instead of `TOX` to silence this message.
+## i See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.
+## This message is displayed once per session.
+```
+
+```r
+CEDENMod_WQ <- CEDENMod_WQ %>% select(WQ)
+```
+
+```
+## Note: Using an external vector in selections is ambiguous.
+## i Use `all_of(WQ)` instead of `WQ` to silence this message.
+## i See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.
+## This message is displayed once per session.
+```
+
+```r
+# Check once all columns have perfect matches?
+tibble(SURF = names(CEDENMod_Tox), CEDEN = names(CEDENMod_WQ))
+```
+
+```
+## # A tibble: 21 x 2
+##    SURF             CEDEN           
+##    <chr>            <chr>           
+##  1 Analyte          Analyte         
+##  2 CollectionMethod CollectionMethod
+##  3 Date             Date            
+##  4 Datum            Datum           
+##  5 geometry         geometry        
+##  6 Latitude         Latitude        
+##  7 LocationCode     LocationCode    
+##  8 Longitude        Longitude       
+##  9 MatrixName       MatrixName      
+## 10 MDL              MDL             
+## # ... with 11 more rows
+```
+
+```r
+# MERGE
+
+CEDEN_ALL <- rbind(CEDENMod_WQ,CEDENMod_Tox)
+```
+
+### Detect differences
+
+There were 117144 records in the WQ dataset
+and 60637 in the Tox dataset. 
+
+In the tox dataset, there were several records related to a single species assessment - by creating a group identifier by the location, date, and organism assessed, I calculated that there were 2430 unique samples.
+
+Within the Tox dataset, 11 different species are represented.
+
+
+```r
+CEDENMod_Tox$ID <- paste(CEDENMod_Tox$Date, CEDENMod_Tox$StationCode, CEDENMod_Tox$OrganismName, sep= ",")
+
+length(unique(CEDENMod_Tox$ID))
+```
+
+```
+## [1] 2430
+```
+
+```r
+# Ideas from: https://www.datasciencemadesimple.com/remove-duplicate-rows-r-using-dplyr-distinct-function/
+
+# Remove duplicate rows of the dataframe using multiple variables
+
+CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL, Date, Analyte, StationName, Result, .keep_all= TRUE)
+
+nrow(CEDEN_ALL_DupChecked)
+```
+
+```
+## [1] 149998
+```
+Assuming records that have the exact same station name, date, analyte, and result are duplicates, there were 27783 duplicates in the merged data, leaving 149998 total records in the merged df.
+
+That suggests that only 32854 unique records were brought over from the tox dataset
+
+### Further refining - what is left?
+
+If we remove records that assess 'survival' and 'biomass' (since we aren't using this for biotic parameters in our model)...
+
+
+```r
+CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked[CEDEN_ALL_DupChecked$Analyte != "Survival"]
+
+CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked[CEDEN_ALL_DupChecked$Analyte != "Biomass (wt/orig indiv)"]
+```
+
+We're left with 30065 unique records brought over out of all 60637 records in the Tox dataset 
