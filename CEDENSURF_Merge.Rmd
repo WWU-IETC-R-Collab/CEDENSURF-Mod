@@ -213,7 +213,9 @@ CEDENSURF_WQSED <- rbind(CEDENSURF_WQ, SURFMod_SED)
 
 ## Remove duplicate data
 
-An alternate method might be to look for data that match in three specific columns, following the merge; like date, stationname, and result
+### Removal from final merged document
+
+distinct() allows us to remove data that matches in specific columns, following the merge; like Date, StationName, Analyte, and Result. It keeps the first record and removes all subsequent matches. 
 
 ```{r}
 # Ideas from: https://www.datasciencemadesimple.com/remove-duplicate-rows-r-using-dplyr-distinct-function/
@@ -228,4 +230,5 @@ CEDENSURF_DupChecked <- distinct(CEDENSURF_WQSED, Date, Analyte, StationName, Re
 # Records in checked data
 nrow(CEDENSURF_DupChecked)
 ```
+
 Assuming records that have the exact same station name, date, analyte, and result are duplicates, there were `r nrow(CEDENSURF_WQSED) - nrow(CEDENSURF_DupChecked)` duplicates in the merged data
