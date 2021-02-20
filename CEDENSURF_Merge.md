@@ -178,7 +178,7 @@ tibble(SURF = names(SURFMod_WQ), CEDEN = names(CEDENMod_WQ))
 CEDENSURF_WQ <- rbind(CEDENMod_WQ, SURFMod_WQ)
 ```
 
-## Merge Joined water data with SURF sediment data
+## Merge with SURF sediment data
 
 
 ### Correct mismatched column names
@@ -309,15 +309,29 @@ nrow(CEDENSURF_DupChecked)
 
 Assuming records that have the exact same station name, date, analyte, and result are duplicates, there were 37643 duplicates in the merged data
 
+< br >
+
+< br >
+
+
+# START OVER
+
+
+```r
+rm(list)
+library(data.table)
+library(lubridate)
+library(sf)
+library(tidyverse)
+```
+
 ## Investigating data first (late)
 
 Due to the structure of the tox data, I have a feeling it involves biological assays that were then related to WQ data sampled on that date (and already present in the CEDEN_WQ dataset)
 
 I can look to see if this is true by merging the two ceden datasets following the same method as before, and assessing differences in sample length. 
 
-### Repeat Merge with only CEDEN data frames
-
-Start with original Mod Data (pre merge)
+## Original Data {.tabset}
 
 
 ```r
@@ -327,20 +341,193 @@ CEDENMod_Tox <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/D
 CEDENMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_WQ.csv")
 ```
 
+There are 117144 records in the WQ dataset
+and 60637 in the Tox dataset. 
+
+### Tox Data 
+
+In the tox dataset, there were several records related to a single species assessment - by creating a group identifier by the location, date, and organism assessed, I calculated that there were 2430 unique samples.
+
+Within the Tox dataset, 11 different species are represented.
+
+#### ID exact duplicates and label in table for inspection
+
+duplicated() produces a vector identifying which records are duplicated. This can be appended to the original dataset for further investigation.
+
+
+```r
+# add index column identifying which entries are duplicated
+
+CEDENMod_Tox$DupCheck <- duplicated(CEDENMod_Tox)
+
+summary(CEDENMod_Tox$DupCheck)
+```
+
+```
+##    Mode   FALSE    TRUE 
+## logical   42363   18274
+```
+
+Is it only some programs that have duplication? 9/10 programs do.
+
+
+```r
+length(unique(CEDENMod_Tox$Program)) # 10
+```
+
+```
+## [1] 10
+```
+
+```r
+unique(CEDENMod_Tox$Program[CEDENMod_Tox$DupCheck == "TRUE"])
+```
+
+```
+## [1] "Irrigated Lands Regulatory Program"                  
+## [2] "Surface Water Ambient Monitoring Program"            
+## [3] "Delta Monitoring RWQCB5"                             
+## [4] "SF Bay Regional Monitoring for Water Quality"        
+## [5] "Sacramento-San Joaquin River Delta Data"             
+## [6] "SF Bay STLS Monitoring"                              
+## [7] "BASMAA Regional Monitoring Coalition"                
+## [8] "Delta Regional Monitoring Program"                   
+## [9] "California Department of Transportation NPDES Permit"
+```
+
+#### Alternative (looser) assessment of duplication
+
+Does the method used to find differences *between the datasets* detect anomalies within the dataset? YES - 25989 records, to be specific. 
+
+That is 42.85997% of the dataset.
+
+This approximation suggests more duplicated records than were identified as exact duplicates - would be worth investigating what those differences are, and whether they shed more light on the source of duplication.
+
+
+
+```r
+# Remove duplicate rows of the dataframe using multiple variables
+
+Check <- distinct(CEDENMod_Tox, Date, StationName, OrganismName, Analyte, Result, .keep_all= TRUE)
+
+nrow(CEDENMod_Tox) - nrow(Check)
+```
+
+```
+## [1] 18293
+```
+
+Even allowing for WQ parameters to be duplicated due to multiple species assessed on the same day, there are still 18293 duplicates, which should not be included.
+
+Since we are using the df for the water parameters and not the associated organism survival, it's more useful to know the number of duplicate WQ entries excluding the organism label
+
+
+```r
+Check <- distinct(CEDENMod_Tox, Date, Analyte, StationName, Result, .keep_all= TRUE)
+
+nrow(CEDENMod_Tox) - nrow(Check)
+```
+
+```
+## [1] 25989
+```
+
+If we remove records that assess 'survival' and 'biomass' (since we aren't using this for biotic parameters in our model)...
+
+
+```r
+Check <- Check[Check$Analyte != "Survival"]
+
+Check <- Check[Check$Analyte != "Biomass (wt/orig indiv)"]
+```
+
+We're left with only 31859 unique, useful records in the tox dataset - or 52.5405281
+
+< br >
+
+### WQ Data
+
+#### ID Exact duplicates
+
+duplicated() produces a vector identifying which records are duplicated. This can be appended to the original dataset for further investigation.
+
+
+```r
+# add index column identifying which entries are duplicated
+
+CEDENMod_WQ$DupCheck <- duplicated(CEDENMod_WQ)
+
+summary(CEDENMod_WQ$DupCheck)
+```
+
+```
+##    Mode   FALSE    TRUE 
+## logical  116487     657
+```
+
+Is it only some programs that have duplication? YES: 9/17 programs
+
+
+```r
+length(unique(CEDENMod_WQ$Program)) # 17
+```
+
+```
+## [1] 17
+```
+
+```r
+unique(CEDENMod_WQ$Program[CEDENMod_WQ$DupCheck == "TRUE"])
+```
+
+```
+## [1] "Delta Monitoring RWQCB5"                             
+## [2] "Sacramento-San Joaquin River Delta Data"             
+## [3] "SF Bay Regional Monitoring for Water Quality"        
+## [4] "Surface Water Ambient Monitoring Program"            
+## [5] "Suisun Bay Monitoring Project"                       
+## [6] "SF Bay STLS Monitoring"                              
+## [7] "California Department of Transportation NPDES Permit"
+## [8] "Irrigated Lands Regulatory Program"                  
+## [9] "American Rivers Restoration"
+```
+
+#### Looser assessment of Duplication
+
+Does the method of assuming differences *between the datasets* detect anomalies within the dataset? YES: 1719 records
+
+
+```r
+# Remove duplicate rows of the dataframe using multiple variables
+
+Check <- distinct(CEDENMod_WQ, Date, Analyte, StationName, Result, .keep_all= TRUE)
+
+nrow(CEDENMod_WQ) - nrow(Check)
+```
+
+```
+## [1] 1719
+```
+
+<br>
+
+<br>
+
+### Merging only CEDEN data frames
+
+Due to the detections described above, further sleuthing should be done before using this merge. But, for the record, here would be the process.
+
+
 ```r
 WQ <- names(CEDENMod_WQ)
 TOX <- names(CEDENMod_Tox)
 
-DIF<- setdiff(TOX, WQ) # gives items in T that are not in W
-
 #Add missing columns to CEDEN WQ
-
+DIF<- setdiff(TOX, WQ) # gives items in T that are not in W
 CEDENMod_WQ[, DIF] <- NA
 
 #Add missing columns to CEDEN TOX
-
 DIF<- setdiff(WQ, TOX) # gives items in W that are not in T
-
 CEDENMod_Tox[, DIF] <- NA
 
 # Finishing touches before merge; order columns to match - is this really necessary for merge? IDK
@@ -375,20 +562,20 @@ tibble(SURF = names(CEDENMod_Tox), CEDEN = names(CEDENMod_WQ))
 ```
 
 ```
-## # A tibble: 21 x 2
+## # A tibble: 22 x 2
 ##    SURF             CEDEN           
 ##    <chr>            <chr>           
 ##  1 Analyte          Analyte         
 ##  2 CollectionMethod CollectionMethod
 ##  3 Date             Date            
 ##  4 Datum            Datum           
-##  5 geometry         geometry        
-##  6 Latitude         Latitude        
-##  7 LocationCode     LocationCode    
-##  8 Longitude        Longitude       
-##  9 MatrixName       MatrixName      
-## 10 MDL              MDL             
-## # ... with 11 more rows
+##  5 DupCheck         DupCheck        
+##  6 geometry         geometry        
+##  7 Latitude         Latitude        
+##  8 LocationCode     LocationCode    
+##  9 Longitude        Longitude       
+## 10 MatrixName       MatrixName      
+## # ... with 12 more rows
 ```
 
 ```r
@@ -396,15 +583,7 @@ tibble(SURF = names(CEDENMod_Tox), CEDEN = names(CEDENMod_WQ))
 
 CEDEN_ALL <- rbind(CEDENMod_WQ,CEDENMod_Tox)
 ```
-
 ### Detect differences
-
-There were 117144 records in the WQ dataset
-and 60637 in the Tox dataset. 
-
-In the tox dataset, there were several records related to a single species assessment - by creating a group identifier by the location, date, and organism assessed, I calculated that there were 2430 unique samples.
-
-Within the Tox dataset, 11 different species are represented.
 
 
 ```r
@@ -433,16 +612,3 @@ nrow(CEDEN_ALL_DupChecked)
 Assuming records that have the exact same station name, date, analyte, and result are duplicates, there were 27783 duplicates in the merged data, leaving 149998 total records in the merged df.
 
 That suggests that only 32854 unique records were brought over from the tox dataset
-
-### Further refining - what is left?
-
-If we remove records that assess 'survival' and 'biomass' (since we aren't using this for biotic parameters in our model)...
-
-
-```r
-CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked[CEDEN_ALL_DupChecked$Analyte != "Survival"]
-
-CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked[CEDEN_ALL_DupChecked$Analyte != "Biomass (wt/orig indiv)"]
-```
-
-We're left with 30065 unique records brought over out of all 60637 records in the Tox dataset 
