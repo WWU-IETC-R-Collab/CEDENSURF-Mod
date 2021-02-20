@@ -6,6 +6,12 @@ output:
   html_document:
     code_download: true
     keep_md: true
+    toc: true
+    toc_float:
+      toc_collapsed: true
+    toc_depth: 3
+    number_sections: true
+    theme: lumen
 ---
 
 
@@ -17,6 +23,10 @@ library(lubridate)
 library(sf)
 library(tidyverse)
 ```
+
+# Round 1: Blind Merge
+
+This method works great, but there are problems with duplicate records that should be addressed first.
 
 ## Load Data
 
@@ -314,7 +324,7 @@ Assuming records that have the exact same station name, date, analyte, and resul
 < br >
 
 
-# START OVER
+# Round 2: Data investion first
 
 
 ```r
@@ -325,13 +335,11 @@ library(sf)
 library(tidyverse)
 ```
 
-## Investigating data first (late)
+## CEDEN - Original Data {.tabset}
 
 Due to the structure of the tox data, I have a feeling it involves biological assays that were then related to WQ data sampled on that date (and already present in the CEDEN_WQ dataset)
 
 I can look to see if this is true by merging the two ceden datasets following the same method as before, and assessing differences in sample length. 
-
-## Original Data {.tabset}
 
 
 ```r
@@ -350,7 +358,7 @@ In the tox dataset, there were several records related to a single species asses
 
 Within the Tox dataset, 11 different species are represented.
 
-#### ID exact duplicates and label in table for inspection
+#### Exact duplicates - Tox
 
 duplicated() produces a vector identifying which records are duplicated. This can be appended to the original dataset for further investigation.
 
@@ -367,7 +375,6 @@ summary(CEDENMod_Tox$DupCheck)
 ##    Mode   FALSE    TRUE 
 ## logical   42363   18274
 ```
-
 Is it only some programs that have duplication? 9/10 programs do.
 
 
@@ -408,9 +415,9 @@ This approximation suggests more duplicated records than were identified as exac
 ```r
 # Remove duplicate rows of the dataframe using multiple variables
 
-Check <- distinct(CEDENMod_Tox, Date, StationName, OrganismName, Analyte, Result, .keep_all= TRUE)
+NoDup_Tox <- distinct(CEDENMod_Tox, Date, StationName, OrganismName, Analyte, Result, .keep_all= TRUE)
 
-nrow(CEDENMod_Tox) - nrow(Check)
+nrow(CEDENMod_Tox) - nrow(NoDup_Tox)
 ```
 
 ```
@@ -423,9 +430,9 @@ Since we are using the df for the water parameters and not the associated organi
 
 
 ```r
-Check <- distinct(CEDENMod_Tox, Date, Analyte, StationName, Result, .keep_all= TRUE)
+NoDup_Tox <- distinct(CEDENMod_Tox, Date, Analyte, StationName, Result, .keep_all= TRUE)
 
-nrow(CEDENMod_Tox) - nrow(Check)
+nrow(CEDENMod_Tox) - nrow(NoDup_Tox)
 ```
 
 ```
@@ -436,9 +443,9 @@ If we remove records that assess 'survival' and 'biomass' (since we aren't using
 
 
 ```r
-Check <- Check[Check$Analyte != "Survival"]
+NoDup_Tox <- NoDup_Tox[NoDup_Tox$Analyte != "Survival"]
 
-Check <- Check[Check$Analyte != "Biomass (wt/orig indiv)"]
+NoDup_Tox <- NoDup_Tox[NoDup_Tox$Analyte != "Biomass (wt/orig indiv)"]
 ```
 
 We're left with only 31859 unique, useful records in the tox dataset - or 52.5405281
@@ -447,7 +454,7 @@ We're left with only 31859 unique, useful records in the tox dataset - or 52.540
 
 ### WQ Data
 
-#### ID Exact duplicates
+#### Exact duplicates - WQ
 
 duplicated() produces a vector identifying which records are duplicated. This can be appended to the original dataset for further investigation.
 
@@ -464,6 +471,8 @@ summary(CEDENMod_WQ$DupCheck)
 ##    Mode   FALSE    TRUE 
 ## logical  116487     657
 ```
+
+This method identified only 657 exact duplicates in the entire WQ dataset.
 
 Is it only some programs that have duplication? YES: 9/17 programs
 
@@ -494,15 +503,17 @@ unique(CEDENMod_WQ$Program[CEDENMod_WQ$DupCheck == "TRUE"])
 
 #### Looser assessment of Duplication
 
-Does the method of assuming differences *between the datasets* detect anomalies within the dataset? YES: 1719 records
+Does the method of assuming differences *between the datasets* detect anomalies within the WQ dataset? YES, 1719 records.
+
+That's only 1.4674247% of the entire WQ dataset
 
 
 ```r
 # Remove duplicate rows of the dataframe using multiple variables
 
-Check <- distinct(CEDENMod_WQ, Date, Analyte, StationName, Result, .keep_all= TRUE)
+NoDupWQ <- distinct(CEDENMod_WQ, Date, Analyte, StationName, Result, .keep_all= TRUE)
 
-nrow(CEDENMod_WQ) - nrow(Check)
+nrow(CEDENMod_WQ) - nrow(NoDupWQ)
 ```
 
 ```
@@ -513,7 +524,7 @@ nrow(CEDENMod_WQ) - nrow(Check)
 
 <br>
 
-### Merging only CEDEN data frames
+## Merging CEDEN data
 
 Due to the detections described above, further sleuthing should be done before using this merge. But, for the record, here would be the process.
 
@@ -583,7 +594,8 @@ tibble(SURF = names(CEDENMod_Tox), CEDEN = names(CEDENMod_WQ))
 
 CEDEN_ALL <- rbind(CEDENMod_WQ,CEDENMod_Tox)
 ```
-### Detect differences
+
+## Detect differences
 
 
 ```r
@@ -609,6 +621,7 @@ nrow(CEDEN_ALL_DupChecked)
 ```
 ## [1] 149998
 ```
+
 Assuming records that have the exact same station name, date, analyte, and result are duplicates, there were 27783 duplicates in the merged data, leaving 149998 total records in the merged df.
 
 That suggests that only 32854 unique records were brought over from the tox dataset
