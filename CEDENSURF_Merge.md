@@ -17,18 +17,16 @@ output:
 
 
 
+
 ```r
+rm(list = ls())
 library(data.table)
 library(lubridate)
 library(sf)
 library(tidyverse)
 ```
 
-# Round 1: Blind Merge
-
-This method works great, but there are problems with duplicate records that should be addressed first.
-
-## Load Data
+# Load Data
 
 ### CEDEN
 
@@ -51,6 +49,7 @@ SURFMod_SED <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/mai
 
 SURFMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/SURFMod_water.csv")
 ```
+
 ### Append with source
 
 
@@ -64,303 +63,26 @@ SURFMod_SED$Source <- rep("SURF", times=nrow(SURFMod_SED))
 SURFMod_WQ$Source <- rep("SURF", times=nrow(SURFMod_WQ))
 ```
 
-## Remove duplicate data
+# Data investion first
 
-More investigating will probably be better, but for now we can simply remove those data defined in SURF as sourced from CEDEN
-
-
-```r
-SURFMod_WQ <- filter(SURFMod_WQ, Data.source != "CEDEN")
-```
-
-## Merge Water Quality Sets
-
-### Correct mismatched column names
-
-Rather than using Steven's method of renaming using a list (which is dependent on an expected number and order of column names), I renamed each column individually
-
-
-```r
-SURFMod_WQ$Unit <- "ppb"
-
-SURFMod_WQ <- SURFMod_WQ %>% rename(Date = Sample_date,
-          Analyte = Chemical_name, 
-          Result = Concentration..ppb., 
-          CollectionMethod = Sample_type, 
-          StationCode = Site_code,
-          StationName = Site_name,
-          MDL = Method_detection_level..ppb.,
-          LOQ = Level_of_quantification..ppb.)
-```
-
-### Match columns
-
-To do the merge even though there are columns without matches in each dataset, we can give both datasets identical columns and allow them to be filled with NA's when those columns are not actually present.
-
-
-```r
-C <- names(CEDENMod_WQ)
-S <- names(SURFMod_WQ)
-
-DIF<- setdiff(S, C) # gives items in S that are not in C
-```
-
-Columns that were in SURF and not CEDEN:
-County, LOQ, Study_cd, Study_description, Study_weblink, Data.source, Agency, Record_id
-
-
-```r
-#Add missing columns to CEDEN
-
-CEDENMod_WQ[, DIF] <- NA
-```
-
-
-
-```r
-#Add missing columns to SURF
-
-DIF<- setdiff(C, S) # gives items in C that are not in S
-
-SURFMod_WQ[, DIF] <- NA
-```
-
-Columns that were in CEDEN and not SURF:
-` r DIF`
-
-### Merge
-
-Reorder columns so columns align, then merge with rbind()
-
-
-```r
-# Finishing touches before merge; order columns to match - is this really necessary for merge? IDK
-
-C <- sort(names(CEDENMod_WQ))
-S <- sort(names(SURFMod_WQ))
-
-SURFMod_WQ <- SURFMod_WQ %>% select(S)
-```
-
-```
-## Note: Using an external vector in selections is ambiguous.
-## i Use `all_of(S)` instead of `S` to silence this message.
-## i See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.
-## This message is displayed once per session.
-```
-
-```r
-CEDENMod_WQ <- CEDENMod_WQ %>% select(C)
-```
-
-```
-## Note: Using an external vector in selections is ambiguous.
-## i Use `all_of(C)` instead of `C` to silence this message.
-## i See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.
-## This message is displayed once per session.
-```
-
-```r
-# Check once all columns have perfect matches?
-tibble(SURF = names(SURFMod_WQ), CEDEN = names(CEDENMod_WQ))
-```
-
-```
-## # A tibble: 29 x 2
-##    SURF             CEDEN           
-##    <chr>            <chr>           
-##  1 Agency           Agency          
-##  2 Analyte          Analyte         
-##  3 CollectionMethod CollectionMethod
-##  4 County           County          
-##  5 Data.source      Data.source     
-##  6 Date             Date            
-##  7 Datum            Datum           
-##  8 geometry         geometry        
-##  9 Latitude         Latitude        
-## 10 LocationCode     LocationCode    
-## # ... with 19 more rows
-```
-
-```r
-# MERGE
-
-CEDENSURF_WQ <- rbind(CEDENMod_WQ, SURFMod_WQ)
-```
-
-## Merge with SURF sediment data
-
-
-### Correct mismatched column names
-
-Rather than using Steven's method of renaming using a list (which is dependent on an expected number and order of column names), I renamed each column individually
-
-
-```r
-SURFMod_SED$Unit <- "ppb"
-
-SURFMod_SED <- SURFMod_SED %>% rename(Date = Sample_date,
-          Analyte = Chemical_name, 
-          Result = Concentration..ppb., 
-          CollectionMethod = Sample_type, 
-          StationCode = Site_code,
-          StationName = Site_name,
-          MDL = Method_detection_level..ppb.,
-          LOQ = Level_of_quantification..ppb.)
-```
-
-### Match columns
-
-To do the merge even though there are columns without matches in each dataset, we can give both datasets identical columns and allow them to be filled with NA's when those columns are not actually present.
-
-
-```r
-C <- names(CEDENSURF_WQ)
-S <- names(SURFMod_SED)
-
-#Add missing columns to CEDEN
-
-DIF<- setdiff(S, C) # gives items in S that are not in C
-
-CEDENSURF_WQ[, DIF] <- NA
-```
-
-Columns that were in SURF sediment and not in the water tables:
-Total organic carbon (%)
-
-
-
-```r
-#Add missing columns to SURF
-
-DIF<- setdiff(C, S) # gives items in C that are not in S
-
-SURFMod_SED[, DIF] <- NA
-```
-
-
-Columns that were in the water tables and not in SURF sediment:
-
-Datum, LocationCode, MatrixName, ParentProject, Program, Project, rb_number, regional_board
-
-### Merge
-
-Reorder columns so columns align, then merge with rbind()
-
-
-```r
-# Finishing touches before merge; order columns to match - is this really necessary for merge? IDK
-
-C <- sort(names(CEDENSURF_WQ))
-S <- sort(names(SURFMod_SED))
-
-SURFMod_SED <- SURFMod_SED %>% select(S)
-
-CEDENSURF_WQ <- CEDENSURF_WQ %>% select(C)
-
-# Check once all columns have perfect matches?
-
-tibble(SURF = names(SURFMod_SED), CEDEN = names(CEDENSURF_WQ))
-```
-
-```
-## # A tibble: 30 x 2
-##    SURF             CEDEN           
-##    <chr>            <chr>           
-##  1 Agency           Agency          
-##  2 Analyte          Analyte         
-##  3 CollectionMethod CollectionMethod
-##  4 County           County          
-##  5 Data.source      Data.source     
-##  6 Date             Date            
-##  7 Datum            Datum           
-##  8 geometry         geometry        
-##  9 Latitude         Latitude        
-## 10 LocationCode     LocationCode    
-## # ... with 20 more rows
-```
-
-```r
-# MERGE
-
-CEDENSURF_WQSED <- rbind(CEDENSURF_WQ, SURFMod_SED)
-```
-
-## Remove duplicate data
-
-### Removal from final merged document
-
-distinct() allows us to remove data that matches in specific columns, following the merge; like Date, StationName, Analyte, and Result. It keeps the first record and removes all subsequent matches. 
-
-
-```r
-# Ideas from: https://www.datasciencemadesimple.com/remove-duplicate-rows-r-using-dplyr-distinct-function/
-
-# Records in merged data frame
-nrow(CEDENSURF_WQSED)
-```
-
-```
-## [1] 236017
-```
-
-```r
-# Remove duplicate rows of the dataframe using multiple variables
-
-CEDENSURF_DupChecked <- distinct(CEDENSURF_WQSED, Date, Analyte, StationName, Result, .keep_all= TRUE)
-
-# Records in checked data
-nrow(CEDENSURF_DupChecked)
-```
-
-```
-## [1] 198374
-```
-
-Assuming records that have the exact same station name, date, analyte, and result are duplicates, there were 37643 duplicates in the merged data
-
-< br >
-
-< br >
-
-
-# Round 2: Data investion first
-
-
-```r
-rm(list)
-library(data.table)
-library(lubridate)
-library(sf)
-library(tidyverse)
-```
+Due to reported combined efforts to translate CEDEN data to SURF and vice versa, and issues with replicates being retained in each dataset, careful detection and elimination of duplicates should precede any analysis.
 
 ## CEDEN - Original Data {.tabset}
 
-Due to the structure of the tox data, I have a feeling it involves biological assays that were then related to WQ data sampled on that date (and already present in the CEDEN_WQ dataset)
-
-I can look to see if this is true by merging the two ceden datasets following the same method as before, and assessing differences in sample length. 
-
-
-```r
-# Load CEDEN Data
-CEDENMod_Tox <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_Toxicity.csv")
-
-CEDENMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_WQ.csv")
-```
+Due to the structure of the tox data, I have a feeling it involves biological assays that were then related to WQ data sampled on that date (and already present in the CEDEN_WQ dataset. 
 
 There are 117144 records in the WQ dataset
 and 60637 in the Tox dataset. 
 
-### Tox Data 
+### CEDEN Tox 
 
 In the tox dataset, there were several records related to a single species assessment - by creating a group identifier by the location, date, and organism assessed, I calculated that there were 2430 unique samples.
 
 Within the Tox dataset, 11 different species are represented.
 
-#### Exact duplicates - Tox
+#### Exact duplicates
 
-duplicated() produces a vector identifying which records are duplicated. This can be appended to the original dataset for further investigation.
+duplicated() produces a vector identifying which records are duplicates. This can be appended to the original dataset for further investigation. The first record is marked FALSE, while subsequent matches are marked TRUE
 
 
 ```r
@@ -375,6 +97,7 @@ summary(CEDENMod_Tox$DupCheck)
 ##    Mode   FALSE    TRUE 
 ## logical   42363   18274
 ```
+
 Is it only some programs that have duplication? 9/10 programs do.
 
 
@@ -404,57 +127,55 @@ unique(CEDENMod_Tox$Program[CEDENMod_Tox$DupCheck == "TRUE"])
 
 #### Alternative (looser) assessment of duplication
 
-Does the method used to find differences *between the datasets* detect anomalies within the dataset? YES - 25989 records, to be specific. 
-
-That is 42.85997% of the dataset.
-
-This approximation suggests more duplicated records than were identified as exact duplicates - would be worth investigating what those differences are, and whether they shed more light on the source of duplication.
-
+If we assume that some columns may differ due to differences in data loading (ie: originally submitted to SURF and brought to CEDEN vs originally loaded to CEDEN), then we may want to use a looser structure to detect duplicates. 
 
 
 ```r
-# Remove duplicate rows of the dataframe using multiple variables
-
-NoDup_Tox <- distinct(CEDENMod_Tox, Date, StationName, OrganismName, Analyte, Result, .keep_all= TRUE)
+NoDup_Tox<- distinct(CEDENMod_Tox, Date, StationName, Analyte, CollectionMethod, Result, .keep_all= TRUE)
 
 nrow(CEDENMod_Tox) - nrow(NoDup_Tox)
 ```
 
 ```
-## [1] 18293
+## [1] 25729
 ```
 
-Even allowing for WQ parameters to be duplicated due to multiple species assessed on the same day, there are still 18293 duplicates, which should not be included.
+By assuming that records in the same location on the same date,  measuring the same analyte via the same collection method, and obtaining the same result are duplicates, we find almost 50% more duplicates. 
+25729 records, to be specific. 
 
-Since we are using the df for the water parameters and not the associated organism survival, it's more useful to know the number of duplicate WQ entries excluding the organism label
+That is 42.4311889% of the dataset.
+
+Including Organism name in the list of differentiating variables, it returns almost the exact same count of duplicates (18274) as exact duplication (18297) - indicating that a major source of WQ duplication is repeating WQ parameters for multiple species assessed.
 
 
 ```r
-NoDup_Tox <- distinct(CEDENMod_Tox, Date, Analyte, StationName, Result, .keep_all= TRUE)
+# Remove duplicate rows of the dataframe using multiple variables & ORGANISM NAME
 
-nrow(CEDENMod_Tox) - nrow(NoDup_Tox)
+nrow(CEDENMod_Tox) - nrow(distinct(CEDENMod_Tox, Date, StationName, CollectionMethod, OrganismName, Analyte, Result, .keep_all= TRUE))
 ```
 
 ```
-## [1] 25989
+## [1] 18274
 ```
 
-If we remove records that assess 'survival' and 'biomass' (since we aren't using this for biotic parameters in our model)...
+Since we are using the df for the water parameters and not the associated organism survival, it's more useful to remove duplicate WQ entries regardless of the organism. We can also remove records that assess 'survival' and 'biomass' (since we aren't using this for the biotic parameters in our model).
 
 
 ```r
 NoDup_Tox <- NoDup_Tox[NoDup_Tox$Analyte != "Survival"]
 
 NoDup_Tox <- NoDup_Tox[NoDup_Tox$Analyte != "Biomass (wt/orig indiv)"]
+
+# nrow = 31859
 ```
 
-We're left with only 31859 unique, useful records in the tox dataset - or 52.5405281
+We're left with only 32011 unique, useful records in the tox dataset - or 52.7912001 % of the original tox data remaining
 
 < br >
 
-### WQ Data
+### CEDEN WQ
 
-#### Exact duplicates - WQ
+#### Exact duplicates
 
 duplicated() produces a vector identifying which records are duplicated. This can be appended to the original dataset for further investigation.
 
@@ -474,7 +195,7 @@ summary(CEDENMod_WQ$DupCheck)
 
 This method identified only 657 exact duplicates in the entire WQ dataset.
 
-Is it only some programs that have duplication? YES: 9/17 programs
+Only 9/17 programs present these exact duplicates
 
 
 ```r
@@ -503,50 +224,61 @@ unique(CEDENMod_WQ$Program[CEDENMod_WQ$DupCheck == "TRUE"])
 
 #### Looser assessment of Duplication
 
-Does the method of assuming differences *between the datasets* detect anomalies within the WQ dataset? YES, 1719 records.
+Utilizign the distinct() function to assume that records in the same location on the same date, measuring the same analyte via the same collection method and obtaining the same result are duplicates, we find 1536 duplicate records.
 
-That's only 1.4674247% of the entire WQ dataset
+That is more than double the number of exact duplicates found, yet still only 1.4674247% of the entire WQ dataset.
 
 
 ```r
 # Remove duplicate rows of the dataframe using multiple variables
 
-NoDupWQ <- distinct(CEDENMod_WQ, Date, Analyte, StationName, Result, .keep_all= TRUE)
+NoDupWQ <- distinct(CEDENMod_WQ, Date, Analyte, StationName, CollectionMethod, Result, .keep_all= TRUE)
 
 nrow(CEDENMod_WQ) - nrow(NoDupWQ)
 ```
 
 ```
-## [1] 1719
+## [1] 1536
 ```
-
 <br>
 
 <br>
 
 ## Merging CEDEN data
 
-Due to the detections described above, further sleuthing should be done before using this merge. But, for the record, here would be the process.
+After dealing with duplication WITHIN the CEDEN tox and wq datasets, there were only 75 duplicate records found following the merged data.
 
 
 ```r
-WQ <- names(CEDENMod_WQ)
-TOX <- names(CEDENMod_Tox)
+# Strip column with duplicate check from both, and organism from tox
+NoDup_Tox <- select(NoDup_Tox, -c(DupCheck, OrganismName))
+NoDupWQ <- select(NoDupWQ, -DupCheck)
+
+# Vector of column names to compare
+WQ <- names(NoDupWQ)
+TOX <- names(NoDup_Tox)
 
 #Add missing columns to CEDEN WQ
 DIF<- setdiff(TOX, WQ) # gives items in T that are not in W
-CEDENMod_WQ[, DIF] <- NA
+NoDupWQ[, DIF] <- NA
+```
 
+```
+## Warning in `[<-.data.table`(`*tmp*`, , DIF, value = NA): length(LHS)==0; no
+## columns to delete or assign RHS to.
+```
+
+```r
 #Add missing columns to CEDEN TOX
 DIF<- setdiff(WQ, TOX) # gives items in W that are not in T
-CEDENMod_Tox[, DIF] <- NA
+NoDup_Tox[, DIF] <- NA
 
 # Finishing touches before merge; order columns to match - is this really necessary for merge? IDK
 
-WQ <- sort(names(CEDENMod_WQ))
-TOX <- sort(names(CEDENMod_Tox))
+WQ <- sort(names(NoDupWQ))
+TOX <- sort(names(NoDup_Tox))
 
-CEDENMod_Tox <- CEDENMod_Tox %>% select(TOX)
+NoDup_Tox <- NoDup_Tox %>% select(TOX)
 ```
 
 ```
@@ -557,7 +289,7 @@ CEDENMod_Tox <- CEDENMod_Tox %>% select(TOX)
 ```
 
 ```r
-CEDENMod_WQ <- CEDENMod_WQ %>% select(WQ)
+NoDupWQ <- NoDupWQ %>% select(WQ)
 ```
 
 ```
@@ -569,44 +301,31 @@ CEDENMod_WQ <- CEDENMod_WQ %>% select(WQ)
 
 ```r
 # Check once all columns have perfect matches?
-tibble(SURF = names(CEDENMod_Tox), CEDEN = names(CEDENMod_WQ))
+tibble(SURF = names(NoDup_Tox), CEDEN = names(NoDupWQ))
 ```
 
 ```
-## # A tibble: 22 x 2
+## # A tibble: 21 x 2
 ##    SURF             CEDEN           
 ##    <chr>            <chr>           
 ##  1 Analyte          Analyte         
 ##  2 CollectionMethod CollectionMethod
 ##  3 Date             Date            
 ##  4 Datum            Datum           
-##  5 DupCheck         DupCheck        
-##  6 geometry         geometry        
-##  7 Latitude         Latitude        
-##  8 LocationCode     LocationCode    
-##  9 Longitude        Longitude       
-## 10 MatrixName       MatrixName      
-## # ... with 12 more rows
+##  5 geometry         geometry        
+##  6 Latitude         Latitude        
+##  7 LocationCode     LocationCode    
+##  8 Longitude        Longitude       
+##  9 MatrixName       MatrixName      
+## 10 MDL              MDL             
+## # ... with 11 more rows
 ```
 
 ```r
 # MERGE
-
-CEDEN_ALL <- rbind(CEDENMod_WQ,CEDENMod_Tox)
+CEDEN_ALL <- rbind(NoDupWQ,NoDup_Tox)
 ```
 
-## Detect differences
-
-
-```r
-CEDENMod_Tox$ID <- paste(CEDENMod_Tox$Date, CEDENMod_Tox$StationCode, CEDENMod_Tox$OrganismName, sep= ",")
-
-length(unique(CEDENMod_Tox$ID))
-```
-
-```
-## [1] 2430
-```
 
 ```r
 # Ideas from: https://www.datasciencemadesimple.com/remove-duplicate-rows-r-using-dplyr-distinct-function/
@@ -615,13 +334,369 @@ length(unique(CEDENMod_Tox$ID))
 
 CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL, Date, Analyte, StationName, Result, .keep_all= TRUE)
 
-nrow(CEDEN_ALL_DupChecked)
+nrow(CEDEN_ALL)-nrow(CEDEN_ALL_DupChecked)
 ```
 
 ```
-## [1] 149998
+## [1] 410
+```
+< br >
+
+< br >
+
+
+## SURF DATA
+
+
+```r
+rm(list=setdiff(ls(), c("CEDENMod_WQ", "CEDENMod_Tox", "CEDEN_ALL_DupChecked","SURFMod_WQ", "SURFMod_SED")))
 ```
 
-Assuming records that have the exact same station name, date, analyte, and result are duplicates, there were 27783 duplicates in the merged data, leaving 149998 total records in the merged df.
+There are 129323 records in the WQ dataset
+and 36027 in the SED dataset. 
 
-That suggests that only 32854 unique records were brought over from the tox dataset
+### SURF Water
+
+#### Data Prep
+
+More investigating will probably be better, but for now we can simply remove those data defined in SURF as sourced from CEDEN
+
+
+```r
+SURFMod_WQ <- filter(SURFMod_WQ, Data.source != "CEDEN")
+```
+
+**Correct mismatched column names**
+
+Rather than using Steven's method of renaming using a list (which is dependent on an expected number and order of column names), I renamed each column individually
+
+
+```r
+SURFMod_WQ$Unit <- "ppb"
+
+SURFMod_WQ <- SURFMod_WQ %>% rename(Date = Sample_date,
+          Analyte = Chemical_name, 
+          Result = Concentration..ppb., 
+          CollectionMethod = Sample_type, 
+          StationCode = Site_code,
+          StationName = Site_name,
+          MDL = Method_detection_level..ppb.,
+          LOQ = Level_of_quantification..ppb.)
+```
+
+#### Exact duplicates
+
+duplicated() produces a vector identifying which records are duplicated. This can be appended to the original dataset for further investigation.
+
+
+```r
+# add index column identifying which entries are duplicated
+
+SURFMod_WQ$DupCheck <- duplicated(SURFMod_WQ)
+
+summary(SURFMod_WQ$DupCheck)
+```
+
+```
+##    Mode   FALSE 
+## logical   82846
+```
+
+Fantastic. There are no exact duplicates within the SURF water data. 
+
+#### Looser assessment of Duplication
+
+Utilizing the distinct() function to assume that records in the same location on the same date, measuring the same analyte and obtaining the same result are duplicates, we find 5,676 duplicate records.
+
+
+```r
+# Remove duplicate rows of the dataframe using multiple variables
+
+NoDupWQ <- distinct(SURFMod_WQ, Date, Analyte, StationName, Result, .keep_all= TRUE)
+
+nrow(SURFMod_WQ) - nrow(NoDupWQ)
+```
+
+```
+## [1] 5676
+```
+<br>
+
+<br>
+
+## SURF sediment
+
+#### Data Prep
+
+More investigating will probably be better, but for now we can simply remove those data defined in SURF as sourced from CEDEN
+
+
+```r
+SURFMod_SED <- filter(SURFMod_SED, Data.source != "CEDEN")
+```
+
+**Correct mismatched column names**
+
+```r
+SURFMod_SED$Unit <- "ppb"
+
+SURFMod_SED <- SURFMod_SED %>% rename(Date = Sample_date,
+          Analyte = Chemical_name, 
+          Result = Concentration..ppb., 
+          CollectionMethod = Sample_type, 
+          StationCode = Site_code,
+          StationName = Site_name,
+          MDL = Method_detection_level..ppb.,
+          LOQ = Level_of_quantification..ppb.)
+```
+
+#### Exact duplicates
+
+duplicated() produces a vector identifying which records are duplicated. This can be appended to the original dataset for further investigation.
+
+
+```r
+# add index column identifying which entries are duplicated
+
+SURFMod_SED$DupCheck <- duplicated(SURFMod_SED)
+
+summary(SURFMod_SED$DupCheck)
+```
+
+```
+##    Mode   FALSE 
+## logical   28817
+```
+
+Fantastic. There are no exact duplicates within the SURF sediment data. 
+
+#### Looser assessment of Duplication
+
+Utilizing the distinct() function to assume that records in the same location on the same date, measuring the same analyte and obtaining the same result are duplicates, we find only 784 - not bad.
+
+
+```r
+# Remove duplicate rows of the dataframe using multiple variables
+
+NoDupSED <- distinct(SURFMod_SED, Date, Analyte, StationName, Result, .keep_all= TRUE)
+
+nrow(SURFMod_SED) - nrow(NoDupSED)
+```
+
+```
+## [1] 784
+```
+
+< br >
+
+< br >
+
+## Merge SURF df
+
+After dealing with duplication WITHIN the SURF sed and wq datasets, there were still **26127** duplicate records found following the merging of the data if we assume that records in the same location on the same date, measuring the same analyte and obtaining the same result are duplicates.
+
+This doesn't take into accound sample method, yet it is surprising that the RESULT is identical for both sediment and water samples. By including "SampleMethod" to differentiate water and sediment samples, there was ZERO duplication found. 
+
+
+```r
+# Strip column with duplicate check from both
+NoDupSED <- select(NoDupSED, -DupCheck)
+NoDupWQ <- select(NoDupWQ, -DupCheck)
+
+# Vector of column names to compare
+WQ <- names(NoDupWQ)
+SED <- names(NoDupSED)
+
+#Add missing columns to CEDEN WQ
+DIF<- setdiff(SED, WQ) # gives items in S that are not in W
+NoDupWQ[, DIF] <- NA
+
+#Add missing columns to CEDEN SED
+DIF<- setdiff(WQ, SED) # gives items in W that are not in S
+NoDupSED[, DIF] <- NA
+```
+
+```
+## Warning in `[<-.data.table`(`*tmp*`, , DIF, value = NA): length(LHS)==0; no
+## columns to delete or assign RHS to.
+```
+
+```r
+# Finishing touches before merge; order columns to match - is this really necessary for merge? IDK
+
+WQ <- sort(names(NoDupWQ))
+SED <- sort(names(NoDupSED))
+
+NoDupSED <- NoDupSED %>% select(SED)
+```
+
+```
+## Note: Using an external vector in selections is ambiguous.
+## i Use `all_of(SED)` instead of `SED` to silence this message.
+## i See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.
+## This message is displayed once per session.
+```
+
+```r
+NoDupWQ <- NoDupWQ %>% select(WQ)
+
+# Check once all columns have perfect matches?
+tibble(SURF = names(NoDupSED), CEDEN = names(NoDupWQ))
+```
+
+```
+## # A tibble: 22 x 2
+##    SURF             CEDEN           
+##    <chr>            <chr>           
+##  1 Agency           Agency          
+##  2 Analyte          Analyte         
+##  3 CollectionMethod CollectionMethod
+##  4 County           County          
+##  5 Data.source      Data.source     
+##  6 Date             Date            
+##  7 geometry         geometry        
+##  8 Latitude         Latitude        
+##  9 Longitude        Longitude       
+## 10 LOQ              LOQ             
+## # ... with 12 more rows
+```
+
+```r
+# MERGE
+SURF_ALL <- rbind(NoDupWQ,NoDupSED)
+```
+
+
+```r
+# Ideas from: https://www.datasciencemadesimple.com/remove-duplicate-rows-r-using-dplyr-distinct-function/
+
+# Remove duplicate rows of the dataframe using multiple variables
+
+SURF_ALL_DupChecked <- distinct(SURF_ALL, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
+
+nrow(SURF_ALL)-nrow(SURF_ALL_DupChecked)
+```
+
+```
+## [1] 0
+```
+
+< br >
+
+< br >
+
+## Merge SURF and CEDEN
+
+
+```r
+rm(list=setdiff(ls(), c("CEDENMod_WQ", "CEDENMod_Tox", "CEDEN_ALL_DupChecked","SURFMod_WQ", "SURFMod_SED", "SURF_ALL_DupChecked")))
+```
+
+### Data prep
+**Match columns to CEDEN data**
+
+
+```r
+C <- names(CEDEN_ALL_DupChecked)
+S <- names(SURF_ALL_DupChecked)
+
+DIF<- setdiff(S, C) # gives items in S that are not in C
+```
+
+Columns that were in SURF and not CEDEN:
+Agency, County, Data.source, LOQ, Record_id, Study_cd, Study_description, Study_weblink, Total organic carbon (%)
+
+
+```r
+#Add missing columns to CEDEN
+CEDEN_ALL_DupChecked[, DIF] <- NA
+```
+
+
+```r
+#Add missing columns to SURF
+DIF<- setdiff(C, S) # gives items in C that are not in S
+SURF_ALL_DupChecked[, DIF] <- NA
+```
+
+Columns that were in CEDEN and not SURF:
+` r DIF`
+
+### Merge
+
+Reorder columns to align, then merge with rbind()
+
+
+```r
+# Finishing touches before merge; order columns to match - is this really necessary for merge? IDK
+
+C <- sort(names(CEDEN_ALL_DupChecked))
+S <- sort(names(SURF_ALL_DupChecked))
+
+SURF_ALL_DupChecked <- SURF_ALL_DupChecked %>% select(S)
+```
+
+```
+## Note: Using an external vector in selections is ambiguous.
+## i Use `all_of(S)` instead of `S` to silence this message.
+## i See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.
+## This message is displayed once per session.
+```
+
+```r
+CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>% select(C)
+```
+
+```
+## Note: Using an external vector in selections is ambiguous.
+## i Use `all_of(C)` instead of `C` to silence this message.
+## i See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.
+## This message is displayed once per session.
+```
+
+```r
+# Check once all columns have perfect matches?
+tibble(SURF = names(SURF_ALL_DupChecked), CEDEN = names(CEDEN_ALL_DupChecked))
+```
+
+```
+## # A tibble: 30 x 2
+##    SURF             CEDEN           
+##    <chr>            <chr>           
+##  1 Agency           Agency          
+##  2 Analyte          Analyte         
+##  3 CollectionMethod CollectionMethod
+##  4 County           County          
+##  5 Data.source      Data.source     
+##  6 Date             Date            
+##  7 Datum            Datum           
+##  8 geometry         geometry        
+##  9 Latitude         Latitude        
+## 10 LocationCode     LocationCode    
+## # ... with 20 more rows
+```
+
+```r
+# MERGE
+CEDENSURF <- rbind(CEDEN_ALL_DupChecked, SURF_ALL_DupChecked)
+```
+
+### Check for duplicates
+
+None found! Great news. Need to make sure this is not due to differences in nomenclature/formatting used in the analyte or other columns. 
+
+
+```r
+# Ideas from: https://www.datasciencemadesimple.com/remove-duplicate-rows-r-using-dplyr-distinct-function/
+
+# Remove duplicate rows of the dataframe using multiple variables
+
+CEDENSURF_DupChecked <- distinct(CEDENSURF, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
+
+nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
+```
+
+```
+## [1] 0
+```
+
