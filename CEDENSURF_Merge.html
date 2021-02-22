@@ -291,25 +291,25 @@ library(data.table)
 library(lubridate)
 library(sf)
 library(tidyverse)</code></pre>
-<div id="load-data" class="section level1" number="1">
-<h1 number="1"><span class="header-section-number">1</span> Load Data</h1>
-<div id="ceden" class="section level3" number="1.0.1">
-<h3 number="1.0.1"><span class="header-section-number">1.0.1</span> CEDEN</h3>
+<div id="load-prep-data" class="section level1">
+<h1>Load &amp; Prep Data</h1>
+<div id="ceden" class="section level3">
+<h3>CEDEN</h3>
 <p>Two files - one with tox data, and one with wq data</p>
 <pre class="r"><code># Load CEDEN Data
 CEDENMod_Tox &lt;- fread(&quot;https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_Toxicity.csv&quot;)
 
 CEDENMod_WQ &lt;- fread(&quot;https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_WQ.csv&quot;)</code></pre>
 </div>
-<div id="surf" class="section level3" number="1.0.2">
-<h3 number="1.0.2"><span class="header-section-number">1.0.2</span> SURF</h3>
+<div id="surf" class="section level3">
+<h3>SURF</h3>
 <p>Two files - one with wq data, and one with SED data ?</p>
 <pre class="r"><code>SURFMod_SED &lt;- fread(&quot;https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/SURFMod_SED.csv&quot;)
 
 SURFMod_WQ &lt;- fread(&quot;https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/SURFMod_water.csv&quot;)</code></pre>
 </div>
-<div id="append-with-source" class="section level3" number="1.0.3">
-<h3 number="1.0.3"><span class="header-section-number">1.0.3</span> Append with source</h3>
+<div id="append-with-source" class="section level3">
+<h3>Append with source</h3>
 <pre class="r"><code>CEDENMod_Tox$Source &lt;- rep(&quot;CEDEN&quot;, times=nrow(CEDENMod_Tox))
 
 CEDENMod_WQ$Source &lt;- rep(&quot;CEDEN&quot;, times=nrow(CEDENMod_WQ))
@@ -319,19 +319,19 @@ SURFMod_SED$Source &lt;- rep(&quot;SURF&quot;, times=nrow(SURFMod_SED))
 SURFMod_WQ$Source &lt;- rep(&quot;SURF&quot;, times=nrow(SURFMod_WQ))</code></pre>
 </div>
 </div>
-<div id="data-investion-first" class="section level1" number="2">
-<h1 number="2"><span class="header-section-number">2</span> Data investion first</h1>
+<div id="assess-duplication-within-each-database" class="section level1">
+<h1>Assess duplication within each database</h1>
 <p>Due to reported combined efforts to translate CEDEN data to SURF and vice versa, and issues with replicates being retained in each dataset, careful detection and elimination of duplicates should precede any analysis.</p>
-<div id="ceden---original-data" class="section level2 tabset" number="2.1">
-<h2 class="tabset" number="2.1"><span class="header-section-number">2.1</span> CEDEN - Original Data</h2>
+<div id="ceden-data" class="section level2 tabset">
+<h2 class="tabset">CEDEN Data</h2>
 <p>Due to the structure of the tox data, I have a feeling it involves biological assays that were then related to WQ data sampled on that date (and already present in the CEDEN_WQ dataset.</p>
 <p>There are 117144 records in the WQ dataset and 60637 in the Tox dataset.</p>
-<div id="ceden-tox" class="section level3" number="2.1.1">
-<h3 number="2.1.1"><span class="header-section-number">2.1.1</span> CEDEN Tox</h3>
+<div id="ceden-tox" class="section level3">
+<h3>CEDEN Tox</h3>
 <p>In the tox dataset, there were several records related to a single species assessment - by creating a group identifier by the location, date, and organism assessed, I calculated that there were 2430 unique samples.</p>
 <p>Within the Tox dataset, 11 different species are represented.</p>
-<div id="exact-duplicates" class="section level4" number="2.1.1.1">
-<h4 number="2.1.1.1"><span class="header-section-number">2.1.1.1</span> Exact duplicates</h4>
+<div id="exact-duplicates" class="section level4">
+<h4>Exact duplicates</h4>
 <p>duplicated() produces a vector identifying which records are duplicates. This can be appended to the original dataset for further investigation. The first record is marked FALSE, while subsequent matches are marked TRUE</p>
 <pre class="r"><code># add index column identifying which entries are duplicated
 
@@ -354,8 +354,8 @@ summary(CEDENMod_Tox$DupCheck)</code></pre>
 ## [8] &quot;Delta Regional Monitoring Program&quot;                   
 ## [9] &quot;California Department of Transportation NPDES Permit&quot;</code></pre>
 </div>
-<div id="alternative-looser-assessment-of-duplication" class="section level4" number="2.1.1.2">
-<h4 number="2.1.1.2"><span class="header-section-number">2.1.1.2</span> Alternative (looser) assessment of duplication</h4>
+<div id="alternative-looser-assessment-of-duplication" class="section level4">
+<h4>Alternative (looser) assessment of duplication</h4>
 <p>If we assume that some columns may differ due to differences in data loading (ie: originally submitted to SURF and brought to CEDEN vs originally loaded to CEDEN), then we may want to use a looser structure to detect duplicates.</p>
 <pre class="r"><code>NoDup_Tox&lt;- distinct(CEDENMod_Tox, Date, StationName, Analyte, CollectionMethod, Result, .keep_all= TRUE)
 
@@ -375,13 +375,13 @@ NoDup_Tox &lt;- NoDup_Tox[NoDup_Tox$Analyte != &quot;Biomass (wt/orig indiv)&quo
 
 # nrow = 31859</code></pre>
 <p>We’re left with only 32011 unique, useful records in the tox dataset - or 52.7912001 % of the original tox data remaining</p>
-<p>&lt; br &gt;</p>
+<p><br></p>
 </div>
 </div>
-<div id="ceden-wq" class="section level3" number="2.1.2">
-<h3 number="2.1.2"><span class="header-section-number">2.1.2</span> CEDEN WQ</h3>
-<div id="exact-duplicates-1" class="section level4" number="2.1.2.1">
-<h4 number="2.1.2.1"><span class="header-section-number">2.1.2.1</span> Exact duplicates</h4>
+<div id="ceden-wq" class="section level3">
+<h3>CEDEN WQ</h3>
+<div id="exact-duplicates-1" class="section level4">
+<h4>Exact duplicates</h4>
 <p>duplicated() produces a vector identifying which records are duplicated. This can be appended to the original dataset for further investigation.</p>
 <pre class="r"><code># add index column identifying which entries are duplicated
 
@@ -405,10 +405,10 @@ summary(CEDENMod_WQ$DupCheck)</code></pre>
 ## [8] &quot;Irrigated Lands Regulatory Program&quot;                  
 ## [9] &quot;American Rivers Restoration&quot;</code></pre>
 </div>
-<div id="looser-assessment-of-duplication" class="section level4" number="2.1.2.2">
-<h4 number="2.1.2.2"><span class="header-section-number">2.1.2.2</span> Looser assessment of Duplication</h4>
+<div id="looser-assessment-of-duplication" class="section level4">
+<h4>Looser assessment of Duplication</h4>
 <p>Utilizign the distinct() function to assume that records in the same location on the same date, measuring the same analyte via the same collection method and obtaining the same result are duplicates, we find 1536 duplicate records.</p>
-<p>That is more than double the number of exact duplicates found, yet still only 1.4674247% of the entire WQ dataset.</p>
+<p>That is more than double the number of exact duplicates found, yet still only 1.3112067% of the entire WQ dataset.</p>
 <pre class="r"><code># Remove duplicate rows of the dataframe using multiple variables
 
 NoDupWQ &lt;- distinct(CEDENMod_WQ, Date, Analyte, StationName, CollectionMethod, Result, .keep_all= TRUE)
@@ -420,9 +420,9 @@ nrow(CEDENMod_WQ) - nrow(NoDupWQ)</code></pre>
 </div>
 </div>
 </div>
-<div id="merging-ceden-data" class="section level2" number="2.2">
-<h2 number="2.2"><span class="header-section-number">2.2</span> Merging CEDEN data</h2>
-<p>After dealing with duplication WITHIN the CEDEN tox and wq datasets, there were only 75 duplicate records found following the merged data.</p>
+<div id="merging-ceden-data" class="section level2">
+<h2>Merging CEDEN data</h2>
+<p>After dealing with duplication WITHIN the CEDEN tox and wq datasets, there were only 9 duplicate records found following the merged data. (75 if Collection Method is not a requirement for establishing duplication)</p>
 <pre class="r"><code># Strip column with duplicate check from both, and organism from tox
 NoDup_Tox &lt;- select(NoDup_Tox, -c(DupCheck, OrganismName))
 NoDupWQ &lt;- select(NoDupWQ, -DupCheck)
@@ -477,21 +477,21 @@ CEDEN_ALL &lt;- rbind(NoDupWQ,NoDup_Tox)</code></pre>
 
 # Remove duplicate rows of the dataframe using multiple variables
 
-CEDEN_ALL_DupChecked &lt;- distinct(CEDEN_ALL, Date, Analyte, StationName, Result, .keep_all= TRUE)
+CEDEN_ALL_DupChecked &lt;- distinct(CEDEN_ALL, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
 
 nrow(CEDEN_ALL)-nrow(CEDEN_ALL_DupChecked)</code></pre>
-<pre><code>## [1] 410</code></pre>
-<p>&lt; br &gt;</p>
-<p>&lt; br &gt;</p>
+<pre><code>## [1] 9</code></pre>
+<p><br></p>
+<p><br></p>
 </div>
-<div id="surf-data" class="section level2" number="2.3">
-<h2 number="2.3"><span class="header-section-number">2.3</span> SURF DATA</h2>
+<div id="surf-data" class="section level2 tabset">
+<h2 class="tabset">SURF data</h2>
 <pre class="r"><code>rm(list=setdiff(ls(), c(&quot;CEDENMod_WQ&quot;, &quot;CEDENMod_Tox&quot;, &quot;CEDEN_ALL_DupChecked&quot;,&quot;SURFMod_WQ&quot;, &quot;SURFMod_SED&quot;)))</code></pre>
 <p>There are 129323 records in the WQ dataset and 36027 in the SED dataset.</p>
-<div id="surf-water" class="section level3" number="2.3.1">
-<h3 number="2.3.1"><span class="header-section-number">2.3.1</span> SURF Water</h3>
-<div id="data-prep" class="section level4" number="2.3.1.1">
-<h4 number="2.3.1.1"><span class="header-section-number">2.3.1.1</span> Data Prep</h4>
+<div id="surf-water" class="section level3">
+<h3>SURF Water</h3>
+<div id="data-prep" class="section level4">
+<h4>Data Prep</h4>
 <p>More investigating will probably be better, but for now we can simply remove those data defined in SURF as sourced from CEDEN</p>
 <pre class="r"><code>SURFMod_WQ &lt;- filter(SURFMod_WQ, Data.source != &quot;CEDEN&quot;)</code></pre>
 <p><strong>Correct mismatched column names</strong></p>
@@ -507,8 +507,8 @@ SURFMod_WQ &lt;- SURFMod_WQ %&gt;% rename(Date = Sample_date,
           MDL = Method_detection_level..ppb.,
           LOQ = Level_of_quantification..ppb.)</code></pre>
 </div>
-<div id="exact-duplicates-2" class="section level4" number="2.3.1.2">
-<h4 number="2.3.1.2"><span class="header-section-number">2.3.1.2</span> Exact duplicates</h4>
+<div id="exact-duplicates-2" class="section level4">
+<h4>Exact duplicates</h4>
 <p>duplicated() produces a vector identifying which records are duplicated. This can be appended to the original dataset for further investigation.</p>
 <pre class="r"><code># add index column identifying which entries are duplicated
 
@@ -519,24 +519,24 @@ summary(SURFMod_WQ$DupCheck)</code></pre>
 ## logical   82846</code></pre>
 <p>Fantastic. There are no exact duplicates within the SURF water data.</p>
 </div>
-<div id="looser-assessment-of-duplication-1" class="section level4" number="2.3.1.3">
-<h4 number="2.3.1.3"><span class="header-section-number">2.3.1.3</span> Looser assessment of Duplication</h4>
+<div id="looser-assessment-of-duplication-1" class="section level4">
+<h4>Looser assessment of Duplication</h4>
 <p>Utilizing the distinct() function to assume that records in the same location on the same date, measuring the same analyte and obtaining the same result are duplicates, we find 5,676 duplicate records.</p>
 <pre class="r"><code># Remove duplicate rows of the dataframe using multiple variables
 
-NoDupWQ &lt;- distinct(SURFMod_WQ, Date, Analyte, StationName, Result, .keep_all= TRUE)
+NoDupWQ &lt;- distinct(SURFMod_WQ, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
 
 nrow(SURFMod_WQ) - nrow(NoDupWQ)</code></pre>
-<pre><code>## [1] 5676</code></pre>
+<pre><code>## [1] 5662</code></pre>
 <p><br></p>
 <p><br></p>
 </div>
 </div>
 </div>
-<div id="surf-sediment" class="section level2" number="2.4">
-<h2 number="2.4"><span class="header-section-number">2.4</span> SURF sediment</h2>
-<div id="data-prep-1" class="section level4" number="2.4.0.1">
-<h4 number="2.4.0.1"><span class="header-section-number">2.4.0.1</span> Data Prep</h4>
+<div id="surf-sediment" class="section level2">
+<h2>SURF sediment</h2>
+<div id="data-prep-1" class="section level4">
+<h4>Data Prep</h4>
 <p>More investigating will probably be better, but for now we can simply remove those data defined in SURF as sourced from CEDEN</p>
 <pre class="r"><code>SURFMod_SED &lt;- filter(SURFMod_SED, Data.source != &quot;CEDEN&quot;)</code></pre>
 <p><strong>Correct mismatched column names</strong></p>
@@ -551,8 +551,8 @@ SURFMod_SED &lt;- SURFMod_SED %&gt;% rename(Date = Sample_date,
           MDL = Method_detection_level..ppb.,
           LOQ = Level_of_quantification..ppb.)</code></pre>
 </div>
-<div id="exact-duplicates-3" class="section level4" number="2.4.0.2">
-<h4 number="2.4.0.2"><span class="header-section-number">2.4.0.2</span> Exact duplicates</h4>
+<div id="exact-duplicates-3" class="section level4">
+<h4>Exact duplicates</h4>
 <p>duplicated() produces a vector identifying which records are duplicated. This can be appended to the original dataset for further investigation.</p>
 <pre class="r"><code># add index column identifying which entries are duplicated
 
@@ -563,23 +563,24 @@ summary(SURFMod_SED$DupCheck)</code></pre>
 ## logical   28817</code></pre>
 <p>Fantastic. There are no exact duplicates within the SURF sediment data.</p>
 </div>
-<div id="looser-assessment-of-duplication-2" class="section level4" number="2.4.0.3">
-<h4 number="2.4.0.3"><span class="header-section-number">2.4.0.3</span> Looser assessment of Duplication</h4>
+<div id="looser-assessment-of-duplication-2" class="section level4">
+<h4>Looser assessment of Duplication</h4>
 <p>Utilizing the distinct() function to assume that records in the same location on the same date, measuring the same analyte and obtaining the same result are duplicates, we find only 784 - not bad.</p>
 <pre class="r"><code># Remove duplicate rows of the dataframe using multiple variables
 
-NoDupSED &lt;- distinct(SURFMod_SED, Date, Analyte, StationName, Result, .keep_all= TRUE)
+NoDupSED &lt;- distinct(SURFMod_SED, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
 
 nrow(SURFMod_SED) - nrow(NoDupSED)</code></pre>
 <pre><code>## [1] 784</code></pre>
-<p>&lt; br &gt;</p>
-<p>&lt; br &gt;</p>
+<p><br></p>
+<p><br></p>
 </div>
 </div>
-<div id="merge-surf-df" class="section level2" number="2.5">
-<h2 number="2.5"><span class="header-section-number">2.5</span> Merge SURF df</h2>
-<p>After dealing with duplication WITHIN the SURF sed and wq datasets, there were still <strong>26127</strong> duplicate records found following the merging of the data if we assume that records in the same location on the same date, measuring the same analyte and obtaining the same result are duplicates.</p>
-<p>This doesn’t take into accound sample method, yet it is surprising that the RESULT is identical for both sediment and water samples. By including “SampleMethod” to differentiate water and sediment samples, there was ZERO duplication found.</p>
+<div id="merge-surf-df" class="section level2">
+<h2>Merge SURF df</h2>
+<p>ZERO duplication found between the SED and WQ datasets, assuming duplicates would have to have the exact same Location, Date, Analyte, Collection Method, and Result.</p>
+<p><em>Note</em> I had started without ‘Collection Method’ in the distinct() query, but added it as an additional requirement for establishing duplication because without that record, the difference between results for water vs sediment were not recognized and <strong>26127</strong> records were considered duplicates following the merging of the SURF data.</p>
+<p>This is still surprising to me, because that means the RESULT concentration was identical for both sediment and water samples. Are they truly sampled separately and exactly the same? By including “SampleMethod” to differentiate water and sediment samples,</p>
 <pre class="r"><code># Strip column with duplicate check from both
 NoDupSED &lt;- select(NoDupSED, -DupCheck)
 NoDupWQ &lt;- select(NoDupWQ, -DupCheck)
@@ -635,14 +636,15 @@ SURF_ALL_DupChecked &lt;- distinct(SURF_ALL, Date, Analyte, CollectionMethod, St
 
 nrow(SURF_ALL)-nrow(SURF_ALL_DupChecked)</code></pre>
 <pre><code>## [1] 0</code></pre>
-<p>&lt; br &gt;</p>
-<p>&lt; br &gt;</p>
+<p><br></p>
+<p><br></p>
 </div>
-<div id="merge-surf-and-ceden" class="section level2" number="2.6">
-<h2 number="2.6"><span class="header-section-number">2.6</span> Merge SURF and CEDEN</h2>
+</div>
+<div id="merge-surf-and-ceden" class="section level1">
+<h1>Merge SURF and CEDEN</h1>
 <pre class="r"><code>rm(list=setdiff(ls(), c(&quot;CEDENMod_WQ&quot;, &quot;CEDENMod_Tox&quot;, &quot;CEDEN_ALL_DupChecked&quot;,&quot;SURFMod_WQ&quot;, &quot;SURFMod_SED&quot;, &quot;SURF_ALL_DupChecked&quot;)))</code></pre>
-<div id="data-prep-2" class="section level3" number="2.6.1">
-<h3 number="2.6.1"><span class="header-section-number">2.6.1</span> Data prep</h3>
+<div id="data-prep-2" class="section level3">
+<h3>Data prep</h3>
 <p><strong>Match columns to CEDEN data</strong></p>
 <pre class="r"><code>C &lt;- names(CEDEN_ALL_DupChecked)
 S &lt;- names(SURF_ALL_DupChecked)
@@ -656,8 +658,8 @@ DIF&lt;- setdiff(C, S) # gives items in C that are not in S
 SURF_ALL_DupChecked[, DIF] &lt;- NA</code></pre>
 <p>Columns that were in CEDEN and not SURF: <code>r DIF</code></p>
 </div>
-<div id="merge" class="section level3" number="2.6.2">
-<h3 number="2.6.2"><span class="header-section-number">2.6.2</span> Merge</h3>
+<div id="merge" class="section level3">
+<h3>Merge</h3>
 <p>Reorder columns to align, then merge with rbind()</p>
 <pre class="r"><code># Finishing touches before merge; order columns to match - is this really necessary for merge? IDK
 
@@ -693,9 +695,9 @@ tibble(SURF = names(SURF_ALL_DupChecked), CEDEN = names(CEDEN_ALL_DupChecked))</
 <pre class="r"><code># MERGE
 CEDENSURF &lt;- rbind(CEDEN_ALL_DupChecked, SURF_ALL_DupChecked)</code></pre>
 </div>
-<div id="check-for-duplicates" class="section level3" number="2.6.3">
-<h3 number="2.6.3"><span class="header-section-number">2.6.3</span> Check for duplicates</h3>
-<p>None found! Great news. Need to make sure this is not due to differences in nomenclature/formatting used in the analyte or other columns.</p>
+<div id="check-for-duplicates" class="section level3">
+<h3>Check for duplicates</h3>
+<p>None found! Great start.</p>
 <pre class="r"><code># Ideas from: https://www.datasciencemadesimple.com/remove-duplicate-rows-r-using-dplyr-distinct-function/
 
 # Remove duplicate rows of the dataframe using multiple variables
@@ -706,9 +708,37 @@ nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)</code></pre>
 <pre><code>## [1] 0</code></pre>
 </div>
 </div>
+<div id="next-steps" class="section level1">
+<h1>Next Steps</h1>
+<p>Next, we need to find a way to unify nomenclature between the datasets, before we can confidently suggest there is no more duplication. For example, there are differences in analyte nomenclature between the databases:</p>
+<pre class="r"><code>analyte_C &lt;- sort(unique(CEDENSURF$Analyte[CEDENSURF$Source == &quot;CEDEN&quot;]))
+# 1808
+
+analyte_S &lt;- sort(unique(CEDENSURF$Analyte[CEDENSURF$Source == &quot;SURF&quot;]))
+# 307</code></pre>
+<p>There are <code>r length(analyte_C)</code> different analytes in the CEDEN data, while only 307 in the SURF.</p>
+<p>It appears that SURF gives the simple analyte name, while CEDEN retains additional information in the analyte name specifying ‘total’ vs ‘particulate’ vs ‘dissolved’.</p>
+<p>For the purposes of this merged dataset, it may make sense to simplify the analyte names from CEDEN, and allow the original (unmerged with SURF) CEDEN data to be used in situations where that additional information is required.</p>
+<p>For example, a subset of “Analytes” in each database follow:</p>
+<pre class="r"><code># Show example of differences
+tibble(CEDEN = c(analyte_C[20:40]), SURF = c(analyte_S[10:30]))</code></pre>
+<pre><code>## # A tibble: 21 x 2
+##    CEDEN                             SURF                    
+##    &lt;chr&gt;                             &lt;chr&gt;                   
+##  1 AFDM_Algae, Particulate           acephate                
+##  2 Alachlor, Dissolved               acetamiprid             
+##  3 Alachlor, Particulate             acibenzolar-s-methyl    
+##  4 Alachlor, Total                   acifluorfen, sodium salt
+##  5 Aldicarb, Total                   alachlor                
+##  6 Aldrin, Total                     aldicarb                
+##  7 Alkalinity as CaCO3, Not Recorded aldicarb sulfone        
+##  8 Alkalinity as CaCO3, Total        aldicarb sulfoxide      
+##  9 Allethrin, Dissolved              aldrin                  
+## 10 Allethrin, Particulate            allethrin               
+## # ... with 11 more rows</code></pre>
 </div>
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIkNFREVOU1VSRl9NZXJnZSINCmF1dGhvcjogIkVyaWthIFciDQpkYXRlOiAiMi8xOC8yMDIxIg0Kb3V0cHV0Og0KICBodG1sX2RvY3VtZW50Og0KICAgIGNvZGVfZG93bmxvYWQ6IHRydWUNCiAgICBrZWVwX21kOiB0cnVlDQogICAgdG9jOiB0cnVlDQogICAgdG9jX2Zsb2F0Og0KICAgICAgdG9jX2NvbGxhcHNlZDogdHJ1ZQ0KICAgIHRvY19kZXB0aDogMw0KICAgIG51bWJlcl9zZWN0aW9uczogdHJ1ZQ0KICAgIHRoZW1lOiBsdW1lbg0KLS0tDQoNCmBgYHtyIHNldHVwLCBpbmNsdWRlPUZBTFNFfQ0Ka25pdHI6Om9wdHNfY2h1bmskc2V0KGVjaG8gPSBUUlVFKQ0KYGBgDQoNCg0KYGBge3IsIHdhcm5pbmc9RiwgbWVzc2FnZT1GfQ0Kcm0obGlzdCA9IGxzKCkpDQpsaWJyYXJ5KGRhdGEudGFibGUpDQpsaWJyYXJ5KGx1YnJpZGF0ZSkNCmxpYnJhcnkoc2YpDQpsaWJyYXJ5KHRpZHl2ZXJzZSkNCmBgYA0KDQojIExvYWQgRGF0YQ0KDQojIyMgQ0VERU4NCg0KVHdvIGZpbGVzIC0gb25lIHdpdGggdG94IGRhdGEsIGFuZCBvbmUgd2l0aCB3cSBkYXRhDQoNCmBgYHtyfQ0KIyBMb2FkIENFREVOIERhdGENCkNFREVOTW9kX1RveCA8LSBmcmVhZCgiaHR0cHM6Ly9naXRodWIuY29tL1dXVS1JRVRDLVItQ29sbGFiL0NFREVOLW1vZC9yYXcvbWFpbi9EYXRhL091dHB1dC9DRURFTk1vZF9Ub3hpY2l0eS5jc3YiKQ0KDQpDRURFTk1vZF9XUSA8LSBmcmVhZCgiaHR0cHM6Ly9naXRodWIuY29tL1dXVS1JRVRDLVItQ29sbGFiL0NFREVOLW1vZC9yYXcvbWFpbi9EYXRhL091dHB1dC9DRURFTk1vZF9XUS5jc3YiKQ0KYGBgDQoNCiMjIyBTVVJGDQoNClR3byBmaWxlcyAtIG9uZSB3aXRoIHdxIGRhdGEsIGFuZCBvbmUgd2l0aCBTRUQgZGF0YSA/DQpgYGB7cn0NClNVUkZNb2RfU0VEIDwtIGZyZWFkKCJodHRwczovL2dpdGh1Yi5jb20vV1dVLUlFVEMtUi1Db2xsYWIvQ0VERU5TVVJGLW1vZC9yYXcvbWFpbi9EYXRhL091dHB1dC9TVVJGTW9kX1NFRC5jc3YiKQ0KDQpTVVJGTW9kX1dRIDwtIGZyZWFkKCJodHRwczovL2dpdGh1Yi5jb20vV1dVLUlFVEMtUi1Db2xsYWIvQ0VERU5TVVJGLW1vZC9yYXcvbWFpbi9EYXRhL091dHB1dC9TVVJGTW9kX3dhdGVyLmNzdiIpDQpgYGANCg0KIyMjIEFwcGVuZCB3aXRoIHNvdXJjZQ0KDQpgYGB7cn0NCkNFREVOTW9kX1RveCRTb3VyY2UgPC0gcmVwKCJDRURFTiIsIHRpbWVzPW5yb3coQ0VERU5Nb2RfVG94KSkNCg0KQ0VERU5Nb2RfV1EkU291cmNlIDwtIHJlcCgiQ0VERU4iLCB0aW1lcz1ucm93KENFREVOTW9kX1dRKSkNCg0KU1VSRk1vZF9TRUQkU291cmNlIDwtIHJlcCgiU1VSRiIsIHRpbWVzPW5yb3coU1VSRk1vZF9TRUQpKQ0KDQpTVVJGTW9kX1dRJFNvdXJjZSA8LSByZXAoIlNVUkYiLCB0aW1lcz1ucm93KFNVUkZNb2RfV1EpKQ0KYGBgDQoNCiMgRGF0YSBpbnZlc3Rpb24gZmlyc3QNCg0KRHVlIHRvIHJlcG9ydGVkIGNvbWJpbmVkIGVmZm9ydHMgdG8gdHJhbnNsYXRlIENFREVOIGRhdGEgdG8gU1VSRiBhbmQgdmljZSB2ZXJzYSwgYW5kIGlzc3VlcyB3aXRoIHJlcGxpY2F0ZXMgYmVpbmcgcmV0YWluZWQgaW4gZWFjaCBkYXRhc2V0LCBjYXJlZnVsIGRldGVjdGlvbiBhbmQgZWxpbWluYXRpb24gb2YgZHVwbGljYXRlcyBzaG91bGQgcHJlY2VkZSBhbnkgYW5hbHlzaXMuDQoNCiMjIENFREVOIC0gT3JpZ2luYWwgRGF0YSB7LnRhYnNldH0NCg0KRHVlIHRvIHRoZSBzdHJ1Y3R1cmUgb2YgdGhlIHRveCBkYXRhLCBJIGhhdmUgYSBmZWVsaW5nIGl0IGludm9sdmVzIGJpb2xvZ2ljYWwgYXNzYXlzIHRoYXQgd2VyZSB0aGVuIHJlbGF0ZWQgdG8gV1EgZGF0YSBzYW1wbGVkIG9uIHRoYXQgZGF0ZSAoYW5kIGFscmVhZHkgcHJlc2VudCBpbiB0aGUgQ0VERU5fV1EgZGF0YXNldC4gDQoNClRoZXJlIGFyZSBgciBucm93KENFREVOTW9kX1dRKWAgcmVjb3JkcyBpbiB0aGUgV1EgZGF0YXNldA0KYW5kIGByIG5yb3coQ0VERU5Nb2RfVG94KWAgaW4gdGhlIFRveCBkYXRhc2V0LiANCg0KIyMjIENFREVOIFRveCANCg0KSW4gdGhlIHRveCBkYXRhc2V0LCB0aGVyZSB3ZXJlIHNldmVyYWwgcmVjb3JkcyByZWxhdGVkIHRvIGEgc2luZ2xlIHNwZWNpZXMgYXNzZXNzbWVudCAtIGJ5IGNyZWF0aW5nIGEgZ3JvdXAgaWRlbnRpZmllciBieSB0aGUgbG9jYXRpb24sIGRhdGUsIGFuZCBvcmdhbmlzbSBhc3Nlc3NlZCwgSSBjYWxjdWxhdGVkIHRoYXQgdGhlcmUgd2VyZSAyNDMwIHVuaXF1ZSBzYW1wbGVzLg0KDQpXaXRoaW4gdGhlIFRveCBkYXRhc2V0LCBgciBsZW5ndGgodW5pcXVlKENFREVOTW9kX1RveCRPcmdhbmlzbU5hbWUpKWAgZGlmZmVyZW50IHNwZWNpZXMgYXJlIHJlcHJlc2VudGVkLg0KDQojIyMjIEV4YWN0IGR1cGxpY2F0ZXMNCg0KZHVwbGljYXRlZCgpIHByb2R1Y2VzIGEgdmVjdG9yIGlkZW50aWZ5aW5nIHdoaWNoIHJlY29yZHMgYXJlIGR1cGxpY2F0ZXMuIFRoaXMgY2FuIGJlIGFwcGVuZGVkIHRvIHRoZSBvcmlnaW5hbCBkYXRhc2V0IGZvciBmdXJ0aGVyIGludmVzdGlnYXRpb24uIFRoZSBmaXJzdCByZWNvcmQgaXMgbWFya2VkIEZBTFNFLCB3aGlsZSBzdWJzZXF1ZW50IG1hdGNoZXMgYXJlIG1hcmtlZCBUUlVFDQoNCmBgYHtyfQ0KIyBhZGQgaW5kZXggY29sdW1uIGlkZW50aWZ5aW5nIHdoaWNoIGVudHJpZXMgYXJlIGR1cGxpY2F0ZWQNCg0KQ0VERU5Nb2RfVG94JER1cENoZWNrIDwtIGR1cGxpY2F0ZWQoQ0VERU5Nb2RfVG94KQ0KDQpzdW1tYXJ5KENFREVOTW9kX1RveCREdXBDaGVjaykNCmBgYA0KDQpJcyBpdCBvbmx5IHNvbWUgcHJvZ3JhbXMgdGhhdCBoYXZlIGR1cGxpY2F0aW9uPyA5LzEwIHByb2dyYW1zIGRvLg0KDQpgYGB7cn0NCmxlbmd0aCh1bmlxdWUoQ0VERU5Nb2RfVG94JFByb2dyYW0pKSAjIDEwDQoNCnVuaXF1ZShDRURFTk1vZF9Ub3gkUHJvZ3JhbVtDRURFTk1vZF9Ub3gkRHVwQ2hlY2sgPT0gIlRSVUUiXSkNCmBgYA0KDQojIyMjIEFsdGVybmF0aXZlIChsb29zZXIpIGFzc2Vzc21lbnQgb2YgZHVwbGljYXRpb24NCg0KSWYgd2UgYXNzdW1lIHRoYXQgc29tZSBjb2x1bW5zIG1heSBkaWZmZXIgZHVlIHRvIGRpZmZlcmVuY2VzIGluIGRhdGEgbG9hZGluZyAoaWU6IG9yaWdpbmFsbHkgc3VibWl0dGVkIHRvIFNVUkYgYW5kIGJyb3VnaHQgdG8gQ0VERU4gdnMgb3JpZ2luYWxseSBsb2FkZWQgdG8gQ0VERU4pLCB0aGVuIHdlIG1heSB3YW50IHRvIHVzZSBhIGxvb3NlciBzdHJ1Y3R1cmUgdG8gZGV0ZWN0IGR1cGxpY2F0ZXMuIA0KDQpgYGB7cn0NCk5vRHVwX1RveDwtIGRpc3RpbmN0KENFREVOTW9kX1RveCwgRGF0ZSwgU3RhdGlvbk5hbWUsIEFuYWx5dGUsIENvbGxlY3Rpb25NZXRob2QsIFJlc3VsdCwgLmtlZXBfYWxsPSBUUlVFKQ0KDQpucm93KENFREVOTW9kX1RveCkgLSBucm93KE5vRHVwX1RveCkNCmBgYA0KDQpCeSBhc3N1bWluZyB0aGF0IHJlY29yZHMgaW4gdGhlIHNhbWUgbG9jYXRpb24gb24gdGhlIHNhbWUgZGF0ZSwgIG1lYXN1cmluZyB0aGUgc2FtZSBhbmFseXRlIHZpYSB0aGUgc2FtZSBjb2xsZWN0aW9uIG1ldGhvZCwgYW5kIG9idGFpbmluZyB0aGUgc2FtZSByZXN1bHQgYXJlIGR1cGxpY2F0ZXMsIHdlIGZpbmQgYWxtb3N0IDUwJSBtb3JlIGR1cGxpY2F0ZXMuIA0KMjU3MjkgcmVjb3JkcywgdG8gYmUgc3BlY2lmaWMuIA0KDQpUaGF0IGlzIGByIDEwMCoyNTcyOS9ucm93KENFREVOTW9kX1RveClgJSBvZiB0aGUgZGF0YXNldC4NCg0KSW5jbHVkaW5nIE9yZ2FuaXNtIG5hbWUgaW4gdGhlIGxpc3Qgb2YgZGlmZmVyZW50aWF0aW5nIHZhcmlhYmxlcywgaXQgcmV0dXJucyBhbG1vc3QgdGhlIGV4YWN0IHNhbWUgY291bnQgb2YgZHVwbGljYXRlcyAoMTgyNzQpIGFzIGV4YWN0IGR1cGxpY2F0aW9uICgxODI5NykgLSBpbmRpY2F0aW5nIHRoYXQgYSBtYWpvciBzb3VyY2Ugb2YgV1EgZHVwbGljYXRpb24gaXMgcmVwZWF0aW5nIFdRIHBhcmFtZXRlcnMgZm9yIG11bHRpcGxlIHNwZWNpZXMgYXNzZXNzZWQuDQoNCmBgYHtyfQ0KIyBSZW1vdmUgZHVwbGljYXRlIHJvd3Mgb2YgdGhlIGRhdGFmcmFtZSB1c2luZyBtdWx0aXBsZSB2YXJpYWJsZXMgJiBPUkdBTklTTSBOQU1FDQoNCm5yb3coQ0VERU5Nb2RfVG94KSAtIG5yb3coZGlzdGluY3QoQ0VERU5Nb2RfVG94LCBEYXRlLCBTdGF0aW9uTmFtZSwgQ29sbGVjdGlvbk1ldGhvZCwgT3JnYW5pc21OYW1lLCBBbmFseXRlLCBSZXN1bHQsIC5rZWVwX2FsbD0gVFJVRSkpDQpgYGANCg0KU2luY2Ugd2UgYXJlIHVzaW5nIHRoZSBkZiBmb3IgdGhlIHdhdGVyIHBhcmFtZXRlcnMgYW5kIG5vdCB0aGUgYXNzb2NpYXRlZCBvcmdhbmlzbSBzdXJ2aXZhbCwgaXQncyBtb3JlIHVzZWZ1bCB0byByZW1vdmUgZHVwbGljYXRlIFdRIGVudHJpZXMgcmVnYXJkbGVzcyBvZiB0aGUgb3JnYW5pc20uIFdlIGNhbiBhbHNvIHJlbW92ZSByZWNvcmRzIHRoYXQgYXNzZXNzICdzdXJ2aXZhbCcgYW5kICdiaW9tYXNzJyAoc2luY2Ugd2UgYXJlbid0IHVzaW5nIHRoaXMgZm9yIHRoZSBiaW90aWMgcGFyYW1ldGVycyBpbiBvdXIgbW9kZWwpLg0KDQpgYGB7cn0NCk5vRHVwX1RveCA8LSBOb0R1cF9Ub3hbTm9EdXBfVG94JEFuYWx5dGUgIT0gIlN1cnZpdmFsIl0NCg0KTm9EdXBfVG94IDwtIE5vRHVwX1RveFtOb0R1cF9Ub3gkQW5hbHl0ZSAhPSAiQmlvbWFzcyAod3Qvb3JpZyBpbmRpdikiXQ0KDQojIG5yb3cgPSAzMTg1OQ0KYGBgDQoNCldlJ3JlIGxlZnQgd2l0aCBvbmx5IGByIG5yb3coTm9EdXBfVG94KWAgdW5pcXVlLCB1c2VmdWwgcmVjb3JkcyBpbiB0aGUgdG94IGRhdGFzZXQgLSBvciBgciAxMDAqbnJvdyhOb0R1cF9Ub3gpL25yb3coQ0VERU5Nb2RfVG94KWAgJSBvZiB0aGUgb3JpZ2luYWwgdG94IGRhdGEgcmVtYWluaW5nDQoNCjwgYnIgPg0KDQojIyMgQ0VERU4gV1ENCg0KIyMjIyBFeGFjdCBkdXBsaWNhdGVzDQoNCmR1cGxpY2F0ZWQoKSBwcm9kdWNlcyBhIHZlY3RvciBpZGVudGlmeWluZyB3aGljaCByZWNvcmRzIGFyZSBkdXBsaWNhdGVkLiBUaGlzIGNhbiBiZSBhcHBlbmRlZCB0byB0aGUgb3JpZ2luYWwgZGF0YXNldCBmb3IgZnVydGhlciBpbnZlc3RpZ2F0aW9uLg0KDQpgYGB7cn0NCiMgYWRkIGluZGV4IGNvbHVtbiBpZGVudGlmeWluZyB3aGljaCBlbnRyaWVzIGFyZSBkdXBsaWNhdGVkDQoNCkNFREVOTW9kX1dRJER1cENoZWNrIDwtIGR1cGxpY2F0ZWQoQ0VERU5Nb2RfV1EpDQoNCnN1bW1hcnkoQ0VERU5Nb2RfV1EkRHVwQ2hlY2spDQpgYGANCg0KVGhpcyBtZXRob2QgaWRlbnRpZmllZCBvbmx5IDY1NyBleGFjdCBkdXBsaWNhdGVzIGluIHRoZSBlbnRpcmUgV1EgZGF0YXNldC4NCg0KT25seSA5LzE3IHByb2dyYW1zIHByZXNlbnQgdGhlc2UgZXhhY3QgZHVwbGljYXRlcw0KDQpgYGB7cn0NCmxlbmd0aCh1bmlxdWUoQ0VERU5Nb2RfV1EkUHJvZ3JhbSkpICMgMTcNCnVuaXF1ZShDRURFTk1vZF9XUSRQcm9ncmFtW0NFREVOTW9kX1dRJER1cENoZWNrID09ICJUUlVFIl0pDQpgYGANCg0KIyMjIyBMb29zZXIgYXNzZXNzbWVudCBvZiBEdXBsaWNhdGlvbg0KDQpVdGlsaXppZ24gdGhlIGRpc3RpbmN0KCkgZnVuY3Rpb24gdG8gYXNzdW1lIHRoYXQgcmVjb3JkcyBpbiB0aGUgc2FtZSBsb2NhdGlvbiBvbiB0aGUgc2FtZSBkYXRlLCBtZWFzdXJpbmcgdGhlIHNhbWUgYW5hbHl0ZSB2aWEgdGhlIHNhbWUgY29sbGVjdGlvbiBtZXRob2QgYW5kIG9idGFpbmluZyB0aGUgc2FtZSByZXN1bHQgYXJlIGR1cGxpY2F0ZXMsIHdlIGZpbmQgMTUzNiBkdXBsaWNhdGUgcmVjb3Jkcy4NCg0KVGhhdCBpcyBtb3JlIHRoYW4gZG91YmxlIHRoZSBudW1iZXIgb2YgZXhhY3QgZHVwbGljYXRlcyBmb3VuZCwgeWV0IHN0aWxsIG9ubHkgYHIgMTAwKjE3MTkvbnJvdyhDRURFTk1vZF9XUSlgJSBvZiB0aGUgZW50aXJlIFdRIGRhdGFzZXQuDQoNCmBgYHtyfQ0KIyBSZW1vdmUgZHVwbGljYXRlIHJvd3Mgb2YgdGhlIGRhdGFmcmFtZSB1c2luZyBtdWx0aXBsZSB2YXJpYWJsZXMNCg0KTm9EdXBXUSA8LSBkaXN0aW5jdChDRURFTk1vZF9XUSwgRGF0ZSwgQW5hbHl0ZSwgU3RhdGlvbk5hbWUsIENvbGxlY3Rpb25NZXRob2QsIFJlc3VsdCwgLmtlZXBfYWxsPSBUUlVFKQ0KDQpucm93KENFREVOTW9kX1dRKSAtIG5yb3coTm9EdXBXUSkNCmBgYA0KPGJyPg0KDQo8YnI+DQoNCiMjIE1lcmdpbmcgQ0VERU4gZGF0YQ0KDQpBZnRlciBkZWFsaW5nIHdpdGggZHVwbGljYXRpb24gV0lUSElOIHRoZSBDRURFTiB0b3ggYW5kIHdxIGRhdGFzZXRzLCB0aGVyZSB3ZXJlIG9ubHkgNzUgZHVwbGljYXRlIHJlY29yZHMgZm91bmQgZm9sbG93aW5nIHRoZSBtZXJnZWQgZGF0YS4NCg0KYGBge3J9DQojIFN0cmlwIGNvbHVtbiB3aXRoIGR1cGxpY2F0ZSBjaGVjayBmcm9tIGJvdGgsIGFuZCBvcmdhbmlzbSBmcm9tIHRveA0KTm9EdXBfVG94IDwtIHNlbGVjdChOb0R1cF9Ub3gsIC1jKER1cENoZWNrLCBPcmdhbmlzbU5hbWUpKQ0KTm9EdXBXUSA8LSBzZWxlY3QoTm9EdXBXUSwgLUR1cENoZWNrKQ0KDQojIFZlY3RvciBvZiBjb2x1bW4gbmFtZXMgdG8gY29tcGFyZQ0KV1EgPC0gbmFtZXMoTm9EdXBXUSkNClRPWCA8LSBuYW1lcyhOb0R1cF9Ub3gpDQoNCiNBZGQgbWlzc2luZyBjb2x1bW5zIHRvIENFREVOIFdRDQpESUY8LSBzZXRkaWZmKFRPWCwgV1EpICMgZ2l2ZXMgaXRlbXMgaW4gVCB0aGF0IGFyZSBub3QgaW4gVw0KTm9EdXBXUVssIERJRl0gPC0gTkENCg0KI0FkZCBtaXNzaW5nIGNvbHVtbnMgdG8gQ0VERU4gVE9YDQpESUY8LSBzZXRkaWZmKFdRLCBUT1gpICMgZ2l2ZXMgaXRlbXMgaW4gVyB0aGF0IGFyZSBub3QgaW4gVA0KTm9EdXBfVG94WywgRElGXSA8LSBOQQ0KDQojIEZpbmlzaGluZyB0b3VjaGVzIGJlZm9yZSBtZXJnZTsgb3JkZXIgY29sdW1ucyB0byBtYXRjaCAtIGlzIHRoaXMgcmVhbGx5IG5lY2Vzc2FyeSBmb3IgbWVyZ2U/IElESw0KDQpXUSA8LSBzb3J0KG5hbWVzKE5vRHVwV1EpKQ0KVE9YIDwtIHNvcnQobmFtZXMoTm9EdXBfVG94KSkNCg0KTm9EdXBfVG94IDwtIE5vRHVwX1RveCAlPiUgc2VsZWN0KFRPWCkNCk5vRHVwV1EgPC0gTm9EdXBXUSAlPiUgc2VsZWN0KFdRKQ0KDQojIENoZWNrIG9uY2UgYWxsIGNvbHVtbnMgaGF2ZSBwZXJmZWN0IG1hdGNoZXM/DQp0aWJibGUoU1VSRiA9IG5hbWVzKE5vRHVwX1RveCksIENFREVOID0gbmFtZXMoTm9EdXBXUSkpDQoNCiMgTUVSR0UNCkNFREVOX0FMTCA8LSByYmluZChOb0R1cFdRLE5vRHVwX1RveCkNCmBgYA0KDQpgYGB7cn0NCiMgSWRlYXMgZnJvbTogaHR0cHM6Ly93d3cuZGF0YXNjaWVuY2VtYWRlc2ltcGxlLmNvbS9yZW1vdmUtZHVwbGljYXRlLXJvd3Mtci11c2luZy1kcGx5ci1kaXN0aW5jdC1mdW5jdGlvbi8NCg0KIyBSZW1vdmUgZHVwbGljYXRlIHJvd3Mgb2YgdGhlIGRhdGFmcmFtZSB1c2luZyBtdWx0aXBsZSB2YXJpYWJsZXMNCg0KQ0VERU5fQUxMX0R1cENoZWNrZWQgPC0gZGlzdGluY3QoQ0VERU5fQUxMLCBEYXRlLCBBbmFseXRlLCBTdGF0aW9uTmFtZSwgUmVzdWx0LCAua2VlcF9hbGw9IFRSVUUpDQoNCm5yb3coQ0VERU5fQUxMKS1ucm93KENFREVOX0FMTF9EdXBDaGVja2VkKQ0KYGBgDQo8IGJyID4NCg0KPCBiciA+DQoNCg0KIyMgU1VSRiBEQVRBDQoNCmBgYHtyfQ0Kcm0obGlzdD1zZXRkaWZmKGxzKCksIGMoIkNFREVOTW9kX1dRIiwgIkNFREVOTW9kX1RveCIsICJDRURFTl9BTExfRHVwQ2hlY2tlZCIsIlNVUkZNb2RfV1EiLCAiU1VSRk1vZF9TRUQiKSkpDQpgYGANCg0KVGhlcmUgYXJlIGByIG5yb3coU1VSRk1vZF9XUSlgIHJlY29yZHMgaW4gdGhlIFdRIGRhdGFzZXQNCmFuZCBgciBucm93KFNVUkZNb2RfU0VEKWAgaW4gdGhlIFNFRCBkYXRhc2V0LiANCg0KIyMjIFNVUkYgV2F0ZXINCg0KIyMjIyBEYXRhIFByZXANCg0KTW9yZSBpbnZlc3RpZ2F0aW5nIHdpbGwgcHJvYmFibHkgYmUgYmV0dGVyLCBidXQgZm9yIG5vdyB3ZSBjYW4gc2ltcGx5IHJlbW92ZSB0aG9zZSBkYXRhIGRlZmluZWQgaW4gU1VSRiBhcyBzb3VyY2VkIGZyb20gQ0VERU4NCg0KYGBge3J9DQpTVVJGTW9kX1dRIDwtIGZpbHRlcihTVVJGTW9kX1dRLCBEYXRhLnNvdXJjZSAhPSAiQ0VERU4iKQ0KYGBgDQoNCioqQ29ycmVjdCBtaXNtYXRjaGVkIGNvbHVtbiBuYW1lcyoqDQoNClJhdGhlciB0aGFuIHVzaW5nIFN0ZXZlbidzIG1ldGhvZCBvZiByZW5hbWluZyB1c2luZyBhIGxpc3QgKHdoaWNoIGlzIGRlcGVuZGVudCBvbiBhbiBleHBlY3RlZCBudW1iZXIgYW5kIG9yZGVyIG9mIGNvbHVtbiBuYW1lcyksIEkgcmVuYW1lZCBlYWNoIGNvbHVtbiBpbmRpdmlkdWFsbHkNCg0KYGBge3J9DQpTVVJGTW9kX1dRJFVuaXQgPC0gInBwYiINCg0KU1VSRk1vZF9XUSA8LSBTVVJGTW9kX1dRICU+JSByZW5hbWUoRGF0ZSA9IFNhbXBsZV9kYXRlLA0KICAgICAgICAgIEFuYWx5dGUgPSBDaGVtaWNhbF9uYW1lLCANCiAgICAgICAgICBSZXN1bHQgPSBDb25jZW50cmF0aW9uLi5wcGIuLCANCiAgICAgICAgICBDb2xsZWN0aW9uTWV0aG9kID0gU2FtcGxlX3R5cGUsIA0KICAgICAgICAgIFN0YXRpb25Db2RlID0gU2l0ZV9jb2RlLA0KICAgICAgICAgIFN0YXRpb25OYW1lID0gU2l0ZV9uYW1lLA0KICAgICAgICAgIE1ETCA9IE1ldGhvZF9kZXRlY3Rpb25fbGV2ZWwuLnBwYi4sDQogICAgICAgICAgTE9RID0gTGV2ZWxfb2ZfcXVhbnRpZmljYXRpb24uLnBwYi4pDQpgYGANCg0KIyMjIyBFeGFjdCBkdXBsaWNhdGVzDQoNCmR1cGxpY2F0ZWQoKSBwcm9kdWNlcyBhIHZlY3RvciBpZGVudGlmeWluZyB3aGljaCByZWNvcmRzIGFyZSBkdXBsaWNhdGVkLiBUaGlzIGNhbiBiZSBhcHBlbmRlZCB0byB0aGUgb3JpZ2luYWwgZGF0YXNldCBmb3IgZnVydGhlciBpbnZlc3RpZ2F0aW9uLg0KDQpgYGB7cn0NCiMgYWRkIGluZGV4IGNvbHVtbiBpZGVudGlmeWluZyB3aGljaCBlbnRyaWVzIGFyZSBkdXBsaWNhdGVkDQoNClNVUkZNb2RfV1EkRHVwQ2hlY2sgPC0gZHVwbGljYXRlZChTVVJGTW9kX1dRKQ0KDQpzdW1tYXJ5KFNVUkZNb2RfV1EkRHVwQ2hlY2spDQpgYGANCg0KRmFudGFzdGljLiBUaGVyZSBhcmUgbm8gZXhhY3QgZHVwbGljYXRlcyB3aXRoaW4gdGhlIFNVUkYgd2F0ZXIgZGF0YS4gDQoNCiMjIyMgTG9vc2VyIGFzc2Vzc21lbnQgb2YgRHVwbGljYXRpb24NCg0KVXRpbGl6aW5nIHRoZSBkaXN0aW5jdCgpIGZ1bmN0aW9uIHRvIGFzc3VtZSB0aGF0IHJlY29yZHMgaW4gdGhlIHNhbWUgbG9jYXRpb24gb24gdGhlIHNhbWUgZGF0ZSwgbWVhc3VyaW5nIHRoZSBzYW1lIGFuYWx5dGUgYW5kIG9idGFpbmluZyB0aGUgc2FtZSByZXN1bHQgYXJlIGR1cGxpY2F0ZXMsIHdlIGZpbmQgNSw2NzYgZHVwbGljYXRlIHJlY29yZHMuDQoNCmBgYHtyfQ0KIyBSZW1vdmUgZHVwbGljYXRlIHJvd3Mgb2YgdGhlIGRhdGFmcmFtZSB1c2luZyBtdWx0aXBsZSB2YXJpYWJsZXMNCg0KTm9EdXBXUSA8LSBkaXN0aW5jdChTVVJGTW9kX1dRLCBEYXRlLCBBbmFseXRlLCBTdGF0aW9uTmFtZSwgUmVzdWx0LCAua2VlcF9hbGw9IFRSVUUpDQoNCm5yb3coU1VSRk1vZF9XUSkgLSBucm93KE5vRHVwV1EpDQpgYGANCjxicj4NCg0KPGJyPg0KDQojIyBTVVJGIHNlZGltZW50DQoNCiMjIyMgRGF0YSBQcmVwDQoNCk1vcmUgaW52ZXN0aWdhdGluZyB3aWxsIHByb2JhYmx5IGJlIGJldHRlciwgYnV0IGZvciBub3cgd2UgY2FuIHNpbXBseSByZW1vdmUgdGhvc2UgZGF0YSBkZWZpbmVkIGluIFNVUkYgYXMgc291cmNlZCBmcm9tIENFREVODQoNCmBgYHtyfQ0KU1VSRk1vZF9TRUQgPC0gZmlsdGVyKFNVUkZNb2RfU0VELCBEYXRhLnNvdXJjZSAhPSAiQ0VERU4iKQ0KYGBgDQoNCioqQ29ycmVjdCBtaXNtYXRjaGVkIGNvbHVtbiBuYW1lcyoqDQpgYGB7cn0NClNVUkZNb2RfU0VEJFVuaXQgPC0gInBwYiINCg0KU1VSRk1vZF9TRUQgPC0gU1VSRk1vZF9TRUQgJT4lIHJlbmFtZShEYXRlID0gU2FtcGxlX2RhdGUsDQogICAgICAgICAgQW5hbHl0ZSA9IENoZW1pY2FsX25hbWUsIA0KICAgICAgICAgIFJlc3VsdCA9IENvbmNlbnRyYXRpb24uLnBwYi4sIA0KICAgICAgICAgIENvbGxlY3Rpb25NZXRob2QgPSBTYW1wbGVfdHlwZSwgDQogICAgICAgICAgU3RhdGlvbkNvZGUgPSBTaXRlX2NvZGUsDQogICAgICAgICAgU3RhdGlvbk5hbWUgPSBTaXRlX25hbWUsDQogICAgICAgICAgTURMID0gTWV0aG9kX2RldGVjdGlvbl9sZXZlbC4ucHBiLiwNCiAgICAgICAgICBMT1EgPSBMZXZlbF9vZl9xdWFudGlmaWNhdGlvbi4ucHBiLikNCmBgYA0KDQojIyMjIEV4YWN0IGR1cGxpY2F0ZXMNCg0KZHVwbGljYXRlZCgpIHByb2R1Y2VzIGEgdmVjdG9yIGlkZW50aWZ5aW5nIHdoaWNoIHJlY29yZHMgYXJlIGR1cGxpY2F0ZWQuIFRoaXMgY2FuIGJlIGFwcGVuZGVkIHRvIHRoZSBvcmlnaW5hbCBkYXRhc2V0IGZvciBmdXJ0aGVyIGludmVzdGlnYXRpb24uDQoNCmBgYHtyfQ0KIyBhZGQgaW5kZXggY29sdW1uIGlkZW50aWZ5aW5nIHdoaWNoIGVudHJpZXMgYXJlIGR1cGxpY2F0ZWQNCg0KU1VSRk1vZF9TRUQkRHVwQ2hlY2sgPC0gZHVwbGljYXRlZChTVVJGTW9kX1NFRCkNCg0Kc3VtbWFyeShTVVJGTW9kX1NFRCREdXBDaGVjaykNCmBgYA0KDQpGYW50YXN0aWMuIFRoZXJlIGFyZSBubyBleGFjdCBkdXBsaWNhdGVzIHdpdGhpbiB0aGUgU1VSRiBzZWRpbWVudCBkYXRhLiANCg0KIyMjIyBMb29zZXIgYXNzZXNzbWVudCBvZiBEdXBsaWNhdGlvbg0KDQpVdGlsaXppbmcgdGhlIGRpc3RpbmN0KCkgZnVuY3Rpb24gdG8gYXNzdW1lIHRoYXQgcmVjb3JkcyBpbiB0aGUgc2FtZSBsb2NhdGlvbiBvbiB0aGUgc2FtZSBkYXRlLCBtZWFzdXJpbmcgdGhlIHNhbWUgYW5hbHl0ZSBhbmQgb2J0YWluaW5nIHRoZSBzYW1lIHJlc3VsdCBhcmUgZHVwbGljYXRlcywgd2UgZmluZCBvbmx5IDc4NCAtIG5vdCBiYWQuDQoNCmBgYHtyfQ0KIyBSZW1vdmUgZHVwbGljYXRlIHJvd3Mgb2YgdGhlIGRhdGFmcmFtZSB1c2luZyBtdWx0aXBsZSB2YXJpYWJsZXMNCg0KTm9EdXBTRUQgPC0gZGlzdGluY3QoU1VSRk1vZF9TRUQsIERhdGUsIEFuYWx5dGUsIFN0YXRpb25OYW1lLCBSZXN1bHQsIC5rZWVwX2FsbD0gVFJVRSkNCg0KbnJvdyhTVVJGTW9kX1NFRCkgLSBucm93KE5vRHVwU0VEKQ0KYGBgDQoNCjwgYnIgPg0KDQo8IGJyID4NCg0KIyMgTWVyZ2UgU1VSRiBkZg0KDQpBZnRlciBkZWFsaW5nIHdpdGggZHVwbGljYXRpb24gV0lUSElOIHRoZSBTVVJGIHNlZCBhbmQgd3EgZGF0YXNldHMsIHRoZXJlIHdlcmUgc3RpbGwgKioyNjEyNyoqIGR1cGxpY2F0ZSByZWNvcmRzIGZvdW5kIGZvbGxvd2luZyB0aGUgbWVyZ2luZyBvZiB0aGUgZGF0YSBpZiB3ZSBhc3N1bWUgdGhhdCByZWNvcmRzIGluIHRoZSBzYW1lIGxvY2F0aW9uIG9uIHRoZSBzYW1lIGRhdGUsIG1lYXN1cmluZyB0aGUgc2FtZSBhbmFseXRlIGFuZCBvYnRhaW5pbmcgdGhlIHNhbWUgcmVzdWx0IGFyZSBkdXBsaWNhdGVzLg0KDQpUaGlzIGRvZXNuJ3QgdGFrZSBpbnRvIGFjY291bmQgc2FtcGxlIG1ldGhvZCwgeWV0IGl0IGlzIHN1cnByaXNpbmcgdGhhdCB0aGUgUkVTVUxUIGlzIGlkZW50aWNhbCBmb3IgYm90aCBzZWRpbWVudCBhbmQgd2F0ZXIgc2FtcGxlcy4gQnkgaW5jbHVkaW5nICJTYW1wbGVNZXRob2QiIHRvIGRpZmZlcmVudGlhdGUgd2F0ZXIgYW5kIHNlZGltZW50IHNhbXBsZXMsIHRoZXJlIHdhcyBaRVJPIGR1cGxpY2F0aW9uIGZvdW5kLiANCg0KYGBge3J9DQojIFN0cmlwIGNvbHVtbiB3aXRoIGR1cGxpY2F0ZSBjaGVjayBmcm9tIGJvdGgNCk5vRHVwU0VEIDwtIHNlbGVjdChOb0R1cFNFRCwgLUR1cENoZWNrKQ0KTm9EdXBXUSA8LSBzZWxlY3QoTm9EdXBXUSwgLUR1cENoZWNrKQ0KDQojIFZlY3RvciBvZiBjb2x1bW4gbmFtZXMgdG8gY29tcGFyZQ0KV1EgPC0gbmFtZXMoTm9EdXBXUSkNClNFRCA8LSBuYW1lcyhOb0R1cFNFRCkNCg0KI0FkZCBtaXNzaW5nIGNvbHVtbnMgdG8gQ0VERU4gV1ENCkRJRjwtIHNldGRpZmYoU0VELCBXUSkgIyBnaXZlcyBpdGVtcyBpbiBTIHRoYXQgYXJlIG5vdCBpbiBXDQpOb0R1cFdRWywgRElGXSA8LSBOQQ0KDQojQWRkIG1pc3NpbmcgY29sdW1ucyB0byBDRURFTiBTRUQNCkRJRjwtIHNldGRpZmYoV1EsIFNFRCkgIyBnaXZlcyBpdGVtcyBpbiBXIHRoYXQgYXJlIG5vdCBpbiBTDQpOb0R1cFNFRFssIERJRl0gPC0gTkENCg0KIyBGaW5pc2hpbmcgdG91Y2hlcyBiZWZvcmUgbWVyZ2U7IG9yZGVyIGNvbHVtbnMgdG8gbWF0Y2ggLSBpcyB0aGlzIHJlYWxseSBuZWNlc3NhcnkgZm9yIG1lcmdlPyBJREsNCg0KV1EgPC0gc29ydChuYW1lcyhOb0R1cFdRKSkNClNFRCA8LSBzb3J0KG5hbWVzKE5vRHVwU0VEKSkNCg0KTm9EdXBTRUQgPC0gTm9EdXBTRUQgJT4lIHNlbGVjdChTRUQpDQpOb0R1cFdRIDwtIE5vRHVwV1EgJT4lIHNlbGVjdChXUSkNCg0KIyBDaGVjayBvbmNlIGFsbCBjb2x1bW5zIGhhdmUgcGVyZmVjdCBtYXRjaGVzPw0KdGliYmxlKFNVUkYgPSBuYW1lcyhOb0R1cFNFRCksIENFREVOID0gbmFtZXMoTm9EdXBXUSkpDQoNCiMgTUVSR0UNClNVUkZfQUxMIDwtIHJiaW5kKE5vRHVwV1EsTm9EdXBTRUQpDQpgYGANCg0KYGBge3J9DQojIElkZWFzIGZyb206IGh0dHBzOi8vd3d3LmRhdGFzY2llbmNlbWFkZXNpbXBsZS5jb20vcmVtb3ZlLWR1cGxpY2F0ZS1yb3dzLXItdXNpbmctZHBseXItZGlzdGluY3QtZnVuY3Rpb24vDQoNCiMgUmVtb3ZlIGR1cGxpY2F0ZSByb3dzIG9mIHRoZSBkYXRhZnJhbWUgdXNpbmcgbXVsdGlwbGUgdmFyaWFibGVzDQoNClNVUkZfQUxMX0R1cENoZWNrZWQgPC0gZGlzdGluY3QoU1VSRl9BTEwsIERhdGUsIEFuYWx5dGUsIENvbGxlY3Rpb25NZXRob2QsIFN0YXRpb25OYW1lLCBSZXN1bHQsIC5rZWVwX2FsbD0gVFJVRSkNCg0KbnJvdyhTVVJGX0FMTCktbnJvdyhTVVJGX0FMTF9EdXBDaGVja2VkKQ0KYGBgDQoNCjwgYnIgPg0KDQo8IGJyID4NCg0KIyMgTWVyZ2UgU1VSRiBhbmQgQ0VERU4NCg0KYGBge3J9DQpybShsaXN0PXNldGRpZmYobHMoKSwgYygiQ0VERU5Nb2RfV1EiLCAiQ0VERU5Nb2RfVG94IiwgIkNFREVOX0FMTF9EdXBDaGVja2VkIiwiU1VSRk1vZF9XUSIsICJTVVJGTW9kX1NFRCIsICJTVVJGX0FMTF9EdXBDaGVja2VkIikpKQ0KYGBgDQoNCiMjIyBEYXRhIHByZXANCioqTWF0Y2ggY29sdW1ucyB0byBDRURFTiBkYXRhKioNCg0KYGBge3J9DQpDIDwtIG5hbWVzKENFREVOX0FMTF9EdXBDaGVja2VkKQ0KUyA8LSBuYW1lcyhTVVJGX0FMTF9EdXBDaGVja2VkKQ0KDQpESUY8LSBzZXRkaWZmKFMsIEMpICMgZ2l2ZXMgaXRlbXMgaW4gUyB0aGF0IGFyZSBub3QgaW4gQw0KYGBgDQoNCkNvbHVtbnMgdGhhdCB3ZXJlIGluIFNVUkYgYW5kIG5vdCBDRURFTjoNCmByIERJRmANCg0KYGBge3J9DQojQWRkIG1pc3NpbmcgY29sdW1ucyB0byBDRURFTg0KQ0VERU5fQUxMX0R1cENoZWNrZWRbLCBESUZdIDwtIE5BDQpgYGANCg0KYGBge3J9DQojQWRkIG1pc3NpbmcgY29sdW1ucyB0byBTVVJGDQpESUY8LSBzZXRkaWZmKEMsIFMpICMgZ2l2ZXMgaXRlbXMgaW4gQyB0aGF0IGFyZSBub3QgaW4gUw0KU1VSRl9BTExfRHVwQ2hlY2tlZFssIERJRl0gPC0gTkENCmBgYA0KDQpDb2x1bW5zIHRoYXQgd2VyZSBpbiBDRURFTiBhbmQgbm90IFNVUkY6DQpgIHIgRElGYA0KDQojIyMgTWVyZ2UNCg0KUmVvcmRlciBjb2x1bW5zIHRvIGFsaWduLCB0aGVuIG1lcmdlIHdpdGggcmJpbmQoKQ0KDQpgYGB7cn0NCiMgRmluaXNoaW5nIHRvdWNoZXMgYmVmb3JlIG1lcmdlOyBvcmRlciBjb2x1bW5zIHRvIG1hdGNoIC0gaXMgdGhpcyByZWFsbHkgbmVjZXNzYXJ5IGZvciBtZXJnZT8gSURLDQoNCkMgPC0gc29ydChuYW1lcyhDRURFTl9BTExfRHVwQ2hlY2tlZCkpDQpTIDwtIHNvcnQobmFtZXMoU1VSRl9BTExfRHVwQ2hlY2tlZCkpDQoNClNVUkZfQUxMX0R1cENoZWNrZWQgPC0gU1VSRl9BTExfRHVwQ2hlY2tlZCAlPiUgc2VsZWN0KFMpDQoNCkNFREVOX0FMTF9EdXBDaGVja2VkIDwtIENFREVOX0FMTF9EdXBDaGVja2VkICU+JSBzZWxlY3QoQykNCg0KIyBDaGVjayBvbmNlIGFsbCBjb2x1bW5zIGhhdmUgcGVyZmVjdCBtYXRjaGVzPw0KdGliYmxlKFNVUkYgPSBuYW1lcyhTVVJGX0FMTF9EdXBDaGVja2VkKSwgQ0VERU4gPSBuYW1lcyhDRURFTl9BTExfRHVwQ2hlY2tlZCkpDQoNCiMgTUVSR0UNCkNFREVOU1VSRiA8LSByYmluZChDRURFTl9BTExfRHVwQ2hlY2tlZCwgU1VSRl9BTExfRHVwQ2hlY2tlZCkNCmBgYA0KDQojIyMgQ2hlY2sgZm9yIGR1cGxpY2F0ZXMNCg0KTm9uZSBmb3VuZCEgR3JlYXQgbmV3cy4gTmVlZCB0byBtYWtlIHN1cmUgdGhpcyBpcyBub3QgZHVlIHRvIGRpZmZlcmVuY2VzIGluIG5vbWVuY2xhdHVyZS9mb3JtYXR0aW5nIHVzZWQgaW4gdGhlIGFuYWx5dGUgb3Igb3RoZXIgY29sdW1ucy4gDQoNCmBgYHtyfQ0KIyBJZGVhcyBmcm9tOiBodHRwczovL3d3dy5kYXRhc2NpZW5jZW1hZGVzaW1wbGUuY29tL3JlbW92ZS1kdXBsaWNhdGUtcm93cy1yLXVzaW5nLWRwbHlyLWRpc3RpbmN0LWZ1bmN0aW9uLw0KDQojIFJlbW92ZSBkdXBsaWNhdGUgcm93cyBvZiB0aGUgZGF0YWZyYW1lIHVzaW5nIG11bHRpcGxlIHZhcmlhYmxlcw0KDQpDRURFTlNVUkZfRHVwQ2hlY2tlZCA8LSBkaXN0aW5jdChDRURFTlNVUkYsIERhdGUsIEFuYWx5dGUsIENvbGxlY3Rpb25NZXRob2QsIFN0YXRpb25OYW1lLCBSZXN1bHQsIC5rZWVwX2FsbD0gVFJVRSkNCg0KbnJvdyhDRURFTlNVUkYpLW5yb3coQ0VERU5TVVJGX0R1cENoZWNrZWQpDQpgYGANCg0K</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIkNFREVOU1VSRl9NZXJnZSINCmF1dGhvcjogIkVyaWthIFciDQpkYXRlOiAiMi8xOC8yMDIxIg0Kb3V0cHV0Og0KICBodG1sX2RvY3VtZW50Og0KICAgIGNvZGVfZG93bmxvYWQ6IHRydWUNCiAgICBrZWVwX21kOiB0cnVlDQogICAgdG9jOiB0cnVlDQogICAgdG9jX2Zsb2F0Og0KICAgICAgdG9jX2NvbGxhcHNlZDogdHJ1ZQ0KICAgIHRvY19kZXB0aDogMw0KICAgIHRoZW1lOiBsdW1lbg0KLS0tDQoNCmBgYHtyIHNldHVwLCBpbmNsdWRlPUZBTFNFfQ0Ka25pdHI6Om9wdHNfY2h1bmskc2V0KGVjaG8gPSBUUlVFKQ0KYGBgDQoNCmBgYHtyLCB3YXJuaW5nPUYsIG1lc3NhZ2U9Rn0NCnJtKGxpc3QgPSBscygpKQ0KbGlicmFyeShkYXRhLnRhYmxlKQ0KbGlicmFyeShsdWJyaWRhdGUpDQpsaWJyYXJ5KHNmKQ0KbGlicmFyeSh0aWR5dmVyc2UpDQpgYGANCg0KIyBMb2FkICYgUHJlcCBEYXRhDQoNCiMjIyBDRURFTg0KDQpUd28gZmlsZXMgLSBvbmUgd2l0aCB0b3ggZGF0YSwgYW5kIG9uZSB3aXRoIHdxIGRhdGENCg0KYGBge3J9DQojIExvYWQgQ0VERU4gRGF0YQ0KQ0VERU5Nb2RfVG94IDwtIGZyZWFkKCJodHRwczovL2dpdGh1Yi5jb20vV1dVLUlFVEMtUi1Db2xsYWIvQ0VERU4tbW9kL3Jhdy9tYWluL0RhdGEvT3V0cHV0L0NFREVOTW9kX1RveGljaXR5LmNzdiIpDQoNCkNFREVOTW9kX1dRIDwtIGZyZWFkKCJodHRwczovL2dpdGh1Yi5jb20vV1dVLUlFVEMtUi1Db2xsYWIvQ0VERU4tbW9kL3Jhdy9tYWluL0RhdGEvT3V0cHV0L0NFREVOTW9kX1dRLmNzdiIpDQpgYGANCg0KIyMjIFNVUkYNCg0KVHdvIGZpbGVzIC0gb25lIHdpdGggd3EgZGF0YSwgYW5kIG9uZSB3aXRoIFNFRCBkYXRhID8NCmBgYHtyfQ0KU1VSRk1vZF9TRUQgPC0gZnJlYWQoImh0dHBzOi8vZ2l0aHViLmNvbS9XV1UtSUVUQy1SLUNvbGxhYi9DRURFTlNVUkYtbW9kL3Jhdy9tYWluL0RhdGEvT3V0cHV0L1NVUkZNb2RfU0VELmNzdiIpDQoNClNVUkZNb2RfV1EgPC0gZnJlYWQoImh0dHBzOi8vZ2l0aHViLmNvbS9XV1UtSUVUQy1SLUNvbGxhYi9DRURFTlNVUkYtbW9kL3Jhdy9tYWluL0RhdGEvT3V0cHV0L1NVUkZNb2Rfd2F0ZXIuY3N2IikNCmBgYA0KDQojIyMgQXBwZW5kIHdpdGggc291cmNlDQoNCmBgYHtyfQ0KQ0VERU5Nb2RfVG94JFNvdXJjZSA8LSByZXAoIkNFREVOIiwgdGltZXM9bnJvdyhDRURFTk1vZF9Ub3gpKQ0KDQpDRURFTk1vZF9XUSRTb3VyY2UgPC0gcmVwKCJDRURFTiIsIHRpbWVzPW5yb3coQ0VERU5Nb2RfV1EpKQ0KDQpTVVJGTW9kX1NFRCRTb3VyY2UgPC0gcmVwKCJTVVJGIiwgdGltZXM9bnJvdyhTVVJGTW9kX1NFRCkpDQoNClNVUkZNb2RfV1EkU291cmNlIDwtIHJlcCgiU1VSRiIsIHRpbWVzPW5yb3coU1VSRk1vZF9XUSkpDQpgYGANCg0KIyBBc3Nlc3MgZHVwbGljYXRpb24gd2l0aGluIGVhY2ggZGF0YWJhc2UNCg0KRHVlIHRvIHJlcG9ydGVkIGNvbWJpbmVkIGVmZm9ydHMgdG8gdHJhbnNsYXRlIENFREVOIGRhdGEgdG8gU1VSRiBhbmQgdmljZSB2ZXJzYSwgYW5kIGlzc3VlcyB3aXRoIHJlcGxpY2F0ZXMgYmVpbmcgcmV0YWluZWQgaW4gZWFjaCBkYXRhc2V0LCBjYXJlZnVsIGRldGVjdGlvbiBhbmQgZWxpbWluYXRpb24gb2YgZHVwbGljYXRlcyBzaG91bGQgcHJlY2VkZSBhbnkgYW5hbHlzaXMuDQoNCiMjIENFREVOIERhdGEgey50YWJzZXR9DQoNCkR1ZSB0byB0aGUgc3RydWN0dXJlIG9mIHRoZSB0b3ggZGF0YSwgSSBoYXZlIGEgZmVlbGluZyBpdCBpbnZvbHZlcyBiaW9sb2dpY2FsIGFzc2F5cyB0aGF0IHdlcmUgdGhlbiByZWxhdGVkIHRvIFdRIGRhdGEgc2FtcGxlZCBvbiB0aGF0IGRhdGUgKGFuZCBhbHJlYWR5IHByZXNlbnQgaW4gdGhlIENFREVOX1dRIGRhdGFzZXQuIA0KDQpUaGVyZSBhcmUgYHIgbnJvdyhDRURFTk1vZF9XUSlgIHJlY29yZHMgaW4gdGhlIFdRIGRhdGFzZXQNCmFuZCBgciBucm93KENFREVOTW9kX1RveClgIGluIHRoZSBUb3ggZGF0YXNldC4gDQoNCiMjIyBDRURFTiBUb3ggDQoNCkluIHRoZSB0b3ggZGF0YXNldCwgdGhlcmUgd2VyZSBzZXZlcmFsIHJlY29yZHMgcmVsYXRlZCB0byBhIHNpbmdsZSBzcGVjaWVzIGFzc2Vzc21lbnQgLSBieSBjcmVhdGluZyBhIGdyb3VwIGlkZW50aWZpZXIgYnkgdGhlIGxvY2F0aW9uLCBkYXRlLCBhbmQgb3JnYW5pc20gYXNzZXNzZWQsIEkgY2FsY3VsYXRlZCB0aGF0IHRoZXJlIHdlcmUgMjQzMCB1bmlxdWUgc2FtcGxlcy4NCg0KV2l0aGluIHRoZSBUb3ggZGF0YXNldCwgYHIgbGVuZ3RoKHVuaXF1ZShDRURFTk1vZF9Ub3gkT3JnYW5pc21OYW1lKSlgIGRpZmZlcmVudCBzcGVjaWVzIGFyZSByZXByZXNlbnRlZC4NCg0KIyMjIyBFeGFjdCBkdXBsaWNhdGVzDQoNCmR1cGxpY2F0ZWQoKSBwcm9kdWNlcyBhIHZlY3RvciBpZGVudGlmeWluZyB3aGljaCByZWNvcmRzIGFyZSBkdXBsaWNhdGVzLiBUaGlzIGNhbiBiZSBhcHBlbmRlZCB0byB0aGUgb3JpZ2luYWwgZGF0YXNldCBmb3IgZnVydGhlciBpbnZlc3RpZ2F0aW9uLiBUaGUgZmlyc3QgcmVjb3JkIGlzIG1hcmtlZCBGQUxTRSwgd2hpbGUgc3Vic2VxdWVudCBtYXRjaGVzIGFyZSBtYXJrZWQgVFJVRQ0KDQpgYGB7cn0NCiMgYWRkIGluZGV4IGNvbHVtbiBpZGVudGlmeWluZyB3aGljaCBlbnRyaWVzIGFyZSBkdXBsaWNhdGVkDQoNCkNFREVOTW9kX1RveCREdXBDaGVjayA8LSBkdXBsaWNhdGVkKENFREVOTW9kX1RveCkNCg0Kc3VtbWFyeShDRURFTk1vZF9Ub3gkRHVwQ2hlY2spDQpgYGANCg0KSXMgaXQgb25seSBzb21lIHByb2dyYW1zIHRoYXQgaGF2ZSBkdXBsaWNhdGlvbj8gOS8xMCBwcm9ncmFtcyBkby4NCg0KYGBge3J9DQpsZW5ndGgodW5pcXVlKENFREVOTW9kX1RveCRQcm9ncmFtKSkgIyAxMA0KDQp1bmlxdWUoQ0VERU5Nb2RfVG94JFByb2dyYW1bQ0VERU5Nb2RfVG94JER1cENoZWNrID09ICJUUlVFIl0pDQpgYGANCg0KIyMjIyBBbHRlcm5hdGl2ZSAobG9vc2VyKSBhc3Nlc3NtZW50IG9mIGR1cGxpY2F0aW9uDQoNCklmIHdlIGFzc3VtZSB0aGF0IHNvbWUgY29sdW1ucyBtYXkgZGlmZmVyIGR1ZSB0byBkaWZmZXJlbmNlcyBpbiBkYXRhIGxvYWRpbmcgKGllOiBvcmlnaW5hbGx5IHN1Ym1pdHRlZCB0byBTVVJGIGFuZCBicm91Z2h0IHRvIENFREVOIHZzIG9yaWdpbmFsbHkgbG9hZGVkIHRvIENFREVOKSwgdGhlbiB3ZSBtYXkgd2FudCB0byB1c2UgYSBsb29zZXIgc3RydWN0dXJlIHRvIGRldGVjdCBkdXBsaWNhdGVzLiANCg0KYGBge3J9DQpOb0R1cF9Ub3g8LSBkaXN0aW5jdChDRURFTk1vZF9Ub3gsIERhdGUsIFN0YXRpb25OYW1lLCBBbmFseXRlLCBDb2xsZWN0aW9uTWV0aG9kLCBSZXN1bHQsIC5rZWVwX2FsbD0gVFJVRSkNCg0KbnJvdyhDRURFTk1vZF9Ub3gpIC0gbnJvdyhOb0R1cF9Ub3gpDQpgYGANCg0KQnkgYXNzdW1pbmcgdGhhdCByZWNvcmRzIGluIHRoZSBzYW1lIGxvY2F0aW9uIG9uIHRoZSBzYW1lIGRhdGUsICBtZWFzdXJpbmcgdGhlIHNhbWUgYW5hbHl0ZSB2aWEgdGhlIHNhbWUgY29sbGVjdGlvbiBtZXRob2QsIGFuZCBvYnRhaW5pbmcgdGhlIHNhbWUgcmVzdWx0IGFyZSBkdXBsaWNhdGVzLCB3ZSBmaW5kIGFsbW9zdCA1MCUgbW9yZSBkdXBsaWNhdGVzLiANCjI1NzI5IHJlY29yZHMsIHRvIGJlIHNwZWNpZmljLiANCg0KVGhhdCBpcyBgciAxMDAqMjU3MjkvbnJvdyhDRURFTk1vZF9Ub3gpYCUgb2YgdGhlIGRhdGFzZXQuDQoNCkluY2x1ZGluZyBPcmdhbmlzbSBuYW1lIGluIHRoZSBsaXN0IG9mIGRpZmZlcmVudGlhdGluZyB2YXJpYWJsZXMsIGl0IHJldHVybnMgYWxtb3N0IHRoZSBleGFjdCBzYW1lIGNvdW50IG9mIGR1cGxpY2F0ZXMgKDE4Mjc0KSBhcyBleGFjdCBkdXBsaWNhdGlvbiAoMTgyOTcpIC0gaW5kaWNhdGluZyB0aGF0IGEgbWFqb3Igc291cmNlIG9mIFdRIGR1cGxpY2F0aW9uIGlzIHJlcGVhdGluZyBXUSBwYXJhbWV0ZXJzIGZvciBtdWx0aXBsZSBzcGVjaWVzIGFzc2Vzc2VkLg0KDQpgYGB7cn0NCiMgUmVtb3ZlIGR1cGxpY2F0ZSByb3dzIG9mIHRoZSBkYXRhZnJhbWUgdXNpbmcgbXVsdGlwbGUgdmFyaWFibGVzICYgT1JHQU5JU00gTkFNRQ0KDQpucm93KENFREVOTW9kX1RveCkgLSBucm93KGRpc3RpbmN0KENFREVOTW9kX1RveCwgRGF0ZSwgU3RhdGlvbk5hbWUsIENvbGxlY3Rpb25NZXRob2QsIE9yZ2FuaXNtTmFtZSwgQW5hbHl0ZSwgUmVzdWx0LCAua2VlcF9hbGw9IFRSVUUpKQ0KYGBgDQoNClNpbmNlIHdlIGFyZSB1c2luZyB0aGUgZGYgZm9yIHRoZSB3YXRlciBwYXJhbWV0ZXJzIGFuZCBub3QgdGhlIGFzc29jaWF0ZWQgb3JnYW5pc20gc3Vydml2YWwsIGl0J3MgbW9yZSB1c2VmdWwgdG8gcmVtb3ZlIGR1cGxpY2F0ZSBXUSBlbnRyaWVzIHJlZ2FyZGxlc3Mgb2YgdGhlIG9yZ2FuaXNtLiBXZSBjYW4gYWxzbyByZW1vdmUgcmVjb3JkcyB0aGF0IGFzc2VzcyAnc3Vydml2YWwnIGFuZCAnYmlvbWFzcycgKHNpbmNlIHdlIGFyZW4ndCB1c2luZyB0aGlzIGZvciB0aGUgYmlvdGljIHBhcmFtZXRlcnMgaW4gb3VyIG1vZGVsKS4NCg0KYGBge3J9DQpOb0R1cF9Ub3ggPC0gTm9EdXBfVG94W05vRHVwX1RveCRBbmFseXRlICE9ICJTdXJ2aXZhbCJdDQoNCk5vRHVwX1RveCA8LSBOb0R1cF9Ub3hbTm9EdXBfVG94JEFuYWx5dGUgIT0gIkJpb21hc3MgKHd0L29yaWcgaW5kaXYpIl0NCg0KIyBucm93ID0gMzE4NTkNCmBgYA0KDQpXZSdyZSBsZWZ0IHdpdGggb25seSBgciBucm93KE5vRHVwX1RveClgIHVuaXF1ZSwgdXNlZnVsIHJlY29yZHMgaW4gdGhlIHRveCBkYXRhc2V0IC0gb3IgYHIgMTAwKm5yb3coTm9EdXBfVG94KS9ucm93KENFREVOTW9kX1RveClgICUgb2YgdGhlIG9yaWdpbmFsIHRveCBkYXRhIHJlbWFpbmluZw0KDQo8YnI+DQoNCiMjIyBDRURFTiBXUQ0KDQojIyMjIEV4YWN0IGR1cGxpY2F0ZXMNCg0KZHVwbGljYXRlZCgpIHByb2R1Y2VzIGEgdmVjdG9yIGlkZW50aWZ5aW5nIHdoaWNoIHJlY29yZHMgYXJlIGR1cGxpY2F0ZWQuIFRoaXMgY2FuIGJlIGFwcGVuZGVkIHRvIHRoZSBvcmlnaW5hbCBkYXRhc2V0IGZvciBmdXJ0aGVyIGludmVzdGlnYXRpb24uDQoNCmBgYHtyfQ0KIyBhZGQgaW5kZXggY29sdW1uIGlkZW50aWZ5aW5nIHdoaWNoIGVudHJpZXMgYXJlIGR1cGxpY2F0ZWQNCg0KQ0VERU5Nb2RfV1EkRHVwQ2hlY2sgPC0gZHVwbGljYXRlZChDRURFTk1vZF9XUSkNCg0Kc3VtbWFyeShDRURFTk1vZF9XUSREdXBDaGVjaykNCmBgYA0KDQpUaGlzIG1ldGhvZCBpZGVudGlmaWVkIG9ubHkgNjU3IGV4YWN0IGR1cGxpY2F0ZXMgaW4gdGhlIGVudGlyZSBXUSBkYXRhc2V0Lg0KDQpPbmx5IDkvMTcgcHJvZ3JhbXMgcHJlc2VudCB0aGVzZSBleGFjdCBkdXBsaWNhdGVzDQoNCmBgYHtyfQ0KbGVuZ3RoKHVuaXF1ZShDRURFTk1vZF9XUSRQcm9ncmFtKSkgIyAxNw0KdW5pcXVlKENFREVOTW9kX1dRJFByb2dyYW1bQ0VERU5Nb2RfV1EkRHVwQ2hlY2sgPT0gIlRSVUUiXSkNCmBgYA0KDQojIyMjIExvb3NlciBhc3Nlc3NtZW50IG9mIER1cGxpY2F0aW9uDQoNClV0aWxpemlnbiB0aGUgZGlzdGluY3QoKSBmdW5jdGlvbiB0byBhc3N1bWUgdGhhdCByZWNvcmRzIGluIHRoZSBzYW1lIGxvY2F0aW9uIG9uIHRoZSBzYW1lIGRhdGUsIG1lYXN1cmluZyB0aGUgc2FtZSBhbmFseXRlIHZpYSB0aGUgc2FtZSBjb2xsZWN0aW9uIG1ldGhvZCBhbmQgb2J0YWluaW5nIHRoZSBzYW1lIHJlc3VsdCBhcmUgZHVwbGljYXRlcywgd2UgZmluZCAxNTM2IGR1cGxpY2F0ZSByZWNvcmRzLg0KDQpUaGF0IGlzIG1vcmUgdGhhbiBkb3VibGUgdGhlIG51bWJlciBvZiBleGFjdCBkdXBsaWNhdGVzIGZvdW5kLCB5ZXQgc3RpbGwgb25seSBgciAxMDAqMTUzNi9ucm93KENFREVOTW9kX1dRKWAlIG9mIHRoZSBlbnRpcmUgV1EgZGF0YXNldC4NCg0KYGBge3J9DQojIFJlbW92ZSBkdXBsaWNhdGUgcm93cyBvZiB0aGUgZGF0YWZyYW1lIHVzaW5nIG11bHRpcGxlIHZhcmlhYmxlcw0KDQpOb0R1cFdRIDwtIGRpc3RpbmN0KENFREVOTW9kX1dRLCBEYXRlLCBBbmFseXRlLCBTdGF0aW9uTmFtZSwgQ29sbGVjdGlvbk1ldGhvZCwgUmVzdWx0LCAua2VlcF9hbGw9IFRSVUUpDQoNCm5yb3coQ0VERU5Nb2RfV1EpIC0gbnJvdyhOb0R1cFdRKQ0KYGBgDQo8YnI+DQoNCjxicj4NCg0KIyMgTWVyZ2luZyBDRURFTiBkYXRhDQoNCkFmdGVyIGRlYWxpbmcgd2l0aCBkdXBsaWNhdGlvbiBXSVRISU4gdGhlIENFREVOIHRveCBhbmQgd3EgZGF0YXNldHMsIHRoZXJlIHdlcmUgb25seSA5IGR1cGxpY2F0ZSByZWNvcmRzIGZvdW5kIGZvbGxvd2luZyB0aGUgbWVyZ2VkIGRhdGEuICg3NSBpZiBDb2xsZWN0aW9uIE1ldGhvZCBpcyBub3QgYSByZXF1aXJlbWVudCBmb3IgZXN0YWJsaXNoaW5nIGR1cGxpY2F0aW9uKQ0KDQpgYGB7cn0NCiMgU3RyaXAgY29sdW1uIHdpdGggZHVwbGljYXRlIGNoZWNrIGZyb20gYm90aCwgYW5kIG9yZ2FuaXNtIGZyb20gdG94DQpOb0R1cF9Ub3ggPC0gc2VsZWN0KE5vRHVwX1RveCwgLWMoRHVwQ2hlY2ssIE9yZ2FuaXNtTmFtZSkpDQpOb0R1cFdRIDwtIHNlbGVjdChOb0R1cFdRLCAtRHVwQ2hlY2spDQoNCiMgVmVjdG9yIG9mIGNvbHVtbiBuYW1lcyB0byBjb21wYXJlDQpXUSA8LSBuYW1lcyhOb0R1cFdRKQ0KVE9YIDwtIG5hbWVzKE5vRHVwX1RveCkNCg0KI0FkZCBtaXNzaW5nIGNvbHVtbnMgdG8gQ0VERU4gV1ENCkRJRjwtIHNldGRpZmYoVE9YLCBXUSkgIyBnaXZlcyBpdGVtcyBpbiBUIHRoYXQgYXJlIG5vdCBpbiBXDQpOb0R1cFdRWywgRElGXSA8LSBOQQ0KDQojQWRkIG1pc3NpbmcgY29sdW1ucyB0byBDRURFTiBUT1gNCkRJRjwtIHNldGRpZmYoV1EsIFRPWCkgIyBnaXZlcyBpdGVtcyBpbiBXIHRoYXQgYXJlIG5vdCBpbiBUDQpOb0R1cF9Ub3hbLCBESUZdIDwtIE5BDQoNCiMgRmluaXNoaW5nIHRvdWNoZXMgYmVmb3JlIG1lcmdlOyBvcmRlciBjb2x1bW5zIHRvIG1hdGNoIC0gaXMgdGhpcyByZWFsbHkgbmVjZXNzYXJ5IGZvciBtZXJnZT8gSURLDQoNCldRIDwtIHNvcnQobmFtZXMoTm9EdXBXUSkpDQpUT1ggPC0gc29ydChuYW1lcyhOb0R1cF9Ub3gpKQ0KDQpOb0R1cF9Ub3ggPC0gTm9EdXBfVG94ICU+JSBzZWxlY3QoVE9YKQ0KTm9EdXBXUSA8LSBOb0R1cFdRICU+JSBzZWxlY3QoV1EpDQoNCiMgQ2hlY2sgb25jZSBhbGwgY29sdW1ucyBoYXZlIHBlcmZlY3QgbWF0Y2hlcz8NCnRpYmJsZShTVVJGID0gbmFtZXMoTm9EdXBfVG94KSwgQ0VERU4gPSBuYW1lcyhOb0R1cFdRKSkNCg0KIyBNRVJHRQ0KQ0VERU5fQUxMIDwtIHJiaW5kKE5vRHVwV1EsTm9EdXBfVG94KQ0KYGBgDQoNCmBgYHtyfQ0KIyBJZGVhcyBmcm9tOiBodHRwczovL3d3dy5kYXRhc2NpZW5jZW1hZGVzaW1wbGUuY29tL3JlbW92ZS1kdXBsaWNhdGUtcm93cy1yLXVzaW5nLWRwbHlyLWRpc3RpbmN0LWZ1bmN0aW9uLw0KDQojIFJlbW92ZSBkdXBsaWNhdGUgcm93cyBvZiB0aGUgZGF0YWZyYW1lIHVzaW5nIG11bHRpcGxlIHZhcmlhYmxlcw0KDQpDRURFTl9BTExfRHVwQ2hlY2tlZCA8LSBkaXN0aW5jdChDRURFTl9BTEwsIERhdGUsIEFuYWx5dGUsIENvbGxlY3Rpb25NZXRob2QsIFN0YXRpb25OYW1lLCBSZXN1bHQsIC5rZWVwX2FsbD0gVFJVRSkNCg0KbnJvdyhDRURFTl9BTEwpLW5yb3coQ0VERU5fQUxMX0R1cENoZWNrZWQpDQpgYGANCjxicj4NCg0KPGJyPg0KDQoNCiMjIFNVUkYgZGF0YSB7LnRhYnNldH0NCg0KYGBge3J9DQpybShsaXN0PXNldGRpZmYobHMoKSwgYygiQ0VERU5Nb2RfV1EiLCAiQ0VERU5Nb2RfVG94IiwgIkNFREVOX0FMTF9EdXBDaGVja2VkIiwiU1VSRk1vZF9XUSIsICJTVVJGTW9kX1NFRCIpKSkNCmBgYA0KDQpUaGVyZSBhcmUgYHIgbnJvdyhTVVJGTW9kX1dRKWAgcmVjb3JkcyBpbiB0aGUgV1EgZGF0YXNldA0KYW5kIGByIG5yb3coU1VSRk1vZF9TRUQpYCBpbiB0aGUgU0VEIGRhdGFzZXQuIA0KDQojIyMgU1VSRiBXYXRlcg0KDQojIyMjIERhdGEgUHJlcA0KDQpNb3JlIGludmVzdGlnYXRpbmcgd2lsbCBwcm9iYWJseSBiZSBiZXR0ZXIsIGJ1dCBmb3Igbm93IHdlIGNhbiBzaW1wbHkgcmVtb3ZlIHRob3NlIGRhdGEgZGVmaW5lZCBpbiBTVVJGIGFzIHNvdXJjZWQgZnJvbSBDRURFTg0KDQpgYGB7cn0NClNVUkZNb2RfV1EgPC0gZmlsdGVyKFNVUkZNb2RfV1EsIERhdGEuc291cmNlICE9ICJDRURFTiIpDQpgYGANCg0KKipDb3JyZWN0IG1pc21hdGNoZWQgY29sdW1uIG5hbWVzKioNCg0KUmF0aGVyIHRoYW4gdXNpbmcgU3RldmVuJ3MgbWV0aG9kIG9mIHJlbmFtaW5nIHVzaW5nIGEgbGlzdCAod2hpY2ggaXMgZGVwZW5kZW50IG9uIGFuIGV4cGVjdGVkIG51bWJlciBhbmQgb3JkZXIgb2YgY29sdW1uIG5hbWVzKSwgSSByZW5hbWVkIGVhY2ggY29sdW1uIGluZGl2aWR1YWxseQ0KDQpgYGB7cn0NClNVUkZNb2RfV1EkVW5pdCA8LSAicHBiIg0KDQpTVVJGTW9kX1dRIDwtIFNVUkZNb2RfV1EgJT4lIHJlbmFtZShEYXRlID0gU2FtcGxlX2RhdGUsDQogICAgICAgICAgQW5hbHl0ZSA9IENoZW1pY2FsX25hbWUsIA0KICAgICAgICAgIFJlc3VsdCA9IENvbmNlbnRyYXRpb24uLnBwYi4sIA0KICAgICAgICAgIENvbGxlY3Rpb25NZXRob2QgPSBTYW1wbGVfdHlwZSwgDQogICAgICAgICAgU3RhdGlvbkNvZGUgPSBTaXRlX2NvZGUsDQogICAgICAgICAgU3RhdGlvbk5hbWUgPSBTaXRlX25hbWUsDQogICAgICAgICAgTURMID0gTWV0aG9kX2RldGVjdGlvbl9sZXZlbC4ucHBiLiwNCiAgICAgICAgICBMT1EgPSBMZXZlbF9vZl9xdWFudGlmaWNhdGlvbi4ucHBiLikNCmBgYA0KDQojIyMjIEV4YWN0IGR1cGxpY2F0ZXMNCg0KZHVwbGljYXRlZCgpIHByb2R1Y2VzIGEgdmVjdG9yIGlkZW50aWZ5aW5nIHdoaWNoIHJlY29yZHMgYXJlIGR1cGxpY2F0ZWQuIFRoaXMgY2FuIGJlIGFwcGVuZGVkIHRvIHRoZSBvcmlnaW5hbCBkYXRhc2V0IGZvciBmdXJ0aGVyIGludmVzdGlnYXRpb24uDQoNCmBgYHtyfQ0KIyBhZGQgaW5kZXggY29sdW1uIGlkZW50aWZ5aW5nIHdoaWNoIGVudHJpZXMgYXJlIGR1cGxpY2F0ZWQNCg0KU1VSRk1vZF9XUSREdXBDaGVjayA8LSBkdXBsaWNhdGVkKFNVUkZNb2RfV1EpDQoNCnN1bW1hcnkoU1VSRk1vZF9XUSREdXBDaGVjaykNCmBgYA0KDQpGYW50YXN0aWMuIFRoZXJlIGFyZSBubyBleGFjdCBkdXBsaWNhdGVzIHdpdGhpbiB0aGUgU1VSRiB3YXRlciBkYXRhLiANCg0KIyMjIyBMb29zZXIgYXNzZXNzbWVudCBvZiBEdXBsaWNhdGlvbg0KDQpVdGlsaXppbmcgdGhlIGRpc3RpbmN0KCkgZnVuY3Rpb24gdG8gYXNzdW1lIHRoYXQgcmVjb3JkcyBpbiB0aGUgc2FtZSBsb2NhdGlvbiBvbiB0aGUgc2FtZSBkYXRlLCBtZWFzdXJpbmcgdGhlIHNhbWUgYW5hbHl0ZSBhbmQgb2J0YWluaW5nIHRoZSBzYW1lIHJlc3VsdCBhcmUgZHVwbGljYXRlcywgd2UgZmluZCA1LDY3NiBkdXBsaWNhdGUgcmVjb3Jkcy4NCg0KYGBge3J9DQojIFJlbW92ZSBkdXBsaWNhdGUgcm93cyBvZiB0aGUgZGF0YWZyYW1lIHVzaW5nIG11bHRpcGxlIHZhcmlhYmxlcw0KDQpOb0R1cFdRIDwtIGRpc3RpbmN0KFNVUkZNb2RfV1EsIERhdGUsIEFuYWx5dGUsIENvbGxlY3Rpb25NZXRob2QsIFN0YXRpb25OYW1lLCBSZXN1bHQsIC5rZWVwX2FsbD0gVFJVRSkNCg0KbnJvdyhTVVJGTW9kX1dRKSAtIG5yb3coTm9EdXBXUSkNCmBgYA0KPGJyPg0KDQo8YnI+DQoNCiMjIFNVUkYgc2VkaW1lbnQNCg0KIyMjIyBEYXRhIFByZXANCg0KTW9yZSBpbnZlc3RpZ2F0aW5nIHdpbGwgcHJvYmFibHkgYmUgYmV0dGVyLCBidXQgZm9yIG5vdyB3ZSBjYW4gc2ltcGx5IHJlbW92ZSB0aG9zZSBkYXRhIGRlZmluZWQgaW4gU1VSRiBhcyBzb3VyY2VkIGZyb20gQ0VERU4NCg0KYGBge3J9DQpTVVJGTW9kX1NFRCA8LSBmaWx0ZXIoU1VSRk1vZF9TRUQsIERhdGEuc291cmNlICE9ICJDRURFTiIpDQpgYGANCg0KKipDb3JyZWN0IG1pc21hdGNoZWQgY29sdW1uIG5hbWVzKioNCmBgYHtyfQ0KU1VSRk1vZF9TRUQkVW5pdCA8LSAicHBiIg0KDQpTVVJGTW9kX1NFRCA8LSBTVVJGTW9kX1NFRCAlPiUgcmVuYW1lKERhdGUgPSBTYW1wbGVfZGF0ZSwNCiAgICAgICAgICBBbmFseXRlID0gQ2hlbWljYWxfbmFtZSwgDQogICAgICAgICAgUmVzdWx0ID0gQ29uY2VudHJhdGlvbi4ucHBiLiwgDQogICAgICAgICAgQ29sbGVjdGlvbk1ldGhvZCA9IFNhbXBsZV90eXBlLCANCiAgICAgICAgICBTdGF0aW9uQ29kZSA9IFNpdGVfY29kZSwNCiAgICAgICAgICBTdGF0aW9uTmFtZSA9IFNpdGVfbmFtZSwNCiAgICAgICAgICBNREwgPSBNZXRob2RfZGV0ZWN0aW9uX2xldmVsLi5wcGIuLA0KICAgICAgICAgIExPUSA9IExldmVsX29mX3F1YW50aWZpY2F0aW9uLi5wcGIuKQ0KYGBgDQoNCiMjIyMgRXhhY3QgZHVwbGljYXRlcw0KDQpkdXBsaWNhdGVkKCkgcHJvZHVjZXMgYSB2ZWN0b3IgaWRlbnRpZnlpbmcgd2hpY2ggcmVjb3JkcyBhcmUgZHVwbGljYXRlZC4gVGhpcyBjYW4gYmUgYXBwZW5kZWQgdG8gdGhlIG9yaWdpbmFsIGRhdGFzZXQgZm9yIGZ1cnRoZXIgaW52ZXN0aWdhdGlvbi4NCg0KYGBge3J9DQojIGFkZCBpbmRleCBjb2x1bW4gaWRlbnRpZnlpbmcgd2hpY2ggZW50cmllcyBhcmUgZHVwbGljYXRlZA0KDQpTVVJGTW9kX1NFRCREdXBDaGVjayA8LSBkdXBsaWNhdGVkKFNVUkZNb2RfU0VEKQ0KDQpzdW1tYXJ5KFNVUkZNb2RfU0VEJER1cENoZWNrKQ0KYGBgDQoNCkZhbnRhc3RpYy4gVGhlcmUgYXJlIG5vIGV4YWN0IGR1cGxpY2F0ZXMgd2l0aGluIHRoZSBTVVJGIHNlZGltZW50IGRhdGEuIA0KDQojIyMjIExvb3NlciBhc3Nlc3NtZW50IG9mIER1cGxpY2F0aW9uDQoNClV0aWxpemluZyB0aGUgZGlzdGluY3QoKSBmdW5jdGlvbiB0byBhc3N1bWUgdGhhdCByZWNvcmRzIGluIHRoZSBzYW1lIGxvY2F0aW9uIG9uIHRoZSBzYW1lIGRhdGUsIG1lYXN1cmluZyB0aGUgc2FtZSBhbmFseXRlIGFuZCBvYnRhaW5pbmcgdGhlIHNhbWUgcmVzdWx0IGFyZSBkdXBsaWNhdGVzLCB3ZSBmaW5kIG9ubHkgNzg0IC0gbm90IGJhZC4NCg0KYGBge3J9DQojIFJlbW92ZSBkdXBsaWNhdGUgcm93cyBvZiB0aGUgZGF0YWZyYW1lIHVzaW5nIG11bHRpcGxlIHZhcmlhYmxlcw0KDQpOb0R1cFNFRCA8LSBkaXN0aW5jdChTVVJGTW9kX1NFRCwgRGF0ZSwgQW5hbHl0ZSwgQ29sbGVjdGlvbk1ldGhvZCwgU3RhdGlvbk5hbWUsIFJlc3VsdCwgLmtlZXBfYWxsPSBUUlVFKQ0KDQpucm93KFNVUkZNb2RfU0VEKSAtIG5yb3coTm9EdXBTRUQpDQpgYGANCg0KPGJyPg0KDQo8YnI+DQoNCiMjIE1lcmdlIFNVUkYgZGYNCg0KWkVSTyBkdXBsaWNhdGlvbiBmb3VuZCBiZXR3ZWVuIHRoZSBTRUQgYW5kIFdRIGRhdGFzZXRzLCBhc3N1bWluZyBkdXBsaWNhdGVzIHdvdWxkIGhhdmUgdG8gaGF2ZSB0aGUgZXhhY3Qgc2FtZSBMb2NhdGlvbiwgRGF0ZSwgQW5hbHl0ZSwgQ29sbGVjdGlvbiBNZXRob2QsIGFuZCBSZXN1bHQuDQoNCipOb3RlKiBJIGhhZCBzdGFydGVkIHdpdGhvdXQgJ0NvbGxlY3Rpb24gTWV0aG9kJyBpbiB0aGUgZGlzdGluY3QoKSBxdWVyeSwgYnV0IGFkZGVkIGl0IGFzIGFuIGFkZGl0aW9uYWwgcmVxdWlyZW1lbnQgZm9yIGVzdGFibGlzaGluZyBkdXBsaWNhdGlvbiBiZWNhdXNlIHdpdGhvdXQgdGhhdCByZWNvcmQsIHRoZSBkaWZmZXJlbmNlIGJldHdlZW4gcmVzdWx0cyBmb3Igd2F0ZXIgdnMgc2VkaW1lbnQgd2VyZSBub3QgcmVjb2duaXplZCBhbmQgKioyNjEyNyoqIHJlY29yZHMgd2VyZSBjb25zaWRlcmVkIGR1cGxpY2F0ZXMgZm9sbG93aW5nIHRoZSBtZXJnaW5nIG9mIHRoZSBTVVJGIGRhdGEuDQoNClRoaXMgaXMgc3RpbGwgc3VycHJpc2luZyB0byBtZSwgYmVjYXVzZSB0aGF0IG1lYW5zIHRoZSBSRVNVTFQgY29uY2VudHJhdGlvbiB3YXMgaWRlbnRpY2FsIGZvciBib3RoIHNlZGltZW50IGFuZCB3YXRlciBzYW1wbGVzLiBBcmUgdGhleSB0cnVseSBzYW1wbGVkIHNlcGFyYXRlbHkgYW5kIGV4YWN0bHkgdGhlIHNhbWU/IEJ5IGluY2x1ZGluZyAiU2FtcGxlTWV0aG9kIiB0byBkaWZmZXJlbnRpYXRlIHdhdGVyIGFuZCBzZWRpbWVudCBzYW1wbGVzLCANCg0KYGBge3J9DQojIFN0cmlwIGNvbHVtbiB3aXRoIGR1cGxpY2F0ZSBjaGVjayBmcm9tIGJvdGgNCk5vRHVwU0VEIDwtIHNlbGVjdChOb0R1cFNFRCwgLUR1cENoZWNrKQ0KTm9EdXBXUSA8LSBzZWxlY3QoTm9EdXBXUSwgLUR1cENoZWNrKQ0KDQojIFZlY3RvciBvZiBjb2x1bW4gbmFtZXMgdG8gY29tcGFyZQ0KV1EgPC0gbmFtZXMoTm9EdXBXUSkNClNFRCA8LSBuYW1lcyhOb0R1cFNFRCkNCg0KI0FkZCBtaXNzaW5nIGNvbHVtbnMgdG8gQ0VERU4gV1ENCkRJRjwtIHNldGRpZmYoU0VELCBXUSkgIyBnaXZlcyBpdGVtcyBpbiBTIHRoYXQgYXJlIG5vdCBpbiBXDQpOb0R1cFdRWywgRElGXSA8LSBOQQ0KDQojQWRkIG1pc3NpbmcgY29sdW1ucyB0byBDRURFTiBTRUQNCkRJRjwtIHNldGRpZmYoV1EsIFNFRCkgIyBnaXZlcyBpdGVtcyBpbiBXIHRoYXQgYXJlIG5vdCBpbiBTDQpOb0R1cFNFRFssIERJRl0gPC0gTkENCg0KIyBGaW5pc2hpbmcgdG91Y2hlcyBiZWZvcmUgbWVyZ2U7IG9yZGVyIGNvbHVtbnMgdG8gbWF0Y2ggLSBpcyB0aGlzIHJlYWxseSBuZWNlc3NhcnkgZm9yIG1lcmdlPyBJREsNCg0KV1EgPC0gc29ydChuYW1lcyhOb0R1cFdRKSkNClNFRCA8LSBzb3J0KG5hbWVzKE5vRHVwU0VEKSkNCg0KTm9EdXBTRUQgPC0gTm9EdXBTRUQgJT4lIHNlbGVjdChTRUQpDQpOb0R1cFdRIDwtIE5vRHVwV1EgJT4lIHNlbGVjdChXUSkNCg0KIyBDaGVjayBvbmNlIGFsbCBjb2x1bW5zIGhhdmUgcGVyZmVjdCBtYXRjaGVzPw0KdGliYmxlKFNVUkYgPSBuYW1lcyhOb0R1cFNFRCksIENFREVOID0gbmFtZXMoTm9EdXBXUSkpDQoNCiMgTUVSR0UNClNVUkZfQUxMIDwtIHJiaW5kKE5vRHVwV1EsTm9EdXBTRUQpDQpgYGANCg0KYGBge3J9DQojIElkZWFzIGZyb206IGh0dHBzOi8vd3d3LmRhdGFzY2llbmNlbWFkZXNpbXBsZS5jb20vcmVtb3ZlLWR1cGxpY2F0ZS1yb3dzLXItdXNpbmctZHBseXItZGlzdGluY3QtZnVuY3Rpb24vDQoNCiMgUmVtb3ZlIGR1cGxpY2F0ZSByb3dzIG9mIHRoZSBkYXRhZnJhbWUgdXNpbmcgbXVsdGlwbGUgdmFyaWFibGVzDQoNClNVUkZfQUxMX0R1cENoZWNrZWQgPC0gZGlzdGluY3QoU1VSRl9BTEwsIERhdGUsIEFuYWx5dGUsIENvbGxlY3Rpb25NZXRob2QsIFN0YXRpb25OYW1lLCBSZXN1bHQsIC5rZWVwX2FsbD0gVFJVRSkNCg0KbnJvdyhTVVJGX0FMTCktbnJvdyhTVVJGX0FMTF9EdXBDaGVja2VkKQ0KYGBgDQoNCjxicj4NCg0KPGJyPg0KDQojIE1lcmdlIFNVUkYgYW5kIENFREVODQoNCmBgYHtyfQ0Kcm0obGlzdD1zZXRkaWZmKGxzKCksIGMoIkNFREVOTW9kX1dRIiwgIkNFREVOTW9kX1RveCIsICJDRURFTl9BTExfRHVwQ2hlY2tlZCIsIlNVUkZNb2RfV1EiLCAiU1VSRk1vZF9TRUQiLCAiU1VSRl9BTExfRHVwQ2hlY2tlZCIpKSkNCmBgYA0KDQojIyMgRGF0YSBwcmVwDQoNCioqTWF0Y2ggY29sdW1ucyB0byBDRURFTiBkYXRhKioNCg0KYGBge3J9DQpDIDwtIG5hbWVzKENFREVOX0FMTF9EdXBDaGVja2VkKQ0KUyA8LSBuYW1lcyhTVVJGX0FMTF9EdXBDaGVja2VkKQ0KDQpESUY8LSBzZXRkaWZmKFMsIEMpICMgZ2l2ZXMgaXRlbXMgaW4gUyB0aGF0IGFyZSBub3QgaW4gQw0KYGBgDQoNCkNvbHVtbnMgdGhhdCB3ZXJlIGluIFNVUkYgYW5kIG5vdCBDRURFTjoNCmByIERJRmANCg0KYGBge3J9DQojQWRkIG1pc3NpbmcgY29sdW1ucyB0byBDRURFTg0KQ0VERU5fQUxMX0R1cENoZWNrZWRbLCBESUZdIDwtIE5BDQpgYGANCg0KYGBge3J9DQojQWRkIG1pc3NpbmcgY29sdW1ucyB0byBTVVJGDQpESUY8LSBzZXRkaWZmKEMsIFMpICMgZ2l2ZXMgaXRlbXMgaW4gQyB0aGF0IGFyZSBub3QgaW4gUw0KU1VSRl9BTExfRHVwQ2hlY2tlZFssIERJRl0gPC0gTkENCmBgYA0KDQpDb2x1bW5zIHRoYXQgd2VyZSBpbiBDRURFTiBhbmQgbm90IFNVUkY6DQpgIHIgRElGYA0KDQojIyMgTWVyZ2UNCg0KUmVvcmRlciBjb2x1bW5zIHRvIGFsaWduLCB0aGVuIG1lcmdlIHdpdGggcmJpbmQoKQ0KDQpgYGB7cn0NCiMgRmluaXNoaW5nIHRvdWNoZXMgYmVmb3JlIG1lcmdlOyBvcmRlciBjb2x1bW5zIHRvIG1hdGNoIC0gaXMgdGhpcyByZWFsbHkgbmVjZXNzYXJ5IGZvciBtZXJnZT8gSURLDQoNCkMgPC0gc29ydChuYW1lcyhDRURFTl9BTExfRHVwQ2hlY2tlZCkpDQpTIDwtIHNvcnQobmFtZXMoU1VSRl9BTExfRHVwQ2hlY2tlZCkpDQoNClNVUkZfQUxMX0R1cENoZWNrZWQgPC0gU1VSRl9BTExfRHVwQ2hlY2tlZCAlPiUgc2VsZWN0KFMpDQoNCkNFREVOX0FMTF9EdXBDaGVja2VkIDwtIENFREVOX0FMTF9EdXBDaGVja2VkICU+JSBzZWxlY3QoQykNCg0KIyBDaGVjayBvbmNlIGFsbCBjb2x1bW5zIGhhdmUgcGVyZmVjdCBtYXRjaGVzPw0KdGliYmxlKFNVUkYgPSBuYW1lcyhTVVJGX0FMTF9EdXBDaGVja2VkKSwgQ0VERU4gPSBuYW1lcyhDRURFTl9BTExfRHVwQ2hlY2tlZCkpDQoNCiMgTUVSR0UNCkNFREVOU1VSRiA8LSByYmluZChDRURFTl9BTExfRHVwQ2hlY2tlZCwgU1VSRl9BTExfRHVwQ2hlY2tlZCkNCmBgYA0KDQojIyMgQ2hlY2sgZm9yIGR1cGxpY2F0ZXMNCg0KTm9uZSBmb3VuZCEgR3JlYXQgc3RhcnQuDQoNCmBgYHtyfQ0KIyBJZGVhcyBmcm9tOiBodHRwczovL3d3dy5kYXRhc2NpZW5jZW1hZGVzaW1wbGUuY29tL3JlbW92ZS1kdXBsaWNhdGUtcm93cy1yLXVzaW5nLWRwbHlyLWRpc3RpbmN0LWZ1bmN0aW9uLw0KDQojIFJlbW92ZSBkdXBsaWNhdGUgcm93cyBvZiB0aGUgZGF0YWZyYW1lIHVzaW5nIG11bHRpcGxlIHZhcmlhYmxlcw0KDQpDRURFTlNVUkZfRHVwQ2hlY2tlZCA8LSBkaXN0aW5jdChDRURFTlNVUkYsIERhdGUsIEFuYWx5dGUsIENvbGxlY3Rpb25NZXRob2QsIFN0YXRpb25OYW1lLCBSZXN1bHQsIC5rZWVwX2FsbD0gVFJVRSkNCg0KbnJvdyhDRURFTlNVUkYpLW5yb3coQ0VERU5TVVJGX0R1cENoZWNrZWQpDQpgYGANCiMgTmV4dCBTdGVwcw0KDQpOZXh0LCB3ZSBuZWVkIHRvIGZpbmQgYSB3YXkgdG8gdW5pZnkgbm9tZW5jbGF0dXJlIGJldHdlZW4gdGhlIGRhdGFzZXRzLCBiZWZvcmUgd2UgY2FuIGNvbmZpZGVudGx5IHN1Z2dlc3QgdGhlcmUgaXMgbm8gbW9yZSBkdXBsaWNhdGlvbi4gRm9yIGV4YW1wbGUsIHRoZXJlIGFyZSBkaWZmZXJlbmNlcyBpbiBhbmFseXRlIG5vbWVuY2xhdHVyZSBiZXR3ZWVuIHRoZSBkYXRhYmFzZXM6DQoNCmBgYHtyfQ0KYW5hbHl0ZV9DIDwtIHNvcnQodW5pcXVlKENFREVOU1VSRiRBbmFseXRlW0NFREVOU1VSRiRTb3VyY2UgPT0gIkNFREVOIl0pKQ0KIyAxODA4DQoNCmFuYWx5dGVfUyA8LSBzb3J0KHVuaXF1ZShDRURFTlNVUkYkQW5hbHl0ZVtDRURFTlNVUkYkU291cmNlID09ICJTVVJGIl0pKQ0KIyAzMDcNCmBgYA0KDQpUaGVyZSBhcmUgYCByIGxlbmd0aChhbmFseXRlX0MpIGAgZGlmZmVyZW50IGFuYWx5dGVzIGluIHRoZSBDRURFTiBkYXRhLCB3aGlsZSBvbmx5IGByIGxlbmd0aChhbmFseXRlX1MpYCBpbiB0aGUgU1VSRi4NCg0KSXQgYXBwZWFycyB0aGF0IFNVUkYgZ2l2ZXMgdGhlIHNpbXBsZSBhbmFseXRlIG5hbWUsIHdoaWxlIENFREVOIHJldGFpbnMgYWRkaXRpb25hbCBpbmZvcm1hdGlvbiBpbiB0aGUgYW5hbHl0ZSBuYW1lIHNwZWNpZnlpbmcgJ3RvdGFsJyB2cyAncGFydGljdWxhdGUnIHZzIA0KJ2Rpc3NvbHZlZCcuDQoNCkZvciB0aGUgcHVycG9zZXMgb2YgdGhpcyBtZXJnZWQgZGF0YXNldCwgaXQgbWF5IG1ha2Ugc2Vuc2UgdG8gc2ltcGxpZnkgdGhlIGFuYWx5dGUgbmFtZXMgZnJvbSBDRURFTiwgYW5kIGFsbG93IHRoZSBvcmlnaW5hbCAodW5tZXJnZWQgd2l0aCBTVVJGKSBDRURFTiBkYXRhIHRvIGJlIHVzZWQgaW4gc2l0dWF0aW9ucyB3aGVyZSB0aGF0IGFkZGl0aW9uYWwgaW5mb3JtYXRpb24gaXMgcmVxdWlyZWQuDQoNCkZvciBleGFtcGxlLCBhIHN1YnNldCBvZiAiQW5hbHl0ZXMiIGluIGVhY2ggZGF0YWJhc2UgZm9sbG93Og0KYGBge3J9DQojIFNob3cgZXhhbXBsZSBvZiBkaWZmZXJlbmNlcw0KdGliYmxlKENFREVOID0gYyhhbmFseXRlX0NbMjA6NDBdKSwgU1VSRiA9IGMoYW5hbHl0ZV9TWzEwOjMwXSkpDQpgYGANCg0K</div>
 
 
 </div>

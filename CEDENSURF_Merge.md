@@ -10,10 +10,8 @@ output:
     toc_float:
       toc_collapsed: true
     toc_depth: 3
-    number_sections: true
     theme: lumen
 ---
-
 
 
 
@@ -26,7 +24,7 @@ library(sf)
 library(tidyverse)
 ```
 
-# Load Data
+# Load & Prep Data
 
 ### CEDEN
 
@@ -63,11 +61,11 @@ SURFMod_SED$Source <- rep("SURF", times=nrow(SURFMod_SED))
 SURFMod_WQ$Source <- rep("SURF", times=nrow(SURFMod_WQ))
 ```
 
-# Data investion first
+# Assess duplication within each database
 
 Due to reported combined efforts to translate CEDEN data to SURF and vice versa, and issues with replicates being retained in each dataset, careful detection and elimination of duplicates should precede any analysis.
 
-## CEDEN - Original Data {.tabset}
+## CEDEN Data {.tabset}
 
 Due to the structure of the tox data, I have a feeling it involves biological assays that were then related to WQ data sampled on that date (and already present in the CEDEN_WQ dataset. 
 
@@ -171,7 +169,7 @@ NoDup_Tox <- NoDup_Tox[NoDup_Tox$Analyte != "Biomass (wt/orig indiv)"]
 
 We're left with only 32011 unique, useful records in the tox dataset - or 52.7912001 % of the original tox data remaining
 
-< br >
+<br>
 
 ### CEDEN WQ
 
@@ -226,7 +224,7 @@ unique(CEDENMod_WQ$Program[CEDENMod_WQ$DupCheck == "TRUE"])
 
 Utilizign the distinct() function to assume that records in the same location on the same date, measuring the same analyte via the same collection method and obtaining the same result are duplicates, we find 1536 duplicate records.
 
-That is more than double the number of exact duplicates found, yet still only 1.4674247% of the entire WQ dataset.
+That is more than double the number of exact duplicates found, yet still only 1.3112067% of the entire WQ dataset.
 
 
 ```r
@@ -246,7 +244,7 @@ nrow(CEDENMod_WQ) - nrow(NoDupWQ)
 
 ## Merging CEDEN data
 
-After dealing with duplication WITHIN the CEDEN tox and wq datasets, there were only 75 duplicate records found following the merged data.
+After dealing with duplication WITHIN the CEDEN tox and wq datasets, there were only 9 duplicate records found following the merged data. (75 if Collection Method is not a requirement for establishing duplication)
 
 
 ```r
@@ -332,20 +330,20 @@ CEDEN_ALL <- rbind(NoDupWQ,NoDup_Tox)
 
 # Remove duplicate rows of the dataframe using multiple variables
 
-CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL, Date, Analyte, StationName, Result, .keep_all= TRUE)
+CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
 
 nrow(CEDEN_ALL)-nrow(CEDEN_ALL_DupChecked)
 ```
 
 ```
-## [1] 410
+## [1] 9
 ```
-< br >
+<br>
 
-< br >
+<br>
 
 
-## SURF DATA
+## SURF data {.tabset}
 
 
 ```r
@@ -412,13 +410,13 @@ Utilizing the distinct() function to assume that records in the same location on
 ```r
 # Remove duplicate rows of the dataframe using multiple variables
 
-NoDupWQ <- distinct(SURFMod_WQ, Date, Analyte, StationName, Result, .keep_all= TRUE)
+NoDupWQ <- distinct(SURFMod_WQ, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
 
 nrow(SURFMod_WQ) - nrow(NoDupWQ)
 ```
 
 ```
-## [1] 5676
+## [1] 5662
 ```
 <br>
 
@@ -478,7 +476,7 @@ Utilizing the distinct() function to assume that records in the same location on
 ```r
 # Remove duplicate rows of the dataframe using multiple variables
 
-NoDupSED <- distinct(SURFMod_SED, Date, Analyte, StationName, Result, .keep_all= TRUE)
+NoDupSED <- distinct(SURFMod_SED, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
 
 nrow(SURFMod_SED) - nrow(NoDupSED)
 ```
@@ -487,15 +485,17 @@ nrow(SURFMod_SED) - nrow(NoDupSED)
 ## [1] 784
 ```
 
-< br >
+<br>
 
-< br >
+<br>
 
 ## Merge SURF df
 
-After dealing with duplication WITHIN the SURF sed and wq datasets, there were still **26127** duplicate records found following the merging of the data if we assume that records in the same location on the same date, measuring the same analyte and obtaining the same result are duplicates.
+ZERO duplication found between the SED and WQ datasets, assuming duplicates would have to have the exact same Location, Date, Analyte, Collection Method, and Result.
 
-This doesn't take into accound sample method, yet it is surprising that the RESULT is identical for both sediment and water samples. By including "SampleMethod" to differentiate water and sediment samples, there was ZERO duplication found. 
+*Note* I had started without 'Collection Method' in the distinct() query, but added it as an additional requirement for establishing duplication because without that record, the difference between results for water vs sediment were not recognized and **26127** records were considered duplicates following the merging of the SURF data.
+
+This is still surprising to me, because that means the RESULT concentration was identical for both sediment and water samples. Are they truly sampled separately and exactly the same? By including "SampleMethod" to differentiate water and sediment samples, 
 
 
 ```r
@@ -581,11 +581,11 @@ nrow(SURF_ALL)-nrow(SURF_ALL_DupChecked)
 ## [1] 0
 ```
 
-< br >
+<br>
 
-< br >
+<br>
 
-## Merge SURF and CEDEN
+# Merge SURF and CEDEN
 
 
 ```r
@@ -593,6 +593,7 @@ rm(list=setdiff(ls(), c("CEDENMod_WQ", "CEDENMod_Tox", "CEDEN_ALL_DupChecked","S
 ```
 
 ### Data prep
+
 **Match columns to CEDEN data**
 
 
@@ -683,7 +684,7 @@ CEDENSURF <- rbind(CEDEN_ALL_DupChecked, SURF_ALL_DupChecked)
 
 ### Check for duplicates
 
-None found! Great news. Need to make sure this is not due to differences in nomenclature/formatting used in the analyte or other columns. 
+None found! Great start.
 
 
 ```r
@@ -698,5 +699,48 @@ nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
 
 ```
 ## [1] 0
+```
+# Next Steps
+
+Next, we need to find a way to unify nomenclature between the datasets, before we can confidently suggest there is no more duplication. For example, there are differences in analyte nomenclature between the databases:
+
+
+```r
+analyte_C <- sort(unique(CEDENSURF$Analyte[CEDENSURF$Source == "CEDEN"]))
+# 1808
+
+analyte_S <- sort(unique(CEDENSURF$Analyte[CEDENSURF$Source == "SURF"]))
+# 307
+```
+
+There are ` r length(analyte_C) ` different analytes in the CEDEN data, while only 307 in the SURF.
+
+It appears that SURF gives the simple analyte name, while CEDEN retains additional information in the analyte name specifying 'total' vs 'particulate' vs 
+'dissolved'.
+
+For the purposes of this merged dataset, it may make sense to simplify the analyte names from CEDEN, and allow the original (unmerged with SURF) CEDEN data to be used in situations where that additional information is required.
+
+For example, a subset of "Analytes" in each database follow:
+
+```r
+# Show example of differences
+tibble(CEDEN = c(analyte_C[20:40]), SURF = c(analyte_S[10:30]))
+```
+
+```
+## # A tibble: 21 x 2
+##    CEDEN                             SURF                    
+##    <chr>                             <chr>                   
+##  1 AFDM_Algae, Particulate           acephate                
+##  2 Alachlor, Dissolved               acetamiprid             
+##  3 Alachlor, Particulate             acibenzolar-s-methyl    
+##  4 Alachlor, Total                   acifluorfen, sodium salt
+##  5 Aldicarb, Total                   alachlor                
+##  6 Aldrin, Total                     aldicarb                
+##  7 Alkalinity as CaCO3, Not Recorded aldicarb sulfone        
+##  8 Alkalinity as CaCO3, Total        aldicarb sulfoxide      
+##  9 Allethrin, Dissolved              aldrin                  
+## 10 Allethrin, Particulate            allethrin               
+## # ... with 11 more rows
 ```
 
