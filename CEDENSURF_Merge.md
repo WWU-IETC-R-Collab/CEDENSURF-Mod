@@ -222,7 +222,7 @@ unique(CEDENMod_WQ$Program[CEDENMod_WQ$DupCheck == "TRUE"])
 
 #### Looser assessment of Duplication
 
-Utilizign the distinct() function to assume that records in the same location on the same date, measuring the same analyte via the same collection method and obtaining the same result are duplicates, we find 1536 duplicate records.
+Utilizing the distinct() function to assume that records in the same location on the same date, measuring the same analyte via the same collection method and obtaining the same result are duplicates, we find 1536 duplicate records.
 
 That is more than double the number of exact duplicates found, yet still only 1.3112067% of the entire WQ dataset.
 
@@ -422,7 +422,7 @@ nrow(SURFMod_WQ) - nrow(NoDupWQ)
 
 <br>
 
-## SURF sediment
+### SURF sediment
 
 #### Data Prep
 
@@ -579,6 +579,94 @@ nrow(SURF_ALL)-nrow(SURF_ALL_DupChecked)
 
 ```
 ## [1] 0
+```
+
+
+### Request: Examples of SURF duplicates when Collection Method is omitted? {.tabset}
+
+#### Conclusion
+
+Able to make df of "duplicate" entries for further inspection. Findings confirm that
+**ALL ARE DUE TO RESULT == 0**
+
+
+```r
+# Create DF limited to only one record per date,loc,analyte,result combo
+
+SURF_ALL_Check1 <- distinct(SURF_ALL, Date, Analyte, StationName, Result, .keep_all= TRUE)
+
+# ID columns retained only when use Collection Method also
+
+DIF<- setdiff(SURF_ALL_DupChecked, SURF_ALL_Check1) # gives items in A that are not in B
+
+# Produce vector of all different "Result" values in the duplicated data
+
+length(unique(SURF_ALL$Result)) # how many different "result" values are represented in the entire combined SURF dataset
+```
+
+```
+## [1] 1241
+```
+
+```r
+unique(DIF$Result) # All unique "result" values within the duplicates that were removed.
+```
+
+```
+## [1] 0
+```
+
+#### Preview Dups Removed
+
+
+```r
+# Example data that were removed? Omits first matching record.
+head(DIF)
+```
+
+```
+##                                Agency     Analyte CollectionMethod     County
+## 1: Sacramento River Watershed Program    ethoprop      Grab sample Sacramento
+## 2: Sacramento River Watershed Program   cyanazine      Grab sample Sacramento
+## 3: Sacramento River Watershed Program        eptc      Grab sample Sacramento
+## 4: Sacramento River Watershed Program     phorate      Grab sample Sacramento
+## 5: Sacramento River Watershed Program tebuthiuron      Grab sample Sacramento
+## 6: Sacramento River Watershed Program  disulfoton      Grab sample Sacramento
+##    Data.source       Date                geometry Latitude Longitude LOQ MDL
+## 1:       Other 2000-05-17 c(-121.50134, 38.45602) 38.45602 -121.5013 0.1  NA
+## 2:       Other 2000-05-17 c(-121.50134, 38.45602) 38.45602 -121.5013 0.5  NA
+## 3:       Other 2000-05-17 c(-121.50134, 38.45602) 38.45602 -121.5013 0.1  NA
+## 4:       Other 2000-05-17 c(-121.50134, 38.45602) 38.45602 -121.5013 0.1  NA
+## 5:       Other 2000-05-17 c(-121.50134, 38.45602) 38.45602 -121.5013 0.4  NA
+## 6:       Other 2000-05-17 c(-121.50134, 38.45602) 38.45602 -121.5013 0.1  NA
+##    Record_id Result Source StationCode
+## 1:    103805      0   SURF        34_5
+## 2:    104092      0   SURF        34_5
+## 3:    103795      0   SURF        34_5
+## 4:    103810      0   SURF        34_5
+## 5:    104094      0   SURF        34_5
+## 6:    103791      0   SURF        34_5
+##                                     StationName Study_cd
+## 1: Sacramento River at Freeport (USGS-11447650)       80
+## 2: Sacramento River at Freeport (USGS-11447650)       80
+## 3: Sacramento River at Freeport (USGS-11447650)       80
+## 4: Sacramento River at Freeport (USGS-11447650)       80
+## 5: Sacramento River at Freeport (USGS-11447650)       80
+## 6: Sacramento River at Freeport (USGS-11447650)       80
+##                                                                                                   Study_description
+## 1: Sacramento River Watershed Program data, 1998-2002, monitoring years 1-4.(No pesticide data collected for 1998).
+## 2: Sacramento River Watershed Program data, 1998-2002, monitoring years 1-4.(No pesticide data collected for 1998).
+## 3: Sacramento River Watershed Program data, 1998-2002, monitoring years 1-4.(No pesticide data collected for 1998).
+## 4: Sacramento River Watershed Program data, 1998-2002, monitoring years 1-4.(No pesticide data collected for 1998).
+## 5: Sacramento River Watershed Program data, 1998-2002, monitoring years 1-4.(No pesticide data collected for 1998).
+## 6: Sacramento River Watershed Program data, 1998-2002, monitoring years 1-4.(No pesticide data collected for 1998).
+##    Study_weblink        Subregion Total organic carbon (%) Unit
+## 1:            NA Sacramento River                       NA  ppb
+## 2:            NA Sacramento River                       NA  ppb
+## 3:            NA Sacramento River                       NA  ppb
+## 4:            NA Sacramento River                       NA  ppb
+## 5:            NA Sacramento River                       NA  ppb
+## 6:            NA Sacramento River                       NA  ppb
 ```
 
 <br>

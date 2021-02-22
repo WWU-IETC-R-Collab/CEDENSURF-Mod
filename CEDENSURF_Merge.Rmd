@@ -288,7 +288,7 @@ nrow(SURFMod_WQ) - nrow(NoDupWQ)
 
 <br>
 
-## SURF sediment
+### SURF sediment
 
 #### Data Prep
 
@@ -390,6 +390,37 @@ SURF_ALL <- rbind(NoDupWQ,NoDupSED)
 SURF_ALL_DupChecked <- distinct(SURF_ALL, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
 
 nrow(SURF_ALL)-nrow(SURF_ALL_DupChecked)
+```
+
+
+### Request: Examples of SURF duplicates when Collection Method is omitted? {.tabset}
+
+#### Conclusion
+
+Able to make df of "duplicate" entries for further inspection. Findings confirm that
+**ALL ARE DUE TO RESULT == 0**
+
+```{r}
+# Create DF limited to only one record per date,loc,analyte,result combo
+
+SURF_ALL_Check1 <- distinct(SURF_ALL, Date, Analyte, StationName, Result, .keep_all= TRUE)
+
+# ID columns retained only when use Collection Method also
+
+DIF<- setdiff(SURF_ALL_DupChecked, SURF_ALL_Check1) # gives items in A that are not in B
+
+# Produce vector of all different "Result" values in the duplicated data
+
+length(unique(SURF_ALL$Result)) # how many different "result" values are represented in the entire combined SURF dataset
+
+unique(DIF$Result) # All unique "result" values within the duplicates that were removed.
+```
+
+#### Preview Dups Removed
+
+```{r}
+# Example data that were removed? Omits first matching record.
+head(DIF)
 ```
 
 <br>
