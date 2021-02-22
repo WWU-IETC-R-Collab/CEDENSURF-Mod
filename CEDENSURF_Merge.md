@@ -702,6 +702,8 @@ nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
 ```
 # Next Steps
 
+### Naming conventions
+
 Next, we need to find a way to unify nomenclature between the datasets, before we can confidently suggest there is no more duplication. For example, there are differences in analyte nomenclature between the databases:
 
 
@@ -744,3 +746,55 @@ tibble(CEDEN = c(analyte_C[20:40]), SURF = c(analyte_S[10:30]))
 ## # ... with 11 more rows
 ```
 
+### Wayne Q: Differences in duplication by year?{.tabset}
+
+There is definitely a more streamlined way to do this, but for expediency... These tables contain the total count of **Exact** duplicates identified in each dataframe. Recall from above that there were more duplicates found usign the final method, but this will give us an initial picture. 
+
+Because there were no exact duplicates for the SURF df, I have not compared their duplication by year.
+
+#### CEDEN WQ
+
+```r
+CEDENMod_WQ$year <- format(as.Date(CEDENMod_WQ$Date, format="%d/%m/%Y"),"%Y")
+
+aggregate(DupCheck~year,FUN=length,data=CEDENMod_WQ[CEDENMod_WQ$DupCheck=="TRUE",])
+```
+
+```
+##   year DupCheck
+## 1 2010       79
+## 2 2011      193
+## 3 2012       76
+## 4 2013       21
+## 5 2014      140
+## 6 2015       40
+## 7 2016        7
+## 8 2017       84
+## 9 2018       17
+```
+
+#### CEDEN Tox
+
+2015 and 2016 were far worse than other years. 
+
+
+```r
+CEDENMod_Tox$year <- format(as.Date(CEDENMod_Tox$Date, format="%d/%m/%Y"),"%Y")
+
+aggregate(DupCheck~year,FUN=length,data=CEDENMod_Tox[CEDENMod_Tox$DupCheck=="TRUE",])
+```
+
+```
+##    year DupCheck
+## 1  2009      139
+## 2  2010     2162
+## 3  2011     1095
+## 4  2012      734
+## 5  2013     1070
+## 6  2014     1238
+## 7  2015     3273
+## 8  2016     4774
+## 9  2017     1660
+## 10 2018     1098
+## 11 2019     1031
+```
