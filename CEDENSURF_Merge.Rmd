@@ -158,7 +158,7 @@ unique(CEDENMod_WQ$Program[CEDENMod_WQ$DupCheck == "TRUE"])
 
 #### Looser assessment of Duplication
 
-Utilizign the distinct() function to assume that records in the same location on the same date, measuring the same analyte via the same collection method and obtaining the same result are duplicates, we find 1536 duplicate records.
+Utilizing the distinct() function to assume that records in the same location on the same date, measuring the same analyte via the same collection method and obtaining the same result are duplicates, we find 1536 duplicate records.
 
 That is more than double the number of exact duplicates found, yet still only `r 100*1536/nrow(CEDENMod_WQ)`% of the entire WQ dataset.
 
