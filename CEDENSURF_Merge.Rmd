@@ -301,7 +301,9 @@ Example <- do.call(rbind, Dups)
 Example
 ```
 
-### Splitting Analyte Column
+### Fixing CEDEN nomenclature
+
+#### Splitting Analyte column
 
 Because of formatting differences between the amount of data recorded under "Analyte" in CEDEN compared to the "Chemical_name" in SURF (which will be renamed Analyte), we opted to split the data in CEDEN's analyte column into two columns: 
 Analyte (Chemical Name), and Analyte_Type (ie: total or particulate)
@@ -315,6 +317,13 @@ head(sort(unique(CEDEN_ALL_DupChecked$Analyte))) # 908 unique Analytes total
 
 # Looks like requiring the separation from extra to analyte to contain a comma and a space allowed the full names to be retained. Without that, the separation led to an analyte "1" which should have been 1,2-bis(2,4,6- tribromophenoxy)ethane, etc.
 ```
+
+#### Convert to lower-case
+
+```{r}
+CEDEN_ALL_DupChecked$Analyte <- tolower(CEDEN_ALL_DupChecked$Analyte)
+```
+
 
 ```{r}
 # How many records available via full CEDEN merge?
@@ -672,15 +681,25 @@ nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
 
 We should check whether splitting the Analyte column in CEDEN helped to unify the nomenclature between datasets, before we can confidently suggest there is no more duplication.
 
-The lists of analytes are MUCH closer to eachother using this method, though it isn't perfect. Some further generalizations seem to exist in SURF Chemical_names, and more analytes are recorded in CEDEN
+The lists of analytes are MUCH closer to the same length using this method, though still all names in CEDEN are different than those in SURF (908 unique analytes in CEDEN, and 908 in the difference between CEDEN and SURF)
+
+There still remains an issue with capitalization - now that the names are consistent, CEDEN capitalizes chemicals while SURF does not.
+
+For example, the first 10 analytes from each source are:
 ```{r}
+CEDENSURF$Analyte <- tolower(CEDENSURF$Analyte)
+
 analyte_C <- sort(unique(CEDENSURF$Analyte[CEDENSURF$Source == "CEDEN"]))
 # 908 (was >1800 before splitting the column)
-
 
 analyte_S <- sort(unique(CEDENSURF$Analyte[CEDENSURF$Source == "SURF"]))
 # 307
 
+tibble(CEDEN = analyte_C[2:11], SURF = analyte_S[1:10])
+```
+
+
+```{r}
 DIF <- setdiff(analyte_C, analyte_S)
 # Main things in C and not in S:
 # PCH as ... three dif, 

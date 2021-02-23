@@ -588,7 +588,9 @@ Example
 ## 686: Deg C
 ```
 
-### Splitting Analyte Column
+### Fixing CEDEN nomenclature
+
+#### Splitting Analyte column
 
 Because of formatting differences between the amount of data recorded under "Analyte" in CEDEN compared to the "Chemical_name" in SURF (which will be renamed Analyte), we opted to split the data in CEDEN's analyte column into two columns: 
 Analyte (Chemical Name), and Analyte_Type (ie: total or particulate)
@@ -621,6 +623,14 @@ head(sort(unique(CEDEN_ALL_DupChecked$Analyte))) # 908 unique Analytes total
 ```r
 # Looks like requiring the separation from extra to analyte to contain a comma and a space allowed the full names to be retained. Without that, the separation led to an analyte "1" which should have been 1,2-bis(2,4,6- tribromophenoxy)ethane, etc.
 ```
+
+#### Convert to lower-case
+
+
+```r
+CEDEN_ALL_DupChecked$Analyte <- tolower(CEDEN_ALL_DupChecked$Analyte)
+```
+
 
 
 ```r
@@ -1432,16 +1442,43 @@ nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
 
 We should check whether splitting the Analyte column in CEDEN helped to unify the nomenclature between datasets, before we can confidently suggest there is no more duplication.
 
-The lists of analytes are MUCH closer to eachother using this method, though it isn't perfect. Some further generalizations seem to exist in SURF Chemical_names, and more analytes are recorded in CEDEN
+The lists of analytes are MUCH closer to the same length using this method, though still all names in CEDEN are different than those in SURF (908 unique analytes in CEDEN, and 908 in the difference between CEDEN and SURF)
+
+There still remains an issue with capitalization - now that the names are consistent, CEDEN capitalizes chemicals while SURF does not.
+
+For example, the first 10 analytes from each source are:
 
 ```r
+CEDENSURF$Analyte <- tolower(CEDENSURF$Analyte)
+
 analyte_C <- sort(unique(CEDENSURF$Analyte[CEDENSURF$Source == "CEDEN"]))
 # 908 (was >1800 before splitting the column)
-
 
 analyte_S <- sort(unique(CEDENSURF$Analyte[CEDENSURF$Source == "SURF"]))
 # 307
 
+tibble(CEDEN = analyte_C[2:11], SURF = analyte_S[1:10])
+```
+
+```
+## # A tibble: 10 x 2
+##    CEDEN                                      SURF                         
+##    <chr>                                      <chr>                        
+##  1 1,2-bis(2,4,6- tribromophenoxy)ethane      1,4-dichlorobenzene (p-dcb0  
+##  2 2-ethyl-1-hexyl-2,3,4,5-tetrabromobenzoate 2,4-d                        
+##  3 2-ethylhexyl-diphenyl phosphate            2,4-db                       
+##  4 2,4,6-tribromophenyl allyl ether           2,4,5-t                      
+##  5 abamectin                                  3-hydroxycarbofuran          
+##  6 acenaphthene                               4-hydroxy chlorothalonil     
+##  7 acenaphthenes                              4-hydroxy molinate           
+##  8 acenaphthylene                             4(2,4-db), dimethylamine salt
+##  9 acetamiprid                                abamectin                    
+## 10 acetone                                    acephate
+```
+
+
+
+```r
 DIF <- setdiff(analyte_C, analyte_S)
 # Main things in C and not in S:
 # PCH as ... three dif, 
@@ -1471,16 +1508,16 @@ tibble(CEDEN = c(analyte_C[20:40]), SURF = c(analyte_S[10:30]))
 ## # A tibble: 21 x 2
 ##    CEDEN               SURF                    
 ##    <chr>               <chr>                   
-##  1 Alkalinity as CaCO3 acephate                
-##  2 Allethrin           acet                    
-##  3 Aluminum            acetamiprid             
-##  4 Ametryn             acibenzolar-s-methyl    
-##  5 Aminocarb           acifluorfen, sodium salt
-##  6 Ammonia as N        alachlor                
-##  7 Ammonia as NH3      aldicarb                
-##  8 Ammonium as N       aldicarb sulfone        
-##  9 AnalysisWeight      aldicarb sulfoxide      
-## 10 Anatoxin-A          aldrin                  
+##  1 alkalinity as caco3 acephate                
+##  2 allethrin           acet                    
+##  3 aluminum            acetamiprid             
+##  4 ametryn             acibenzolar-s-methyl    
+##  5 aminocarb           acifluorfen, sodium salt
+##  6 ammonia as n        alachlor                
+##  7 ammonia as nh3      aldicarb                
+##  8 ammonium as n       aldicarb sulfone        
+##  9 analysisweight      aldicarb sulfoxide      
+## 10 anatoxin-a          aldrin                  
 ## # ... with 11 more rows
 ```
 
