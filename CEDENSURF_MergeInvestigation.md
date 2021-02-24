@@ -1,5 +1,5 @@
 ---
-title: "CEDENSURF_Merge"
+title: "Merge Investigation"
 author: "Erika W"
 date: "2/18/2021"
 output:
@@ -362,21 +362,13 @@ nrow(CEDEN_ALL_DupChecked) - nrow(CEDEN_ALL_Check1)
 ## [1] 401
 ```
 
-```r
-# ID columns retained only when use Collection Method also
-
-DIF<- setdiff(CEDEN_ALL_DupChecked, CEDEN_ALL_Check1) # gives items in A that are not in B
-nrow(DIF)
-```
-
-```
-## [1] 401
-```
 Restricting the duplicates of concern to those which are non-zero values... It appears that there are 6 different collection methods represented in the duplicated data.
 
 Sleuthing what is going on:
 
-1. Many are duplication within a parent project, with one entry having sample method marked "not recorded" and the other defined. 
+1. Many are duplication within a parent project, with one entry having sample method marked "not recorded" and the other defined. While the entire CEDEN dataset has 305 samples labeled "not recorded", 153 of these are likely duplicated data.
+
+**Question** Is it worth simply removing all records for which the sample method is not recorded?
 
 2. Two projects hold the majority of the duplication: CA Dept of Transit NPDES Monitoring 2014-2015 (153), and San Joaquin County Delta Water Quality Coalition (105)
 
@@ -387,6 +379,17 @@ Sleuthing what is going on:
 
 **--> Question** Does it make sense to have a sample defined as a sediment grab method + matrix of overlying water? Does it make sense for these samples to have identical results?
 
+
+```r
+# ID columns retained only when use Collection Method also
+
+DIF<- setdiff(CEDEN_ALL_DupChecked, CEDEN_ALL_Check1) # gives items in A that are not in B
+nrow(DIF)
+```
+
+```
+## [1] 401
+```
 
 ```r
 # 343 duplicates had non-zero results
@@ -445,27 +448,6 @@ summary(DIF$ParentProject)
 ##                                                2 
 ##                    SWAMP Stream Pollution Trends 
 ##                                                1
-```
-
-```r
-# How does number of "not recorded" methods in these duplications compare to those in the entire df?
-
-paste("Collection Method = Not Recorded in...")
-```
-
-```
-## [1] "Collection Method = Not Recorded in..."
-```
-
-```r
-tibble(Entire = nrow(CEDEN_ALL_DupChecked[CEDEN_ALL_DupChecked$CollectionMethod== "Not Recorded"]), Dup = nrow(DIF[DIF$CollectionMethod== "Not Recorded"]))
-```
-
-```
-## # A tibble: 1 x 2
-##   Entire   Dup
-##    <int> <int>
-## 1    307    79
 ```
 
 #### Printout of duplicated data
@@ -588,15 +570,49 @@ Example
 ## 686: Deg C
 ```
 
+```r
+# How does number of "not recorded" methods in these duplications compare to those in the entire df?
+
+paste("Collection Method = Not Recorded in...")
+```
+
+```
+## [1] "Collection Method = Not Recorded in..."
+```
+
+```r
+tibble(Entire = nrow(CEDEN_ALL_DupChecked[CEDEN_ALL_DupChecked$CollectionMethod== "Not Recorded"]), Dup = nrow(Example[Example$CollectionMethod== "Not Recorded"]))
+```
+
+```
+## # A tibble: 1 x 2
+##   Entire   Dup
+##    <int> <int>
+## 1    307   153
+```
+
 ### Fixing CEDEN nomenclature
 
-#### Splitting Analyte column
+**Split Analyte Column**
 
 Because of formatting differences between the amount of data recorded under "Analyte" in CEDEN compared to the "Chemical_name" in SURF (which will be renamed Analyte), we opted to split the data in CEDEN's analyte column into two columns: 
+
 Analyte (Chemical Name), and Analyte_Type (ie: total or particulate)
 
 
+Using separate() to split the column and requiring the separation to be a comma and space ", " seems to have worked well, except for one name which appears to be empty
+
+**Convert to lower-case**
+
+SURF chemicals are all lowercase. We can make all letters in the CEDEN data lowercase using tolower() so that they will be compatible.
+
 ```r
+# Remove subset of data determined to be >50% duplication
+
+CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>% filter(CollectionMethod != "Not Recorded")
+
+# Split Analyte column
+
 CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>%
   separate(Analyte, into = c("Analyte", "Analyte_type"), sep = ", " , extra = "merge")
 ```
@@ -607,7 +623,11 @@ CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>%
 ```
 
 ```r
-# sort(unique(CEDEN_ALL_DupChecked$Analyte))
+# Convert to lowercase
+
+CEDEN_ALL_DupChecked$Analyte <- tolower(CEDEN_ALL_DupChecked$Analyte)
+
+# Preview
 head(sort(unique(CEDEN_ALL_DupChecked$Analyte))) # 908 unique Analytes total
 ```
 
@@ -615,22 +635,16 @@ head(sort(unique(CEDEN_ALL_DupChecked$Analyte))) # 908 unique Analytes total
 ## [1] ""                                          
 ## [2] "1,2-bis(2,4,6- tribromophenoxy)ethane"     
 ## [3] "2-ethyl-1-hexyl-2,3,4,5-tetrabromobenzoate"
-## [4] "2-Ethylhexyl-diphenyl phosphate"           
+## [4] "2-ethylhexyl-diphenyl phosphate"           
 ## [5] "2,4,6-tribromophenyl allyl ether"          
-## [6] "Abamectin"
+## [6] "abamectin"
 ```
 
 ```r
 # Looks like requiring the separation from extra to analyte to contain a comma and a space allowed the full names to be retained. Without that, the separation led to an analyte "1" which should have been 1,2-bis(2,4,6- tribromophenoxy)ethane, etc.
 ```
 
-#### Convert to lower-case
-
-
-```r
-CEDEN_ALL_DupChecked$Analyte <- tolower(CEDEN_ALL_DupChecked$Analyte)
-```
-
+### CEDEN merge result
 
 
 ```r
@@ -639,9 +653,46 @@ nrow(CEDEN_ALL_DupChecked)
 ```
 
 ```
-## [1] 147610
+## [1] 147303
 ```
+
 In the end, there are 147610 unique records available through the CEDEN datasets. 
+
+Transforming the Analyte column to simplify it also changed the results of our duplication checks output. 
+
+
+```r
+CEDEN_ALL_Check1 <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, CollectionMethod, 
+                              StationName, Result,MatrixName,
+                             .keep_all= TRUE)
+
+nrow(CEDEN_ALL_DupChecked) - nrow(CEDEN_ALL_Check1)
+```
+
+```
+## [1] 3778
+```
+
+```r
+DIF<- setdiff(CEDEN_ALL_DupChecked, CEDEN_ALL_Check1)
+
+Dups <- vector("list") # save empty list where each subset be saved
+
+for (i in 1:343){
+  Dups[[i]] <- CEDEN_ALL %>% filter(., Analyte == DIF$Analyte[i],
+                                         Date == DIF$Date[i], 
+                                         StationName == DIF$StationName[i],
+                                    Result == DIF$Result[i])
+  }
+
+Example <- do.call(rbind, Dups)
+Example
+```
+
+```
+## Empty data.table (0 rows and 21 cols): Analyte,CollectionMethod,Date,Datum,geometry,Latitude...
+```
+
 
 <br>
 
@@ -1434,7 +1485,7 @@ nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
 ```
 
 ```
-## [1] 15296
+## [1] 15290
 ```
 # Next Steps
 
