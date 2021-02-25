@@ -24,7 +24,15 @@ library(sf)
 library(tidyverse)
 ```
 
+# Intro
+
+This markdown covers the process to identify duplication within the CEDEN and SURF datasets, and to merge those datasets together to make a quality-assured database for use in our analyses.
+
 # Load Data
+
+SURF Data was acquired at the DPR SURF database web page as CSVs via FTP download on 2/17/2021, and modified via the methods outlined in https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/blob/main/CEDENSURF.md prior to this work.
+
+CEDEN Data was acquired from https://ceden.waterboards.ca.gov/AdvancedQueryTool, for the Central Valley and San Francisco Bay regions, and spatially queried to the USFE project area. This original data set can be found within the IETC Tox Box at: Upper San Francisco Project\Data & Analyses\Original\CEDEN. The methods of prior modification are at: https://github.com/WWU-IETC-R-Collab/CEDEN-mod/blob/main/CEDEN_ModMaster.md
 
 ### CEDEN
 
@@ -176,28 +184,9 @@ NoDup_Tox[, DIF] <- NA
 WQ <- sort(names(NoDup_WQ))
 TOX <- sort(names(NoDup_Tox))
 
-NoDup_Tox <- NoDup_Tox %>% select(TOX)
-```
+NoDup_Tox <- NoDup_Tox %>% select(all_of(TOX))
+NoDup_WQ <- NoDup_WQ %>% select(all_of(WQ))
 
-```
-## Note: Using an external vector in selections is ambiguous.
-## i Use `all_of(TOX)` instead of `TOX` to silence this message.
-## i See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.
-## This message is displayed once per session.
-```
-
-```r
-NoDup_WQ <- NoDup_WQ %>% select(WQ)
-```
-
-```
-## Note: Using an external vector in selections is ambiguous.
-## i Use `all_of(WQ)` instead of `WQ` to silence this message.
-## i See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.
-## This message is displayed once per session.
-```
-
-```r
 # Check once all columns have perfect matches?
 # tibble(SURF = names(NoDup_Tox), CEDEN = names(NoDup_WQ))
 
@@ -426,18 +415,8 @@ NoDup_SED[, DIF] <- NA
 WQ <- sort(names(NoDup_WQ))
 SED <- sort(names(NoDup_SED))
 
-NoDup_SED <- NoDup_SED %>% select(SED)
-```
-
-```
-## Note: Using an external vector in selections is ambiguous.
-## i Use `all_of(SED)` instead of `SED` to silence this message.
-## i See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.
-## This message is displayed once per session.
-```
-
-```r
-NoDup_WQ <- NoDup_WQ %>% select(WQ)
+NoDup_SED <- NoDup_SED %>% select(all_of(SED))
+NoDup_WQ <- NoDup_WQ %>% select(all_of(WQ))
 
 # Check once all columns have perfect matches?
 # tibble(SURF = names(NoDup_SED), CEDEN = names(NoDup_WQ))
@@ -530,28 +509,9 @@ SURF_ALL_DupChecked[, DIF] <- NA
 C <- sort(names(CEDEN_ALL_DupChecked)) # 908
 S <- sort(names(SURF_ALL_DupChecked)) # 327
 
-SURF_ALL_DupChecked <- SURF_ALL_DupChecked %>% select(S)
-```
+SURF_ALL_DupChecked <- SURF_ALL_DupChecked %>% select(all_of(S))
+CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>% select(all_of(C))
 
-```
-## Note: Using an external vector in selections is ambiguous.
-## i Use `all_of(S)` instead of `S` to silence this message.
-## i See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.
-## This message is displayed once per session.
-```
-
-```r
-CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>% select(C)
-```
-
-```
-## Note: Using an external vector in selections is ambiguous.
-## i Use `all_of(C)` instead of `C` to silence this message.
-## i See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>.
-## This message is displayed once per session.
-```
-
-```r
 # Check once all columns have perfect matches?
 # tibble(SURF = names(SURF_ALL_DupChecked), CEDEN = names(CEDEN_ALL_DupChecked))
 
@@ -578,6 +538,7 @@ nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
 ```
 ## [1] 0
 ```
+
 # Next Steps
 
 ### Naming conventions

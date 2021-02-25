@@ -25,7 +25,15 @@ library(sf)
 library(tidyverse)
 ```
 
+# Intro
+
+This markdown covers the process to identify duplication within the CEDEN and SURF datasets, and to merge those datasets together to make a quality-assured database for use in our analyses.
+
 # Load Data
+
+SURF Data was acquired at the DPR SURF database web page as CSVs via FTP download on 2/17/2021, and modified via the methods outlined in https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/blob/main/CEDENSURF.md prior to this work.
+
+CEDEN Data was acquired from https://ceden.waterboards.ca.gov/AdvancedQueryTool, for the Central Valley and San Francisco Bay regions, and spatially queried to the USFE project area. This original data set can be found within the IETC Tox Box at: Upper San Francisco Project\Data & Analyses\Original\CEDEN. The methods of prior modification are at: https://github.com/WWU-IETC-R-Collab/CEDEN-mod/blob/main/CEDEN_ModMaster.md
 
 ### CEDEN
 
@@ -151,8 +159,8 @@ NoDup_Tox[, DIF] <- NA
 WQ <- sort(names(NoDup_WQ))
 TOX <- sort(names(NoDup_Tox))
 
-NoDup_Tox <- NoDup_Tox %>% select(TOX)
-NoDup_WQ <- NoDup_WQ %>% select(WQ)
+NoDup_Tox <- NoDup_Tox %>% select(all_of(TOX))
+NoDup_WQ <- NoDup_WQ %>% select(all_of(WQ))
 
 # Check once all columns have perfect matches?
 # tibble(SURF = names(NoDup_Tox), CEDEN = names(NoDup_WQ))
@@ -184,13 +192,6 @@ Further assessment revealed problematic data duplication that was not caught whe
 
 CEDEN_ALL_DupChecked <- filter(CEDEN_ALL_DupChecked, CollectionMethod != "Not Recorded")
 
-# How to check to see how many more duplicates (of non-zero results) would have been removed if we don't restrict to identical "CollectionMethod" values
-
-Check <- distinct(CEDEN_ALL, Date, Analyte, 
-              StationName, Result, 
-              .keep_all= TRUE)
-
-nrow(CEDEN_ALL_DupChecked[CEDEN_ALL_DupChecked$Result != 0]) - nrow(Check[Check$Result != 0])
 ```
 
 ### Fix nomenclature
@@ -224,7 +225,9 @@ head(sort(unique(CEDEN_ALL_DupChecked$Analyte))) # 908 unique Analytes total
 # Looks like requiring the separation from extra to analyte to contain a comma and a space allowed the full names to be retained. Without that, the separation led to an analyte "1" which should have been 1,2-bis(2,4,6- tribromophenoxy)ethane, etc.
 ```
 
-This simplification of Analyte name would lead to 15,290 more records being considered "duplication" using our current method, mostly (14,776) containing a zero-result. Because these differences in analytes are not retained in the SURF dataset, it makes sense to condense them prior to merging the databases.
+This simplification of Analyte name would lead to 15,290 more records being considered "duplication" using our current method, mostly (14,776) containing a zero-result. Because these differences in analytes are not retained in the SURF dataset, it makes sense to condense them (remove duplicates) prior to merging the databases.
+
+Removal of these simplified duplicates also eliminates the utility of retaining the "Analyte Type" column. For example, a reading of Analyte X with Type = Total Type = Suspended have the exact same result. Removing duplicates would keep the first record (Analyte = X, Type = Total) and remove the second (Analyte X, Type = S). In the dataframe, if you are trying to reason backwards to the meaning of that remaining meaning (Analyte X, Type = Total), you're missing the other half of the story (Type = Sus too). So, to avoid improper interpretation of this dataframe, Analyte Type should be removed. 
 
 ```{r, eval = F}
 Check <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
@@ -236,7 +239,8 @@ length(DIF$Result[DIF$Result == "0"])
 ```
 
 ```{r}
-CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
+CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE) %>%
+  select(-Analyte_type)
 ```
 
 ### CEDEN merge result
@@ -298,8 +302,8 @@ Used distinct() to remove duplicates (records in the same location on the same d
 # Remove duplicate rows of the dataframe using multiple variables
 
 NoDup_WQ <- distinct(SURFMod_WQ, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
-
 ```
+
 We find `r nrow(SURFMod_WQ) - nrow(NoDup_WQ)`, 5,676 of which come from the SURF data sourced from CEDEN
 
 <br>
@@ -342,8 +346,8 @@ NoDup_SED[, DIF] <- NA
 WQ <- sort(names(NoDup_WQ))
 SED <- sort(names(NoDup_SED))
 
-NoDup_SED <- NoDup_SED %>% select(SED)
-NoDup_WQ <- NoDup_WQ %>% select(WQ)
+NoDup_SED <- NoDup_SED %>% select(all_of(SED))
+NoDup_WQ <- NoDup_WQ %>% select(all_of(WQ))
 
 # Check once all columns have perfect matches?
 # tibble(SURF = names(NoDup_SED), CEDEN = names(NoDup_WQ))
@@ -357,7 +361,6 @@ SURF_ALL <- rbind(NoDup_WQ,NoDup_SED)
 ZERO duplication found between the SED and WQ datasets, assuming duplicates would have to have the exact same Location, Date, Analyte, Collection Method, and Result.
 
 ```{r}
-
 # Remove duplicate rows of the dataframe using multiple variables
 
 SURF_ALL_DupChecked <- distinct(SURF_ALL, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
@@ -428,8 +431,8 @@ SURF_ALL_DupChecked[, DIF] <- NA
 C <- sort(names(CEDEN_ALL_DupChecked)) # 908
 S <- sort(names(SURF_ALL_DupChecked)) # 327
 
-SURF_ALL_DupChecked <- SURF_ALL_DupChecked %>% select(S)
-CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>% select(C)
+SURF_ALL_DupChecked <- SURF_ALL_DupChecked %>% select(all_of(S))
+CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>% select(all_of(C))
 
 # Check once all columns have perfect matches?
 # tibble(SURF = names(SURF_ALL_DupChecked), CEDEN = names(CEDEN_ALL_DupChecked))
@@ -439,38 +442,3 @@ CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>% select(C)
 CEDENSURF <- rbind(SURF_ALL_DupChecked, CEDEN_ALL_DupChecked)
 ```
 
-### Check for duplicates
-
-Even retaining the CEDEN data in SURF prior to merge, we locate no duplicates using this method. There are likely still issues with matching nomenclature (ie: Anaylte names) between the data sources preventing this.
-
-```{r}
-# Ideas from: https://www.datasciencemadesimple.com/remove-duplicate-rows-r-using-dplyr-distinct-function/
-
-# Remove duplicate rows of the dataframe using multiple variables
-
-CEDENSURF_DupChecked <- distinct(CEDENSURF, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
-
-nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
-```
-# Next Steps
-
-### Naming conventions
-
-We should check whether splitting the Analyte column in CEDEN helped to unify the nomenclature between datasets, before we can confidently suggest there is no more duplication.
-
-The lists of analytes are MUCH closer to the same length using this method, though still all names in CEDEN are different than those in SURF (908 unique analytes in CEDEN, and 908 in the difference between CEDEN and SURF)
-
-For example, a subset of "Analytes" in each database follow:
-
-```{r}
-## Example analytes observed in each dataset
-
-analyte_C <- sort(unique(CEDENSURF$Analyte[CEDENSURF$Source == "CEDEN"]))
-# 908 (was >1800 before splitting the column)
-
-analyte_S <- sort(unique(CEDENSURF$Analyte[CEDENSURF$Source == "SURF"]))
-# 307
-
-# Show example of differences
-tibble(CEDEN = c(analyte_C[20:40]), SURF = c(analyte_S[10:30]))
-```

@@ -61,22 +61,20 @@ SURFMod_SED$Source <- rep("SURF", times=nrow(SURFMod_SED))
 SURFMod_WQ$Source <- rep("SURF", times=nrow(SURFMod_WQ))
 ```
 
-# Assess duplication within each database
+# Remove Duplicates
 
-Due to reported combined efforts to translate CEDEN data to SURF and vice versa, and issues with replicates being retained in each dataset, careful detection and elimination of duplicates should precede any analysis.
+Due to reported combined efforts to translate CEDEN data to SURF and vice versa, and issues with replicates being retained in each dataset, careful detection and elimination of duplicates should precede any merge and analysis.
 
-## CEDEN Data {.tabset}
+## CEDEN Data
 
-Due to the structure of the tox data, I have a feeling it involves biological assays that were then related to WQ data sampled on that date (and already present in the CEDEN_WQ dataset. 
+The tox data seems to be focused on associating WQ parameters with specific biological assays. These WQ parameters may already be present in the CEDEN_WQ dataset. 
 
 There are 117144 records in the WQ dataset
 and 60637 in the Tox dataset. 
 
 ### CEDEN Tox 
 
-In the tox dataset, there were several records related to a single species assessment - by creating a group identifier by the location, date, and organism assessed, I calculated that there were 2430 unique samples.
-
-Within the Tox dataset, 11 different species are represented.
+In the tox dataset, there were several records related to each species assessment - by creating a group identifier by the location, date, and organism assessed, I calculated that there were ~ 2430 unique biological assays.11 different species are represented.
 
 #### Exact duplicates
 
@@ -125,7 +123,12 @@ unique(CEDENMod_Tox$Program[CEDENMod_Tox$DupCheck == "TRUE"])
 
 #### Alternative (looser) assessment of duplication
 
-If we assume that some columns may differ due to differences in data loading (ie: originally submitted to SURF and brought to CEDEN vs originally loaded to CEDEN), then we may want to use a looser structure to detect duplicates. 
+If we assume that some columns may differ due to differences in data loading, then we may want to use a looser structure to detect duplicates. 
+
+By assuming that records in the same location on the same date,  measuring the same analyte via the same collection method, and obtaining the same result are duplicates, we find almost 50% more duplicates. 
+25729 records, to be specific. 
+
+That is 42.4311889% of the dataset.
 
 
 ```r
@@ -138,36 +141,18 @@ nrow(CEDENMod_Tox) - nrow(NoDup_Tox)
 ## [1] 25729
 ```
 
-By assuming that records in the same location on the same date,  measuring the same analyte via the same collection method, and obtaining the same result are duplicates, we find almost 50% more duplicates. 
-25729 records, to be specific. 
-
-That is 42.4311889% of the dataset.
-
-Including Organism name in the list of differentiating variables, it returns almost the exact same count of duplicates (18274) as exact duplication (18297) - indicating that a major source of WQ duplication is repeating WQ parameters for multiple species assessed.
+Since we are using the df for the water parameters and not the associated organism survival, we can remove the organism column, and also remove records that assess biotic parameters like 'survival' and 'biomass'.
 
 
 ```r
-# Remove duplicate rows of the dataframe using multiple variables & ORGANISM NAME
-
-nrow(CEDENMod_Tox) - nrow(distinct(CEDENMod_Tox, Date, StationName, CollectionMethod, OrganismName, Analyte, Result, .keep_all= TRUE))
+NoDup_Tox <- NoDup_Tox %>% filter(Analyte != "Survival") %>%
+  filter(Analyte != "Biomass (wt/orig indiv)") %>%
+  filter(Analyte != "Young/female") %>%
+  filter(Analyte != "Total Cell Count") %>%
+  select(-OrganismName)
 ```
 
-```
-## [1] 18274
-```
-
-Since we are using the df for the water parameters and not the associated organism survival, it's more useful to remove duplicate WQ entries regardless of the organism. We can also remove records that assess 'survival' and 'biomass' (since we aren't using this for the biotic parameters in our model).
-
-
-```r
-NoDup_Tox <- NoDup_Tox[NoDup_Tox$Analyte != "Survival"]
-
-NoDup_Tox <- NoDup_Tox[NoDup_Tox$Analyte != "Biomass (wt/orig indiv)"]
-
-# nrow = 31859
-```
-
-We're left with only 32011 unique, useful records in the tox dataset - or 52.7912001 % of the original tox data remaining
+We're left with only 27872 unique, useful records in the tox dataset - or 46% of the original tox data remaining
 
 <br>
 
@@ -180,7 +165,6 @@ duplicated() produces a vector identifying which records are duplicated. This ca
 
 ```r
 # add index column identifying which entries are duplicated
-
 CEDENMod_WQ$DupCheck <- duplicated(CEDENMod_WQ)
 
 summary(CEDENMod_WQ$DupCheck)
@@ -224,7 +208,7 @@ unique(CEDENMod_WQ$Program[CEDENMod_WQ$DupCheck == "TRUE"])
 
 Utilizing the distinct() function to assume that records in the same location on the same date, measuring the same analyte via the same collection method and obtaining the same result are duplicates, we find 1536 duplicate records.
 
-That is more than double the number of exact duplicates found, yet still only 1.3112067% of the entire WQ dataset.
+That is more than double the number of exact duplicates found, yet still only 1.3% of the entire WQ dataset.
 
 
 ```r
@@ -249,7 +233,7 @@ After dealing with duplication WITHIN the CEDEN tox and wq datasets, there were 
 
 ```r
 # Strip column with duplicate check from both, and organism from tox
-NoDup_Tox <- select(NoDup_Tox, -c(DupCheck, OrganismName))
+NoDup_Tox <- select(NoDup_Tox, -c(DupCheck))
 NoDupWQ <- select(NoDupWQ, -DupCheck)
 
 # Vector of column names to compare
@@ -299,27 +283,8 @@ NoDupWQ <- NoDupWQ %>% select(WQ)
 
 ```r
 # Check once all columns have perfect matches?
-tibble(SURF = names(NoDup_Tox), CEDEN = names(NoDupWQ))
-```
+# tibble(SURF = names(NoDup_Tox), CEDEN = names(NoDupWQ))
 
-```
-## # A tibble: 21 x 2
-##    SURF             CEDEN           
-##    <chr>            <chr>           
-##  1 Analyte          Analyte         
-##  2 CollectionMethod CollectionMethod
-##  3 Date             Date            
-##  4 Datum            Datum           
-##  5 geometry         geometry        
-##  6 Latitude         Latitude        
-##  7 LocationCode     LocationCode    
-##  8 Longitude        Longitude       
-##  9 MatrixName       MatrixName      
-## 10 MDL              MDL             
-## # ... with 11 more rows
-```
-
-```r
 # MERGE
 CEDEN_ALL <- rbind(NoDupWQ,NoDup_Tox)
 ```
@@ -341,6 +306,7 @@ nrow(CEDEN_ALL)-nrow(CEDEN_ALL_DupChecked)
 ### Duplication Errors? {.tabset}
 
 #### Queries
+
 Are there duplicates retained by restricting to unique Collection Methods, which should not be?
 
 There are 401 extra records retained when using Collection method to differentiate identical results. 343 of these duplicate records were not zero-result values, and therefore represent records of concern.
@@ -361,7 +327,6 @@ nrow(CEDEN_ALL_DupChecked) - nrow(CEDEN_ALL_Check1)
 ```
 ## [1] 401
 ```
-
 Restricting the duplicates of concern to those which are non-zero values... It appears that there are 6 different collection methods represented in the duplicated data.
 
 Sleuthing what is going on:
@@ -381,18 +346,12 @@ Sleuthing what is going on:
 
 
 ```r
-# ID columns retained only when use Collection Method also
+# Find columns retained only when restricting Collection Method also
 
 DIF<- setdiff(CEDEN_ALL_DupChecked, CEDEN_ALL_Check1) # gives items in A that are not in B
-nrow(DIF)
-```
 
-```
-## [1] 401
-```
 
-```r
-# 343 duplicates had non-zero results
+# Restrict to non-zero results (concern for duplication)
 
 DIF <- DIF %>% filter(., Result != "0") 
 nrow(DIF)
@@ -591,7 +550,7 @@ tibble(Entire = nrow(CEDEN_ALL_DupChecked[CEDEN_ALL_DupChecked$CollectionMethod=
 ## 1    307   153
 ```
 
-### Fixing CEDEN nomenclature
+### Fix CEDEN nomenclature
 
 **Split Analyte Column**
 
@@ -599,12 +558,12 @@ Because of formatting differences between the amount of data recorded under "Ana
 
 Analyte (Chemical Name), and Analyte_Type (ie: total or particulate)
 
-
 Using separate() to split the column and requiring the separation to be a comma and space ", " seems to have worked well, except for one name which appears to be empty
 
 **Convert to lower-case**
 
 SURF chemicals are all lowercase. We can make all letters in the CEDEN data lowercase using tolower() so that they will be compatible.
+
 
 ```r
 # Remove subset of data determined to be >50% duplication
@@ -618,7 +577,7 @@ CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>%
 ```
 
 ```
-## Warning: Expected 2 pieces. Missing pieces filled with `NA` in 21820 rows [2, 3,
+## Warning: Expected 2 pieces. Missing pieces filled with `NA` in 17681 rows [2, 3,
 ## 4, 5, 7, 8, 9, 10, 11, 12, 14, 19, 20, 22, 23, 24, 28, 94, 118, 144, ...].
 ```
 
@@ -644,55 +603,31 @@ head(sort(unique(CEDEN_ALL_DupChecked$Analyte))) # 908 unique Analytes total
 # Looks like requiring the separation from extra to analyte to contain a comma and a space allowed the full names to be retained. Without that, the separation led to an analyte "1" which should have been 1,2-bis(2,4,6- tribromophenoxy)ethane, etc.
 ```
 
+This simplification of Analyte name would lead to 15,290 more records being considered "duplication" using our current method, mostly (14,776) containing a zero-result. Because these differences in analytes are not retained in the SURF dataset, it makes sense to condense them (remove duplicates) prior to merging the databases.
+
+
+```r
+Check <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
+
+nrow(CEDEN_ALL_DupChecked) - nrow(Check)
+
+DIF<- setdiff(CEDEN_ALL_DupChecked, Check)
+length(DIF$Result[DIF$Result == "0"])
+```
+
+Removal of these simplified duplicates also eliminates the utility of retaining the "Analyte Type" column. For example, a reading of Analyte X with Type = Total Type = Suspended have the exact same result. Removing duplicates would keep the first record (Analyte = X, Type = Total) and remove the second (Analyte X, Type = S). In the dataframe, if you are trying to reason backwards to the meaning of that remaining meaning (Analyte X, Type = Total), you're missing the other half of the story (Type = Sus too). So, to avoid improper interpretation of this dataframe, Analyte Type should be removed. 
+
+
+```r
+CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE) %>%
+  select(-Analyte_type)
+
+# 127,874
+```
+
 ### CEDEN merge result
 
-
-```r
-# How many records available via full CEDEN merge?
-nrow(CEDEN_ALL_DupChecked)
-```
-
-```
-## [1] 147303
-```
-
-In the end, there are 147610 unique records available through the CEDEN datasets. 
-
-Transforming the Analyte column to simplify it also changed the results of our duplication checks output. 
-
-
-```r
-CEDEN_ALL_Check1 <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, CollectionMethod, 
-                              StationName, Result,MatrixName,
-                             .keep_all= TRUE)
-
-nrow(CEDEN_ALL_DupChecked) - nrow(CEDEN_ALL_Check1)
-```
-
-```
-## [1] 3778
-```
-
-```r
-DIF<- setdiff(CEDEN_ALL_DupChecked, CEDEN_ALL_Check1)
-
-Dups <- vector("list") # save empty list where each subset be saved
-
-for (i in 1:343){
-  Dups[[i]] <- CEDEN_ALL %>% filter(., Analyte == DIF$Analyte[i],
-                                         Date == DIF$Date[i], 
-                                         StationName == DIF$StationName[i],
-                                    Result == DIF$Result[i])
-  }
-
-Example <- do.call(rbind, Dups)
-Example
-```
-
-```
-## Empty data.table (0 rows and 21 cols): Analyte,CollectionMethod,Date,Datum,geometry,Latitude...
-```
-
+Using these QA/QC methods, 127874 unique records are available through the CEDEN datasets. 
 
 <br>
 
@@ -769,8 +704,6 @@ nrow(SURFMod_WQ) - nrow(NoDupWQ)
 ### SURF sediment
 
 #### Data Prep
-
-More investigating will probably be better, but for now we can simply remove those data defined in SURF as sourced from CEDEN
 
 **Correct mismatched column names**
 
@@ -873,27 +806,8 @@ NoDupSED <- NoDupSED %>% select(SED)
 NoDupWQ <- NoDupWQ %>% select(WQ)
 
 # Check once all columns have perfect matches?
-tibble(SURF = names(NoDupSED), CEDEN = names(NoDupWQ))
-```
+# tibble(SURF = names(NoDupSED), CEDEN = names(NoDupWQ))
 
-```
-## # A tibble: 22 x 2
-##    SURF             CEDEN           
-##    <chr>            <chr>           
-##  1 Agency           Agency          
-##  2 Analyte          Analyte         
-##  3 CollectionMethod CollectionMethod
-##  4 County           County          
-##  5 Data.source      Data.source     
-##  6 Date             Date            
-##  7 geometry         geometry        
-##  8 Latitude         Latitude        
-##  9 Longitude        Longitude       
-## 10 LOQ              LOQ             
-## # ... with 12 more rows
-```
-
-```r
 # MERGE
 SURF_ALL <- rbind(NoDupWQ,NoDupSED)
 ```
@@ -1444,39 +1358,29 @@ CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>% select(C)
 
 ```r
 # Check once all columns have perfect matches?
-tibble(SURF = names(SURF_ALL_DupChecked), CEDEN = names(CEDEN_ALL_DupChecked))
-```
+# tibble(SURF = names(SURF_ALL_DupChecked), CEDEN = names(CEDEN_ALL_DupChecked))
 
-```
-## # A tibble: 31 x 2
-##    SURF             CEDEN           
-##    <chr>            <chr>           
-##  1 Agency           Agency          
-##  2 Analyte          Analyte         
-##  3 Analyte_type     Analyte_type    
-##  4 CollectionMethod CollectionMethod
-##  5 County           County          
-##  6 Data.source      Data.source     
-##  7 Date             Date            
-##  8 Datum            Datum           
-##  9 geometry         geometry        
-## 10 Latitude         Latitude        
-## # ... with 21 more rows
-```
-
-```r
 # MERGE
 CEDENSURF <- rbind(SURF_ALL_DupChecked, CEDEN_ALL_DupChecked)
 ```
 
-### Check for duplicates
+### Check for duplicates {.tabset}
 
-None found! Great start.
+Retaining the 45,064 records of CEDEN data in SURF prior to merge, this method removes 15,290.
+
+This means 2.9774\times 10^{4} records of SURF's CEDEN-sourced data are retained. Some may be unique, and some may be additional duplicates that we are not catching. 
 
 
 ```r
-# Ideas from: https://www.datasciencemadesimple.com/remove-duplicate-rows-r-using-dplyr-distinct-function/
+# How many SURF records are sourced from CEDEN?
+nrow(filter(CEDENSURF, Data.source == "CEDEN"))
+```
 
+```
+## [1] 45064
+```
+
+```r
 # Remove duplicate rows of the dataframe using multiple variables
 
 CEDENSURF_DupChecked <- distinct(CEDENSURF, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
@@ -1485,92 +1389,213 @@ nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
 ```
 
 ```
-## [1] 15290
+## [1] 0
 ```
+Causes of these records being retained include:
+
+A. No match actually exists in CEDEN. Record SHOULD be retained.
+
+B. CEDEN and SURF have different naming protocols - both Station Name and Station Code differ for the same sites.
+
+C. Latitude and Longitude are rounded differently between the databases.
+
+#### Examples of A
+
+1. There is a measure of endosulfan sulfate at Grizzly Bay in the SURF dataset, but a list of ALL analytes measured at Grizzley Bay in the CEDEN set reveals none including "endosulfan") 
+
+
+```r
+# Subset to preview CEDEN Data in the SURF set
+
+head(filter(CEDENSURF, Data.source == "CEDEN"))
+```
+
+```
+##                                      Agency             Analyte
+## 1: Applied Marine Sciences, Inc. California  endosulfan sulfate
+## 2: Applied Marine Sciences, Inc. California          endosulfan
+## 3: Applied Marine Sciences, Inc. California        methoxychlor
+## 4: Applied Marine Sciences, Inc. California  chlorthal-dimethyl
+## 5: Applied Marine Sciences, Inc. California lindane (gamma-bhc)
+## 6: Applied Marine Sciences, Inc. California lindane (gamma-bhc)
+##         CollectionMethod       County Data.source       Date Datum
+## 1: Filtered water sample       Solano       CEDEN 1997-04-22  <NA>
+## 2: Filtered water sample       Solano       CEDEN 1998-07-28  <NA>
+## 3: Filtered water sample   Sacramento       CEDEN 1997-01-29  <NA>
+## 4: Filtered water sample       Solano       CEDEN 1995-08-22  <NA>
+## 5: Filtered water sample Contra Costa       CEDEN 1994-02-09  <NA>
+## 6: Filtered water sample   Sacramento       CEDEN 1995-08-23  <NA>
+##                   geometry Latitude LocationCode Longitude     LOQ MatrixName
+## 1: c(-122.03972, 38.11708) 38.11708         <NA> -122.0397 1.0e-06       <NA>
+## 2: c(-122.03972, 38.11708) 38.11708         <NA> -122.0397 1.0e-06       <NA>
+## 3: c(-121.80972, 38.05944) 38.05944         <NA> -121.8097 1.0e-06       <NA>
+## 4: c(-122.03972, 38.11708) 38.11708         <NA> -122.0397 9.0e-07       <NA>
+## 5:     c(-121.805, 38.021) 38.02100         <NA> -121.8050 5.0e-07       <NA>
+## 6: c(-121.80972, 38.05944) 38.05944         <NA> -121.8097 1.6e-06       <NA>
+##        MDL ParentProject Program Project rb_number Record_id regional_board
+## 1: 1.0e-06          <NA>    <NA>    <NA>        NA   1246085           <NA>
+## 2: 1.0e-06          <NA>    <NA>    <NA>        NA   1246140           <NA>
+## 3: 1.0e-06          <NA>    <NA>    <NA>        NA   1246411           <NA>
+## 4: 9.0e-07          <NA>    <NA>    <NA>        NA   1233010           <NA>
+## 5: 5.0e-07          <NA>    <NA>    <NA>        NA   1229115           <NA>
+## 6: 1.6e-06          <NA>    <NA>    <NA>        NA   1233193           <NA>
+##     Result Source StationCode
+## 1: 8.6e-05   SURF       48_52
+## 2: 0.0e+00   SURF       48_52
+## 3: 0.0e+00   SURF        34_2
+## 4: 7.7e-06   SURF       48_52
+## 5: 0.0e+00   SURF       07_38
+## 6: 9.6e-06   SURF        34_2
+##                                                   StationName Study_cd
+## 1: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7      399
+## 2: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7      400
+## 3:                       Sacramento River near Sherman Island      399
+## 4: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7      397
+## 5:                      San Joaquin River (BG30). CEDEN: BG30      396
+## 6:                       Sacramento River near Sherman Island      397
+##                                                                                                              Study_description
+## 1: Regional Monitoring Program - Status and Trends , SF Bay Regional Monitoring for Water Quality , 1997 RMP Status and Trends
+## 2: Regional Monitoring Program - Status and Trends , SF Bay Regional Monitoring for Water Quality , 1998 RMP Status and Trends
+## 3: Regional Monitoring Program - Status and Trends , SF Bay Regional Monitoring for Water Quality , 1997 RMP Status and Trends
+## 4: Regional Monitoring Program - Status and Trends , SF Bay Regional Monitoring for Water Quality , 1995 RMP Status and Trends
+## 5: Regional Monitoring Program - Status and Trends , SF Bay Regional Monitoring for Water Quality , 1994 RMP Status and Trends
+## 6: Regional Monitoring Program - Status and Trends , SF Bay Regional Monitoring for Water Quality , 1995 RMP Status and Trends
+##              Study_weblink  Subregion Total organic carbon (%) Unit
+## 1: http://www.sfei.org/rmp Suisun Bay                       NA  ppb
+## 2: http://www.sfei.org/rmp Suisun Bay                       NA  ppb
+## 3: http://www.sfei.org/rmp Confluence                       NA  ppb
+## 4: http://www.sfei.org/rmp Suisun Bay                       NA  ppb
+## 5: http://www.sfei.org/rmp Confluence                       NA  ppb
+## 6: http://www.sfei.org/rmp Confluence                       NA  ppb
+```
+
+```r
+# Locate similar location records in CEDEN and SURF using queries
+
+# Record Analyte = "endosulfan sulfate", Agency = Applied Marine Sciences, Inc. California, Collection Method = Filtered water sample, Date = 1997-04-22, Station Name: "Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7", StationCode: "48_52"
+
+# Locate similar location records in CEDEN and SURF using flexible queries
+
+A <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
+  filter(grepl('Dolphin', StationName)) %>%
+  filter(Source == "SURF")
+
+B <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
+  filter(grepl('Dolphin', StationName)) %>%
+  filter(Source == "CEDEN")
+
+# Sort analytes alphabetically, then display chunk around where "endosulfan" should be
+C<- sort(unique(B$Analyte))
+C[15:30]
+```
+
+```
+##  [1] "dichlorobenzenamine"          "dichlorophenoxyacetic acid"  
+##  [3] "dichlorophenoxybutyric acid"  "dichlorophenyl-3-methyl urea"
+##  [5] "dichlorophenyl urea"          "dichloroprop"                
+##  [7] "dichloropropionic acid"       "dinoseb"                     
+##  [9] "dissolved organic carbon"     "diuron"                      
+## [11] "ethalfluralin"                "fluridone"                   
+## [13] "glyphosate"                   "hexazinone"                  
+## [15] "imidacloprid"                 "lead"
+```
+
+2. 
+SURF Name: "Toe Drain Nr Babel Slough Nr Freeport Ca"
+SURF Code: "57_58"
+
+Could not ID this location in CEDEN data, using grepl() to allow approximate naming. None with "Babel" in StationName
+
+
+#### Examples of B
+
+It appears that SURF has appended station names from CEDEN with extra info. For example:
+
+SURF: "Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7"
+SURF Code: "48_52"
+
+CEDEN: "Grizzly Bay at Dolphin nr. Suisun Slough"
+CEDEN Code: "207SNB0D7"
+
+and 
+
+SURF Name: "Sacramento River at Freeport (USGS-11447650)"
+SURF Code: "34_5"
+
+CEDEN Name: "Sacramento River at Freeport, CA"
+CEDEN Code: 11447650
+
+
+```r
+rbind(A[1,], B[1,])
+```
+
+```
+##                                      Agency            Analyte
+## 1: Applied Marine Sciences, Inc. California endosulfan sulfate
+## 2:                                     <NA>             oxygen
+##         CollectionMethod County Data.source       Date Datum
+## 1: Filtered water sample Solano       CEDEN 1997-04-22  <NA>
+## 2:          Field Method   <NA>        <NA> 2010-03-17 NAD83
+##                          geometry Latitude LocationCode Longitude   LOQ
+## 1:        c(-122.03972, 38.11708) 38.11708         <NA> -122.0397 1e-06
+## 2: c(-122.03971862793, 38.117081) 38.11708    OpenWater -122.0397    NA
+##     MatrixName   MDL                      ParentProject
+## 1:        <NA> 1e-06                               <NA>
+## 2: samplewater    NA Suisun Bay Monitoring Project RWB2
+##                          Program                               Project
+## 1:                          <NA>                                  <NA>
+## 2: Suisun Bay Monitoring Project RWB2 Suisun Bay Monitoring Study 2010
+##    rb_number Record_id    regional_board   Result Source StationCode
+## 1:        NA   1246085              <NA> 0.000086   SURF       48_52
+## 2:         2        NA San Francisco Bay 9.160000  CEDEN   207SNB0D7
+##                                                   StationName Study_cd
+## 1: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7      399
+## 2:                   Grizzly Bay at Dolphin nr. Suisun Slough       NA
+##                                                                                                              Study_description
+## 1: Regional Monitoring Program - Status and Trends , SF Bay Regional Monitoring for Water Quality , 1997 RMP Status and Trends
+## 2:                                                                                                                        <NA>
+##              Study_weblink  Subregion Total organic carbon (%) Unit
+## 1: http://www.sfei.org/rmp Suisun Bay                       NA  ppb
+## 2:                    <NA> Suisun Bay                       NA mg/L
+```
+
+#### Example of C
+
+Same station at Grizzly Bay; differences in coordinates listed in SURF (1998 and 2012), compared to CEDEN (2010)
+
+
+```r
+C <- CEDENSURF %>%
+  filter(grepl('Grizzly', StationName)) %>%
+  filter(grepl('Dolphin', StationName)) %>%
+  filter(grepl('2012', Date)) %>%
+  filter(Data.source == "CEDEN")
+
+rbind(A[1,c(23, 25, 7:10,12)], C[1,c(23, 25, 7:10,12)], B[1,c(23, 25, 7:10,12)])
+```
+
+```
+##    StationCode Study_cd Datum                       geometry Latitude
+## 1:       48_52      399  <NA>        c(-122.03972, 38.11708) 38.11708
+## 2:       48_52      825  <NA>        c(-122.03972, 38.11708) 38.11708
+## 3:   207SNB0D7       NA NAD83 c(-122.03971862793, 38.117081) 38.11708
+##    LocationCode     LOQ
+## 1:         <NA> 1.0e-06
+## 2:         <NA> 3.7e-03
+## 3:    OpenWater      NA
+```
+
 # Next Steps
 
-### Naming conventions
+### 1. Decide whether to retain composite samples, or else how to remove
 
-We should check whether splitting the Analyte column in CEDEN helped to unify the nomenclature between datasets, before we can confidently suggest there is no more duplication.
+### 2. Correcting coordinates
 
-The lists of analytes are MUCH closer to the same length using this method, though still all names in CEDEN are different than those in SURF (908 unique analytes in CEDEN, and 908 in the difference between CEDEN and SURF)
+Skyler is correcting differences in projection and coordinate data in both CEDEN and SURF
 
-There still remains an issue with capitalization - now that the names are consistent, CEDEN capitalizes chemicals while SURF does not.
+### 3. Naming conventions (analyte, station name, station code, etc)
 
-For example, the first 10 analytes from each source are:
-
-```r
-CEDENSURF$Analyte <- tolower(CEDENSURF$Analyte)
-
-analyte_C <- sort(unique(CEDENSURF$Analyte[CEDENSURF$Source == "CEDEN"]))
-# 908 (was >1800 before splitting the column)
-
-analyte_S <- sort(unique(CEDENSURF$Analyte[CEDENSURF$Source == "SURF"]))
-# 307
-
-tibble(CEDEN = analyte_C[2:11], SURF = analyte_S[1:10])
-```
-
-```
-## # A tibble: 10 x 2
-##    CEDEN                                      SURF                         
-##    <chr>                                      <chr>                        
-##  1 1,2-bis(2,4,6- tribromophenoxy)ethane      1,4-dichlorobenzene (p-dcb0  
-##  2 2-ethyl-1-hexyl-2,3,4,5-tetrabromobenzoate 2,4-d                        
-##  3 2-ethylhexyl-diphenyl phosphate            2,4-db                       
-##  4 2,4,6-tribromophenyl allyl ether           2,4,5-t                      
-##  5 abamectin                                  3-hydroxycarbofuran          
-##  6 acenaphthene                               4-hydroxy chlorothalonil     
-##  7 acenaphthenes                              4-hydroxy molinate           
-##  8 acenaphthylene                             4(2,4-db), dimethylamine salt
-##  9 acetamiprid                                abamectin                    
-## 10 acetone                                    acephate
-```
-
-
-
-```r
-DIF <- setdiff(analyte_C, analyte_S)
-# Main things in C and not in S:
-# PCH as ... three dif, 
-# PCB - MANY differnt numbers, 
-# PBDE = MANY
-# Dechlorane - several
-# Two each for DDD, DDE, and DDT
-
-# Funny analytes to note: Young/female
-```
-
-There are ` r length(analyte_C) ` different analytes in the CEDEN data, while only 327 in the SURF.
-
-It appears that SURF gives the simple analyte name, while CEDEN retains additional information in the analyte name specifying 'total' vs 'particulate' vs 
-'dissolved'.
-
-For the purposes of this merged dataset, it may make sense to simplify the analyte names from CEDEN, and allow the original (unmerged with SURF) CEDEN data to be used in situations where that additional information is required.
-
-For example, a subset of "Analytes" in each database follow:
-
-```r
-# Show example of differences
-tibble(CEDEN = c(analyte_C[20:40]), SURF = c(analyte_S[10:30]))
-```
-
-```
-## # A tibble: 21 x 2
-##    CEDEN               SURF                    
-##    <chr>               <chr>                   
-##  1 alkalinity as caco3 acephate                
-##  2 allethrin           acet                    
-##  3 aluminum            acetamiprid             
-##  4 ametryn             acibenzolar-s-methyl    
-##  5 aminocarb           acifluorfen, sodium salt
-##  6 ammonia as n        alachlor                
-##  7 ammonia as nh3      aldicarb                
-##  8 ammonium as n       aldicarb sulfone        
-##  9 analysisweight      aldicarb sulfoxide      
-## 10 anatoxin-a          aldrin                  
-## # ... with 11 more rows
-```
 
 ### Wayne Q: Differences in duplication by year?{.tabset}
 

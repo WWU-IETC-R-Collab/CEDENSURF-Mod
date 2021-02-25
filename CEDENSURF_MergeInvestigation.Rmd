@@ -59,22 +59,20 @@ SURFMod_SED$Source <- rep("SURF", times=nrow(SURFMod_SED))
 SURFMod_WQ$Source <- rep("SURF", times=nrow(SURFMod_WQ))
 ```
 
-# Assess duplication within each database
+# Remove Duplicates
 
-Due to reported combined efforts to translate CEDEN data to SURF and vice versa, and issues with replicates being retained in each dataset, careful detection and elimination of duplicates should precede any analysis.
+Due to reported combined efforts to translate CEDEN data to SURF and vice versa, and issues with replicates being retained in each dataset, careful detection and elimination of duplicates should precede any merge and analysis.
 
-## CEDEN Data {.tabset}
+## CEDEN Data
 
-Due to the structure of the tox data, I have a feeling it involves biological assays that were then related to WQ data sampled on that date (and already present in the CEDEN_WQ dataset. 
+The tox data seems to be focused on associating WQ parameters with specific biological assays. These WQ parameters may already be present in the CEDEN_WQ dataset. 
 
 There are `r nrow(CEDENMod_WQ)` records in the WQ dataset
 and `r nrow(CEDENMod_Tox)` in the Tox dataset. 
 
 ### CEDEN Tox 
 
-In the tox dataset, there were several records related to a single species assessment - by creating a group identifier by the location, date, and organism assessed, I calculated that there were 2430 unique samples.
-
-Within the Tox dataset, `r length(unique(CEDENMod_Tox$OrganismName))` different species are represented.
+In the tox dataset, there were several records related to each species assessment - by creating a group identifier by the location, date, and organism assessed, I calculated that there were ~ 2430 unique biological assays.`r length(unique(CEDENMod_Tox$OrganismName))` different species are represented.
 
 #### Exact duplicates
 
@@ -98,7 +96,12 @@ unique(CEDENMod_Tox$Program[CEDENMod_Tox$DupCheck == "TRUE"])
 
 #### Alternative (looser) assessment of duplication
 
-If we assume that some columns may differ due to differences in data loading (ie: originally submitted to SURF and brought to CEDEN vs originally loaded to CEDEN), then we may want to use a looser structure to detect duplicates. 
+If we assume that some columns may differ due to differences in data loading, then we may want to use a looser structure to detect duplicates. 
+
+By assuming that records in the same location on the same date,  measuring the same analyte via the same collection method, and obtaining the same result are duplicates, we find almost 50% more duplicates. 
+25729 records, to be specific. 
+
+That is `r 100*25729/nrow(CEDENMod_Tox)`% of the dataset.
 
 ```{r}
 NoDup_Tox<- distinct(CEDENMod_Tox, Date, StationName, Analyte, CollectionMethod, Result, .keep_all= TRUE)
@@ -106,30 +109,17 @@ NoDup_Tox<- distinct(CEDENMod_Tox, Date, StationName, Analyte, CollectionMethod,
 nrow(CEDENMod_Tox) - nrow(NoDup_Tox)
 ```
 
-By assuming that records in the same location on the same date,  measuring the same analyte via the same collection method, and obtaining the same result are duplicates, we find almost 50% more duplicates. 
-25729 records, to be specific. 
-
-That is `r 100*25729/nrow(CEDENMod_Tox)`% of the dataset.
-
-Including Organism name in the list of differentiating variables, it returns almost the exact same count of duplicates (18274) as exact duplication (18297) - indicating that a major source of WQ duplication is repeating WQ parameters for multiple species assessed.
+Since we are using the df for the water parameters and not the associated organism survival, we can remove the organism column, and also remove records that assess biotic parameters like 'survival' and 'biomass'.
 
 ```{r}
-# Remove duplicate rows of the dataframe using multiple variables & ORGANISM NAME
-
-nrow(CEDENMod_Tox) - nrow(distinct(CEDENMod_Tox, Date, StationName, CollectionMethod, OrganismName, Analyte, Result, .keep_all= TRUE))
+NoDup_Tox <- NoDup_Tox %>% filter(Analyte != "Survival") %>%
+  filter(Analyte != "Biomass (wt/orig indiv)") %>%
+  filter(Analyte != "Young/female") %>%
+  filter(Analyte != "Total Cell Count") %>%
+  select(-OrganismName)
 ```
 
-Since we are using the df for the water parameters and not the associated organism survival, it's more useful to remove duplicate WQ entries regardless of the organism. We can also remove records that assess 'survival' and 'biomass' (since we aren't using this for the biotic parameters in our model).
-
-```{r}
-NoDup_Tox <- NoDup_Tox[NoDup_Tox$Analyte != "Survival"]
-
-NoDup_Tox <- NoDup_Tox[NoDup_Tox$Analyte != "Biomass (wt/orig indiv)"]
-
-# nrow = 31859
-```
-
-We're left with only `r nrow(NoDup_Tox)` unique, useful records in the tox dataset - or `r 100*nrow(NoDup_Tox)/nrow(CEDENMod_Tox)` % of the original tox data remaining
+We're left with only `r nrow(NoDup_Tox)` unique, useful records in the tox dataset - or `r round(c(100*nrow(NoDup_Tox)/nrow(CEDENMod_Tox)),1)`% of the original tox data remaining
 
 <br>
 
@@ -141,7 +131,6 @@ duplicated() produces a vector identifying which records are duplicated. This ca
 
 ```{r}
 # add index column identifying which entries are duplicated
-
 CEDENMod_WQ$DupCheck <- duplicated(CEDENMod_WQ)
 
 summary(CEDENMod_WQ$DupCheck)
@@ -160,7 +149,7 @@ unique(CEDENMod_WQ$Program[CEDENMod_WQ$DupCheck == "TRUE"])
 
 Utilizing the distinct() function to assume that records in the same location on the same date, measuring the same analyte via the same collection method and obtaining the same result are duplicates, we find 1536 duplicate records.
 
-That is more than double the number of exact duplicates found, yet still only `r 100*1536/nrow(CEDENMod_WQ)`% of the entire WQ dataset.
+That is more than double the number of exact duplicates found, yet still only `r round(c(100*1536/nrow(CEDENMod_WQ)),1)`% of the entire WQ dataset.
 
 ```{r}
 # Remove duplicate rows of the dataframe using multiple variables
@@ -179,7 +168,7 @@ After dealing with duplication WITHIN the CEDEN tox and wq datasets, there were 
 
 ```{r}
 # Strip column with duplicate check from both, and organism from tox
-NoDup_Tox <- select(NoDup_Tox, -c(DupCheck, OrganismName))
+NoDup_Tox <- select(NoDup_Tox, -c(DupCheck))
 NoDupWQ <- select(NoDupWQ, -DupCheck)
 
 # Vector of column names to compare
@@ -203,7 +192,7 @@ NoDup_Tox <- NoDup_Tox %>% select(TOX)
 NoDupWQ <- NoDupWQ %>% select(WQ)
 
 # Check once all columns have perfect matches?
-tibble(SURF = names(NoDup_Tox), CEDEN = names(NoDupWQ))
+# tibble(SURF = names(NoDup_Tox), CEDEN = names(NoDupWQ))
 
 # MERGE
 CEDEN_ALL <- rbind(NoDupWQ,NoDup_Tox)
@@ -221,6 +210,7 @@ nrow(CEDEN_ALL)-nrow(CEDEN_ALL_DupChecked)
 ### Duplication Errors? {.tabset}
 
 #### Queries
+
 Are there duplicates retained by restricting to unique Collection Methods, which should not be?
 
 There are 401 extra records retained when using Collection method to differentiate identical results. 343 of these duplicate records were not zero-result values, and therefore represent records of concern.
@@ -236,7 +226,6 @@ CEDEN_ALL_Check1 <- distinct(CEDEN_ALL, Date, Analyte,
 
 nrow(CEDEN_ALL_DupChecked) - nrow(CEDEN_ALL_Check1)
 ```
-
 Restricting the duplicates of concern to those which are non-zero values... It appears that there are 6 different collection methods represented in the duplicated data.
 
 Sleuthing what is going on:
@@ -255,13 +244,12 @@ Sleuthing what is going on:
 **--> Question** Does it make sense to have a sample defined as a sediment grab method + matrix of overlying water? Does it make sense for these samples to have identical results?
 
 ```{r}
-
-# ID columns retained only when use Collection Method also
+# Find columns retained only when restricting Collection Method also
 
 DIF<- setdiff(CEDEN_ALL_DupChecked, CEDEN_ALL_Check1) # gives items in A that are not in B
-nrow(DIF)
 
-# 343 duplicates had non-zero results
+
+# Restrict to non-zero results (concern for duplication)
 
 DIF <- DIF %>% filter(., Result != "0") 
 nrow(DIF)
@@ -303,7 +291,7 @@ paste("Collection Method = Not Recorded in...")
 tibble(Entire = nrow(CEDEN_ALL_DupChecked[CEDEN_ALL_DupChecked$CollectionMethod== "Not Recorded"]), Dup = nrow(Example[Example$CollectionMethod== "Not Recorded"]))
 ```
 
-### Fixing CEDEN nomenclature
+### Fix CEDEN nomenclature
 
 **Split Analyte Column**
 
@@ -311,12 +299,12 @@ Because of formatting differences between the amount of data recorded under "Ana
 
 Analyte (Chemical Name), and Analyte_Type (ie: total or particulate)
 
-
 Using separate() to split the column and requiring the separation to be a comma and space ", " seems to have worked well, except for one name which appears to be empty
 
 **Convert to lower-case**
 
 SURF chemicals are all lowercase. We can make all letters in the CEDEN data lowercase using tolower() so that they will be compatible.
+
 ```{r}
 # Remove subset of data determined to be >50% duplication
 
@@ -337,39 +325,29 @@ head(sort(unique(CEDEN_ALL_DupChecked$Analyte))) # 908 unique Analytes total
 # Looks like requiring the separation from extra to analyte to contain a comma and a space allowed the full names to be retained. Without that, the separation led to an analyte "1" which should have been 1,2-bis(2,4,6- tribromophenoxy)ethane, etc.
 ```
 
+This simplification of Analyte name would lead to 15,290 more records being considered "duplication" using our current method, mostly (14,776) containing a zero-result. Because these differences in analytes are not retained in the SURF dataset, it makes sense to condense them (remove duplicates) prior to merging the databases.
+
+```{r, eval = F}
+Check <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
+
+nrow(CEDEN_ALL_DupChecked) - nrow(Check)
+
+DIF<- setdiff(CEDEN_ALL_DupChecked, Check)
+length(DIF$Result[DIF$Result == "0"])
+```
+
+Removal of these simplified duplicates also eliminates the utility of retaining the "Analyte Type" column. For example, a reading of Analyte X with Type = Total Type = Suspended have the exact same result. Removing duplicates would keep the first record (Analyte = X, Type = Total) and remove the second (Analyte X, Type = S). In the dataframe, if you are trying to reason backwards to the meaning of that remaining meaning (Analyte X, Type = Total), you're missing the other half of the story (Type = Sus too). So, to avoid improper interpretation of this dataframe, Analyte Type should be removed. 
+
+```{r}
+CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE) %>%
+  select(-Analyte_type)
+
+# 127,874
+```
+
 ### CEDEN merge result
 
-```{r}
-# How many records available via full CEDEN merge?
-nrow(CEDEN_ALL_DupChecked)
-```
-
-In the end, there are 147610 unique records available through the CEDEN datasets. 
-
-Transforming the Analyte column to simplify it also changed the results of our duplication checks output. 
-
-```{r}
-CEDEN_ALL_Check1 <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, CollectionMethod, 
-                              StationName, Result,MatrixName,
-                             .keep_all= TRUE)
-
-nrow(CEDEN_ALL_DupChecked) - nrow(CEDEN_ALL_Check1)
-
-DIF<- setdiff(CEDEN_ALL_DupChecked, CEDEN_ALL_Check1)
-
-Dups <- vector("list") # save empty list where each subset be saved
-
-for (i in 1:343){
-  Dups[[i]] <- CEDEN_ALL %>% filter(., Analyte == DIF$Analyte[i],
-                                         Date == DIF$Date[i], 
-                                         StationName == DIF$StationName[i],
-                                    Result == DIF$Result[i])
-  }
-
-Example <- do.call(rbind, Dups)
-Example
-```
-
+Using these QA/QC methods, `r nrow(CEDEN_ALL_DupChecked)` unique records are available through the CEDEN datasets. 
 
 <br>
 
@@ -434,8 +412,6 @@ nrow(SURFMod_WQ) - nrow(NoDupWQ)
 ### SURF sediment
 
 #### Data Prep
-
-More investigating will probably be better, but for now we can simply remove those data defined in SURF as sourced from CEDEN
 
 **Correct mismatched column names**
 ```{r}
@@ -508,7 +484,7 @@ NoDupSED <- NoDupSED %>% select(SED)
 NoDupWQ <- NoDupWQ %>% select(WQ)
 
 # Check once all columns have perfect matches?
-tibble(SURF = names(NoDupSED), CEDEN = names(NoDupWQ))
+# tibble(SURF = names(NoDupSED), CEDEN = names(NoDupWQ))
 
 # MERGE
 SURF_ALL <- rbind(NoDupWQ,NoDupSED)
@@ -696,18 +672,21 @@ SURF_ALL_DupChecked <- SURF_ALL_DupChecked %>% select(S)
 CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>% select(C)
 
 # Check once all columns have perfect matches?
-tibble(SURF = names(SURF_ALL_DupChecked), CEDEN = names(CEDEN_ALL_DupChecked))
+# tibble(SURF = names(SURF_ALL_DupChecked), CEDEN = names(CEDEN_ALL_DupChecked))
 
 # MERGE
 CEDENSURF <- rbind(SURF_ALL_DupChecked, CEDEN_ALL_DupChecked)
 ```
 
-### Check for duplicates
+### Check for duplicates {.tabset}
 
-None found! Great start.
+Retaining the 45,064 records of CEDEN data in SURF prior to merge, this method removes 15,290.
+
+This means `r 45064 - 15290` records of SURF's CEDEN-sourced data are retained. Some may be unique, and some may be additional duplicates that we are not catching. 
 
 ```{r}
-# Ideas from: https://www.datasciencemadesimple.com/remove-duplicate-rows-r-using-dplyr-distinct-function/
+# How many SURF records are sourced from CEDEN?
+nrow(filter(CEDENSURF, Data.source == "CEDEN"))
 
 # Remove duplicate rows of the dataframe using multiple variables
 
@@ -715,54 +694,96 @@ CEDENSURF_DupChecked <- distinct(CEDENSURF, Date, Analyte, CollectionMethod, Sta
 
 nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
 ```
+Causes of these records being retained include:
+
+A. No match actually exists in CEDEN. Record SHOULD be retained.
+
+B. CEDEN and SURF have different naming protocols - both Station Name and Station Code differ for the same sites.
+
+C. Latitude and Longitude are rounded differently between the databases.
+
+#### Examples of A
+
+1. There is a measure of endosulfan sulfate at Grizzly Bay in the SURF dataset, but a list of ALL analytes measured at Grizzley Bay in the CEDEN set reveals none including "endosulfan") 
+
+```{r}
+
+# Subset to preview CEDEN Data in the SURF set
+
+head(filter(CEDENSURF, Data.source == "CEDEN"))
+
+# Locate similar location records in CEDEN and SURF using queries
+
+# Record Analyte = "endosulfan sulfate", Agency = Applied Marine Sciences, Inc. California, Collection Method = Filtered water sample, Date = 1997-04-22, Station Name: "Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7", StationCode: "48_52"
+
+# Locate similar location records in CEDEN and SURF using flexible queries
+
+A <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
+  filter(grepl('Dolphin', StationName)) %>%
+  filter(Source == "SURF")
+
+B <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
+  filter(grepl('Dolphin', StationName)) %>%
+  filter(Source == "CEDEN")
+
+# Sort analytes alphabetically, then display chunk around where "endosulfan" should be
+C<- sort(unique(B$Analyte))
+C[15:30]
+```
+
+2. 
+SURF Name: "Toe Drain Nr Babel Slough Nr Freeport Ca"
+SURF Code: "57_58"
+
+Could not ID this location in CEDEN data, using grepl() to allow approximate naming. None with "Babel" in StationName
+
+
+#### Examples of B
+
+It appears that SURF has appended station names from CEDEN with extra info. For example:
+
+SURF: "Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7"
+SURF Code: "48_52"
+
+CEDEN: "Grizzly Bay at Dolphin nr. Suisun Slough"
+CEDEN Code: "207SNB0D7"
+
+and 
+
+SURF Name: "Sacramento River at Freeport (USGS-11447650)"
+SURF Code: "34_5"
+
+CEDEN Name: "Sacramento River at Freeport, CA"
+CEDEN Code: 11447650
+
+```{r}
+rbind(A[1,], B[1,])
+```
+
+#### Example of C
+
+Same station at Grizzly Bay; differences in coordinates listed in SURF (1998 and 2012), compared to CEDEN (2010)
+
+```{r}
+C <- CEDENSURF %>%
+  filter(grepl('Grizzly', StationName)) %>%
+  filter(grepl('Dolphin', StationName)) %>%
+  filter(grepl('2012', Date)) %>%
+  filter(Data.source == "CEDEN")
+
+rbind(A[1,c(23, 25, 7:10,12)], C[1,c(23, 25, 7:10,12)], B[1,c(23, 25, 7:10,12)])
+```
+
 # Next Steps
 
-### Naming conventions
+### 1. Decide whether to retain composite samples, or else how to remove
 
-We should check whether splitting the Analyte column in CEDEN helped to unify the nomenclature between datasets, before we can confidently suggest there is no more duplication.
+### 2. Correcting coordinates
 
-The lists of analytes are MUCH closer to the same length using this method, though still all names in CEDEN are different than those in SURF (908 unique analytes in CEDEN, and 908 in the difference between CEDEN and SURF)
+Skyler is correcting differences in projection and coordinate data in both CEDEN and SURF
 
-There still remains an issue with capitalization - now that the names are consistent, CEDEN capitalizes chemicals while SURF does not.
+### 3. Naming conventions (analyte, station name, station code, etc)
 
-For example, the first 10 analytes from each source are:
-```{r}
-CEDENSURF$Analyte <- tolower(CEDENSURF$Analyte)
-
-analyte_C <- sort(unique(CEDENSURF$Analyte[CEDENSURF$Source == "CEDEN"]))
-# 908 (was >1800 before splitting the column)
-
-analyte_S <- sort(unique(CEDENSURF$Analyte[CEDENSURF$Source == "SURF"]))
-# 307
-
-tibble(CEDEN = analyte_C[2:11], SURF = analyte_S[1:10])
-```
-
-
-```{r}
-DIF <- setdiff(analyte_C, analyte_S)
-# Main things in C and not in S:
-# PCH as ... three dif, 
-# PCB - MANY differnt numbers, 
-# PBDE = MANY
-# Dechlorane - several
-# Two each for DDD, DDE, and DDT
-
-# Funny analytes to note: Young/female
-```
-
-There are ` r length(analyte_C) ` different analytes in the CEDEN data, while only `r length(analyte_S)` in the SURF.
-
-It appears that SURF gives the simple analyte name, while CEDEN retains additional information in the analyte name specifying 'total' vs 'particulate' vs 
-'dissolved'.
-
-For the purposes of this merged dataset, it may make sense to simplify the analyte names from CEDEN, and allow the original (unmerged with SURF) CEDEN data to be used in situations where that additional information is required.
-
-For example, a subset of "Analytes" in each database follow:
-```{r}
-# Show example of differences
-tibble(CEDEN = c(analyte_C[20:40]), SURF = c(analyte_S[10:30]))
-```
 
 ### Wayne Q: Differences in duplication by year?{.tabset}
 
