@@ -198,8 +198,9 @@ CEDEN_ALL_Renamed <- CEDEN_ALL %>%
 ```
 
 ```
-## Warning: Expected 2 pieces. Missing pieces filled with `NA` in 41530 rows [2, 3,
-## 4, 5, 7, 8, 9, 10, 11, 12, 14, 19, 20, 22, 23, 24, 28, 94, 118, 144, ...].
+## Warning: Expected 2 pieces. Missing pieces filled with `NA` in 41965 rows [54,
+## 55, 57, 58, 101, 103, 104, 106, 140, 144, 145, 146, 681, 686, 689, 690, 2753,
+## 2754, 2756, 2760, ...].
 ```
 
 ```r
@@ -212,12 +213,12 @@ head(sort(unique(CEDEN_ALL_Renamed$Analyte))) # 908 unique Analytes total
 ```
 
 ```
-## [1] ""                                          
-## [2] "1,2-bis(2,4,6- tribromophenoxy)ethane"     
-## [3] "2-ethyl-1-hexyl-2,3,4,5-tetrabromobenzoate"
-## [4] "2-ethylhexyl-diphenyl phosphate"           
-## [5] "2,4,6-tribromophenyl allyl ether"          
-## [6] "abamectin"
+## [1] ""                                     
+## [2] "1,2-bis(2,4,6- tribromophenoxy)ethane"
+## [3] "2-ethylhexyl-diphenyl phosphate"      
+## [4] "2,4,6-tribromophenyl allyl ether"     
+## [5] "acenaphthene"                         
+## [6] "acenaphthenes"
 ```
 
 ```r
@@ -230,15 +231,17 @@ head(sort(unique(CEDEN_ALL_Renamed$Analyte))) # 908 unique Analytes total
 
 Create vectors that contain unique analyte names from each DF; sorted alphabetically
 
+
 ```r
 CEDEN_Orig_Analytes <- sort(unique(CEDEN_ALL$Analyte)) #1810 unique analytes before we split the names from modifying text
 
-CEDEN_Analytes <- sort(unique(CEDEN_ALL_Renamed$Analyte)) #910 unique analytes
+CEDEN_Analytes <- sort(unique(CEDEN_ALL_Renamed$Analyte)) #757 unique analytes
 
 SURF_Analytes <- sort(unique(SURF_ALL$Analyte)) #327
 ```
 
 You can also look at analytes that are specifically in CEDEN and not in SURF using this code:
+
 
 ```r
 DIF <- setdiff(CEDEN_Analytes, SURF_Analytes)
@@ -281,7 +284,6 @@ Analytes <- rbind(CE,SE)
 write.csv(x = Analytes, file = "CEDENSURF_Analytes_Format1.csv", row.names = F)
 ```
 
-
 #### Format 2
 
 If you want a table of SURF and CEDEN analytes in adjacent columns like below, run this code and remove the hashtag to write an output table.
@@ -294,30 +296,42 @@ tibble(CEDEN = CEDEN_Analytes[2:11], SURF = SURF_Analytes[1:10])
 
 ```
 ## # A tibble: 10 x 2
-##    CEDEN                                      SURF                         
-##    <chr>                                      <chr>                        
-##  1 1,2-bis(2,4,6- tribromophenoxy)ethane      1,4-dichlorobenzene (p-dcb0  
-##  2 2-ethyl-1-hexyl-2,3,4,5-tetrabromobenzoate 2,4-d                        
-##  3 2-ethylhexyl-diphenyl phosphate            2,4-db                       
-##  4 2,4,6-tribromophenyl allyl ether           2,4,5-t                      
-##  5 abamectin                                  3-hydroxycarbofuran          
-##  6 acenaphthene                               4-hydroxy chlorothalonil     
-##  7 acenaphthenes                              4-hydroxy molinate           
-##  8 acenaphthylene                             4(2,4-db), dimethylamine salt
-##  9 acetamiprid                                abamectin                    
-## 10 acetone                                    acephate
+##    CEDEN                                 SURF                         
+##    <chr>                                 <chr>                        
+##  1 1,2-bis(2,4,6- tribromophenoxy)ethane 1,4-dichlorobenzene (p-dcb0  
+##  2 2-ethylhexyl-diphenyl phosphate       2,4-d                        
+##  3 2,4,6-tribromophenyl allyl ether      2,4-db                       
+##  4 acenaphthene                          2,4,5-t                      
+##  5 acenaphthenes                         3-hydroxycarbofuran          
+##  6 acenaphthylene                        4-hydroxy chlorothalonil     
+##  7 acetone                               4-hydroxy molinate           
+##  8 acibenzolar-s-methyl                  4(2,4-db), dimethylamine salt
+##  9 acid neutralizing capacity            abamectin                    
+## 10 acrolein                              acephate
 ```
 
 ```r
 # Create empty DF with correct dimensions
-Analytes <- setNames(data.frame(matrix(ncol = 2, nrow = 910)), c("CEDEN", "SURF"))
+Analytes2 <- setNames(data.frame(matrix(ncol = 2, nrow = 757)), c("CEDEN", "SURF"))
 
 # Add in data
-Analytes$CEDEN <- CEDEN_Analytes
+Analytes2$CEDEN <- CEDEN_Analytes
 
-Analytes$SURF[1:327] <- SURF_Analytes
+Analytes2$SURF[1:327] <- SURF_Analytes
 
 # Run this code to save this file
-# write.csv(x = Analytes, file = "CEDENSURF_Analytes_Format2.csv", row.names = F)
+# write.csv(x = Analytes2, file = "CEDENSURF_Analytes_Format2.csv", row.names = F)
+```
+### Example grepl() name query 
+
+
+```r
+Analytes[grepl('nitra', Analyte)]
+```
+
+```
+##                   Analyte Source
+## 1: nitrate + nitrite as n  CEDEN
+## 2:           nitrate as n  CEDEN
 ```
 

@@ -171,15 +171,17 @@ head(sort(unique(CEDEN_ALL_Renamed$Analyte))) # 908 unique Analytes total
 ### Identify unique analyte names
 
 Create vectors that contain unique analyte names from each DF; sorted alphabetically
+
 ```{r}
 CEDEN_Orig_Analytes <- sort(unique(CEDEN_ALL$Analyte)) #1810 unique analytes before we split the names from modifying text
 
-CEDEN_Analytes <- sort(unique(CEDEN_ALL_Renamed$Analyte)) #910 unique analytes
+CEDEN_Analytes <- sort(unique(CEDEN_ALL_Renamed$Analyte)) #757 unique analytes
 
 SURF_Analytes <- sort(unique(SURF_ALL$Analyte)) #327
 ```
 
 You can also look at analytes that are specifically in CEDEN and not in SURF using this code:
+
 ```{r}
 DIF <- setdiff(CEDEN_Analytes, SURF_Analytes)
 
@@ -220,7 +222,6 @@ Analytes <- rbind(CE,SE)
 write.csv(x = Analytes, file = "CEDENSURF_Analytes_Format1.csv", row.names = F)
 ```
 
-
 #### Format 2
 
 If you want a table of SURF and CEDEN analytes in adjacent columns like below, run this code and remove the hashtag to write an output table.
@@ -230,14 +231,19 @@ If you want a table of SURF and CEDEN analytes in adjacent columns like below, r
 tibble(CEDEN = CEDEN_Analytes[2:11], SURF = SURF_Analytes[1:10])
 
 # Create empty DF with correct dimensions
-Analytes <- setNames(data.frame(matrix(ncol = 2, nrow = 910)), c("CEDEN", "SURF"))
+Analytes2 <- setNames(data.frame(matrix(ncol = 2, nrow = 757)), c("CEDEN", "SURF"))
 
 # Add in data
-Analytes$CEDEN <- CEDEN_Analytes
+Analytes2$CEDEN <- CEDEN_Analytes
 
-Analytes$SURF[1:327] <- SURF_Analytes
+Analytes2$SURF[1:327] <- SURF_Analytes
 
 # Run this code to save this file
-# write.csv(x = Analytes, file = "CEDENSURF_Analytes_Format2.csv", row.names = F)
+# write.csv(x = Analytes2, file = "CEDENSURF_Analytes_Format2.csv", row.names = F)
+```
+### Example grepl() name query 
+
+```{r}
+Analytes[grepl('nitra', Analyte)]
 ```
 
