@@ -69,8 +69,8 @@ Due to reported combined efforts to translate CEDEN data to SURF and vice versa,
 
 The tox data seems to be focused on associating WQ parameters with specific biological assays. These WQ parameters may already be present in the CEDEN_WQ dataset. 
 
-There are 117144 records in the WQ dataset
-and 60637 in the Tox dataset. 
+There are 60429 records in the WQ dataset
+and 60531 in the Tox dataset. 
 
 ### CEDEN Tox 
 
@@ -91,7 +91,7 @@ summary(CEDENMod_Tox$DupCheck)
 
 ```
 ##    Mode   FALSE    TRUE 
-## logical   42363   18274
+## logical   44686   15845
 ```
 
 Is it only some programs that have duplication? 9/10 programs do.
@@ -102,7 +102,7 @@ length(unique(CEDENMod_Tox$Program)) # 10
 ```
 
 ```
-## [1] 10
+## [1] 11
 ```
 
 ```r
@@ -110,15 +110,16 @@ unique(CEDENMod_Tox$Program[CEDENMod_Tox$DupCheck == "TRUE"])
 ```
 
 ```
-## [1] "Irrigated Lands Regulatory Program"                  
-## [2] "Surface Water Ambient Monitoring Program"            
-## [3] "Delta Monitoring RWQCB5"                             
-## [4] "SF Bay Regional Monitoring for Water Quality"        
-## [5] "Sacramento-San Joaquin River Delta Data"             
-## [6] "SF Bay STLS Monitoring"                              
-## [7] "BASMAA Regional Monitoring Coalition"                
-## [8] "Delta Regional Monitoring Program"                   
-## [9] "California Department of Transportation NPDES Permit"
+##  [1] "SF Bay Regional Monitoring for Water Quality"
+##  [2] "BASMAA Regional Monitoring Coalition"        
+##  [3] "Irrigated Lands Regulatory Program"          
+##  [4] "Surface Water Ambient Monitoring Program"    
+##  [5] "Delta Monitoring RWQCB5"                     
+##  [6] "Sacramento-San Joaquin River Delta Data"     
+##  [7] "SF Bay STLS Monitoring"                      
+##  [8] "Delta Regional Monitoring Program"           
+##  [9] "CA Department of Transportation NPDES Permit"
+## [10] "State Water Contractors Science Program"
 ```
 
 #### Alternative (looser) assessment of duplication
@@ -128,7 +129,7 @@ If we assume that some columns may differ due to differences in data loading, th
 By assuming that records in the same location on the same date,  measuring the same analyte via the same collection method, and obtaining the same result are duplicates, we find almost 50% more duplicates. 
 25729 records, to be specific. 
 
-That is 42.4311889% of the dataset.
+That is 42.5054931% of the dataset.
 
 
 ```r
@@ -138,7 +139,7 @@ nrow(CEDENMod_Tox) - nrow(NoDup_Tox)
 ```
 
 ```
-## [1] 25729
+## [1] 23518
 ```
 
 Since we are using the df for the water parameters and not the associated organism survival, we can remove the organism column, and also remove records that assess biotic parameters like 'survival' and 'biomass'.
@@ -152,7 +153,7 @@ NoDup_Tox <- NoDup_Tox %>% filter(Analyte != "Survival") %>%
   select(-OrganismName)
 ```
 
-We're left with only 27872 unique, useful records in the tox dataset - or 46% of the original tox data remaining
+We're left with only 29695 unique, useful records in the tox dataset - or 49.1% of the original tox data remaining
 
 <br>
 
@@ -172,7 +173,7 @@ summary(CEDENMod_WQ$DupCheck)
 
 ```
 ##    Mode   FALSE    TRUE 
-## logical  116487     657
+## logical   59930     499
 ```
 
 This method identified only 657 exact duplicates in the entire WQ dataset.
@@ -185,7 +186,7 @@ length(unique(CEDENMod_WQ$Program)) # 17
 ```
 
 ```
-## [1] 17
+## [1] 18
 ```
 
 ```r
@@ -193,14 +194,14 @@ unique(CEDENMod_WQ$Program[CEDENMod_WQ$DupCheck == "TRUE"])
 ```
 
 ```
-## [1] "Delta Monitoring RWQCB5"                             
-## [2] "Sacramento-San Joaquin River Delta Data"             
-## [3] "SF Bay Regional Monitoring for Water Quality"        
-## [4] "Surface Water Ambient Monitoring Program"            
-## [5] "Suisun Bay Monitoring Project"                       
-## [6] "SF Bay STLS Monitoring"                              
-## [7] "California Department of Transportation NPDES Permit"
-## [8] "Irrigated Lands Regulatory Program"                  
+## [1] "SF Bay Regional Monitoring for Water Quality"
+## [2] "Suisun Bay Monitoring Project"               
+## [3] "Delta Monitoring RWQCB5"                     
+## [4] "Sacramento-San Joaquin River Delta Data"     
+## [5] "Surface Water Ambient Monitoring Program"    
+## [6] "SF Bay STLS Monitoring"                      
+## [7] "CA Department of Transportation NPDES Permit"
+## [8] "Irrigated Lands Regulatory Program"          
 ## [9] "American Rivers Restoration"
 ```
 
@@ -208,7 +209,7 @@ unique(CEDENMod_WQ$Program[CEDENMod_WQ$DupCheck == "TRUE"])
 
 Utilizing the distinct() function to assume that records in the same location on the same date, measuring the same analyte via the same collection method and obtaining the same result are duplicates, we find 1536 duplicate records.
 
-That is more than double the number of exact duplicates found, yet still only 1.3% of the entire WQ dataset.
+That is more than double the number of exact duplicates found, yet still only 2.5% of the entire WQ dataset.
 
 
 ```r
@@ -220,7 +221,7 @@ nrow(CEDENMod_WQ) - nrow(NoDupWQ)
 ```
 
 ```
-## [1] 1536
+## [1] 1336
 ```
 <br>
 
@@ -325,7 +326,7 @@ nrow(CEDEN_ALL_DupChecked) - nrow(CEDEN_ALL_Check1)
 ```
 
 ```
-## [1] 401
+## [1] 386
 ```
 Restricting the duplicates of concern to those which are non-zero values... It appears that there are 6 different collection methods represented in the duplicated data.
 
@@ -358,7 +359,7 @@ nrow(DIF)
 ```
 
 ```
-## [1] 343
+## [1] 356
 ```
 
 ```r
@@ -370,11 +371,11 @@ summary(DIF$CollectionMethod)
 
 ```
 ## Auto sampler automatically triggered      Auto sampler manually triggered 
-##                                   18                                   23 
+##                                   17                                   26 
 ##                         Not Recorded                        Sediment_Core 
-##                                   79                                   18 
+##                                   76                                   11 
 ##                        Sediment_Grab                           Water_Grab 
-##                                   86                                  119
+##                                   93                                  133
 ```
 
 ```r
@@ -398,9 +399,9 @@ summary(DIF$ParentProject)
 ##  Regional Monitoring Program - Status and Trends 
 ##                                               27 
 ##        Sacramento Valley Water Quality Coalition 
-##                                               33 
+##                                               40 
 ## San Joaquin County Delta Water Quality Coalition 
-##                                              105 
+##                                              111 
 ##                                 SWAMP Monitoring 
 ##                                                4 
 ##                            SWAMP RWB5 Monitoring 
@@ -431,102 +432,90 @@ Example
 ```
 
 ```
-##                               Analyte                     CollectionMethod
-##   1:         Benz(a)anthracene, Total                         Not Recorded
-##   2:         Benz(a)anthracene, Total                           Water_Grab
-##   3:                  Aluminum, Total Auto sampler automatically triggered
-##   4:                  Aluminum, Total                         Not Recorded
-##   5:                      Zinc, Total Auto sampler automatically triggered
-##  ---                                                                      
-## 682: Ammonia as NH3, Unionized, Total                        Sediment_Grab
-## 683: Ammonia as NH3, Unionized, Total                        Sediment_Core
-## 684: Ammonia as NH3, Unionized, Total                        Sediment_Grab
-## 685:                      Temperature                        Sediment_Grab
-## 686:                      Temperature                        Sediment_Core
-##            Date Datum                       geometry Latitude LocationCode
-##   1: 2014-02-26 NAD83 c(-121.49340057373, 38.456501)  38.4565 Not Recorded
-##   2: 2014-02-26 NAD83 c(-121.49340057373, 38.456501)  38.4565 Not Recorded
-##   3: 2014-02-26 NAD83 c(-121.49340057373, 38.456501)  38.4565 Not Recorded
-##   4: 2014-02-26 NAD83 c(-121.49340057373, 38.456501)  38.4565 Not Recorded
-##   5: 2014-02-26 NAD83 c(-121.49340057373, 38.456501)  38.4565 Not Recorded
-##  ---                                                                      
-## 682: 2012-04-23 NAD83               c(-122, 38.0877)  38.0877   OpenWater1
-## 683: 2012-04-23 NAD83               c(-122, 38.0877)  38.0877   OpenWater1
-## 684: 2012-04-23 NAD83               c(-122, 38.0877)  38.0877   OpenWater1
-## 685: 2012-04-23 NAD83           c(-122.043, 38.0882)  38.0882   OpenWater1
-## 686: 2012-04-23 NAD83           c(-122.043, 38.0882)  38.0882   OpenWater1
-##      Longitude     MatrixName     MDL
-##   1: -121.4934    samplewater   0.028
-##   2: -121.4934    samplewater   0.028
-##   3: -121.4934    samplewater 200.000
-##   4: -121.4934    samplewater 200.000
-##   5: -121.4934    samplewater  14.000
-##  ---                                 
-## 682: -122.0000       sediment      NA
-## 683: -122.0000 overlyingwater      NA
-## 684: -122.0000       sediment      NA
-## 685: -122.0430       sediment      NA
-## 686: -122.0430 overlyingwater      NA
-##                                        ParentProject
-##   1:   CA Dept of Transit NPDES Monitoring 2014-2015
-##   2:   CA Dept of Transit NPDES Monitoring 2014-2015
-##   3:   CA Dept of Transit NPDES Monitoring 2014-2015
-##   4:   CA Dept of Transit NPDES Monitoring 2014-2015
-##   5:   CA Dept of Transit NPDES Monitoring 2014-2015
-##  ---                                                
-## 682: Regional Monitoring Program - Status and Trends
-## 683: Regional Monitoring Program - Status and Trends
-## 684: Regional Monitoring Program - Status and Trends
-## 685: Regional Monitoring Program - Status and Trends
-## 686: Regional Monitoring Program - Status and Trends
-##                                                   Program
-##   1: California Department of Transportation NPDES Permit
-##   2: California Department of Transportation NPDES Permit
-##   3: California Department of Transportation NPDES Permit
-##   4: California Department of Transportation NPDES Permit
-##   5: California Department of Transportation NPDES Permit
-##  ---                                                     
-## 682:         SF Bay Regional Monitoring for Water Quality
-## 683:         SF Bay Regional Monitoring for Water Quality
-## 684:         SF Bay Regional Monitoring for Water Quality
-## 685:         SF Bay Regional Monitoring for Water Quality
-## 686:         SF Bay Regional Monitoring for Water Quality
-##                                            Project rb_number    regional_board
-##   1: CA Dept of Transit NPDES Monitoring 2013-2014         5    Central Valley
-##   2: CA Dept of Transit NPDES Monitoring 2013-2014         5    Central Valley
-##   3: CA Dept of Transit NPDES Monitoring 2013-2014         5    Central Valley
-##   4: CA Dept of Transit NPDES Monitoring 2013-2014         5    Central Valley
-##   5: CA Dept of Transit NPDES Monitoring 2013-2014         5    Central Valley
-##  ---                                                                          
-## 682:                    2012 RMP Status and Trends         2 San Francisco Bay
-## 683:                    2012 RMP Status and Trends         2 San Francisco Bay
-## 684:                    2012 RMP Status and Trends         2 San Francisco Bay
-## 685:                    2012 RMP Status and Trends         2 San Francisco Bay
-## 686:                    2012 RMP Status and Trends         2 San Francisco Bay
-##        Result Source StationCode              StationName        Subregion
-##   1: 2.80e-02  CEDEN       3-217 28-ft RVTS Strip Station Sacramento River
-##   2: 2.80e-02  CEDEN       3-217 28-ft RVTS Strip Station Sacramento River
-##   3: 6.30e+04  CEDEN       3-217 28-ft RVTS Strip Station Sacramento River
-##   4: 6.30e+04  CEDEN       3-217 28-ft RVTS Strip Station Sacramento River
-##   5: 3.30e+03  CEDEN       3-217 28-ft RVTS Strip Station Sacramento River
-##  ---                                                                      
-## 682: 1.00e-02  CEDEN      SU128S      Suisun Bay (SU128S)       Suisun Bay
-## 683: 3.00e-02  CEDEN      SU128S      Suisun Bay (SU128S)       Suisun Bay
-## 684: 3.00e-02  CEDEN      SU128S      Suisun Bay (SU128S)       Suisun Bay
-## 685: 1.54e+01  CEDEN      SU131S      Suisun Bay (SU131S)       Suisun Bay
-## 686: 1.54e+01  CEDEN      SU131S      Suisun Bay (SU131S)       Suisun Bay
-##       Unit
-##   1:  ug/L
-##   2:  ug/L
-##   3:  ug/L
-##   4:  ug/L
-##   5:  ug/L
-##  ---      
-## 682:  mg/L
-## 683:  mg/L
-## 684:  mg/L
-## 685: Deg C
-## 686: Deg C
+##                               Analyte CollectionMethod       Date Datum
+##   1:         Benz(a)anthracene, Total     Not Recorded 2014-02-26 NAD83
+##   2:         Benz(a)anthracene, Total       Water_Grab 2014-02-26 NAD83
+##   3:         OilandGrease, HEM, Total     Not Recorded 2014-02-26 NAD83
+##   4:         OilandGrease, HEM, Total       Water_Grab 2014-02-26 NAD83
+##   5:     Dibenz(a,h)anthracene, Total     Not Recorded 2014-02-26 NAD83
+##  ---                                                                   
+## 682:            Ammonia as NH3, Total       Water_Grab 2019-04-18 NAD83
+## 683: Ammonia as NH3, Unionized, Total       Water_Grab 2019-04-18 NAD83
+## 684: Ammonia as NH3, Unionized, Total    Sediment_Grab 2019-04-18 NAD83
+## 685: Ammonia as NH3, Unionized, Total       Water_Grab 2019-05-23 NAD83
+## 686: Ammonia as NH3, Unionized, Total    Sediment_Grab 2019-05-23 NAD83
+##                            geometry Latitude LocationCode Longitude  MatrixName
+##   1: c(-121.49340057373, 38.456501)  38.4565 Not Recorded -121.4934 samplewater
+##   2: c(-121.49340057373, 38.456501)  38.4565 Not Recorded -121.4934 samplewater
+##   3: c(-121.49340057373, 38.456501)  38.4565 Not Recorded -121.4934 samplewater
+##   4: c(-121.49340057373, 38.456501)  38.4565 Not Recorded -121.4934 samplewater
+##   5: c(-121.49340057373, 38.456501)  38.4565 Not Recorded -121.4934 samplewater
+##  ---                                                                           
+## 682:            c(-121.794, 38.307)  38.3070   Midchannel -121.7940 samplewater
+## 683:            c(-121.794, 38.307)  38.3070   Midchannel -121.7940 samplewater
+## 684:            c(-121.794, 38.307)  38.3070         Bank -121.7940    sediment
+## 685:           c(-121.693, 38.3068)  38.3068         Bank -121.6930 samplewater
+## 686:           c(-121.693, 38.3068)  38.3068         Bank -121.6930    sediment
+##        MDL                                 ParentProject
+##   1: 0.028 CA Dept of Transit NPDES Monitoring 2014-2015
+##   2: 0.028 CA Dept of Transit NPDES Monitoring 2014-2015
+##   3: 1.800 CA Dept of Transit NPDES Monitoring 2014-2015
+##   4: 1.800 CA Dept of Transit NPDES Monitoring 2014-2015
+##   5: 0.028 CA Dept of Transit NPDES Monitoring 2014-2015
+##  ---                                                    
+## 682:    NA     Sacramento Valley Water Quality Coalition
+## 683:    NA     Sacramento Valley Water Quality Coalition
+## 684:    NA     Sacramento Valley Water Quality Coalition
+## 685:    NA     Sacramento Valley Water Quality Coalition
+## 686:    NA     Sacramento Valley Water Quality Coalition
+##                                           Program
+##   1: CA Department of Transportation NPDES Permit
+##   2: CA Department of Transportation NPDES Permit
+##   3: CA Department of Transportation NPDES Permit
+##   4: CA Department of Transportation NPDES Permit
+##   5: CA Department of Transportation NPDES Permit
+##  ---                                             
+## 682:           Irrigated Lands Regulatory Program
+## 683:           Irrigated Lands Regulatory Program
+## 684:           Irrigated Lands Regulatory Program
+## 685:           Irrigated Lands Regulatory Program
+## 686:           Irrigated Lands Regulatory Program
+##                                              Project rb_number regional_board
+##   1:   CA Dept of Transit NPDES Monitoring 2013-2014         5 Central Valley
+##   2:   CA Dept of Transit NPDES Monitoring 2013-2014         5 Central Valley
+##   3:   CA Dept of Transit NPDES Monitoring 2013-2014         5 Central Valley
+##   4:   CA Dept of Transit NPDES Monitoring 2013-2014         5 Central Valley
+##   5:   CA Dept of Transit NPDES Monitoring 2013-2014         5 Central Valley
+##  ---                                                                         
+## 682: SVC, Order R5-2014-0030, Dec 1st 2019, WY19, Q3         5 Central Valley
+## 683: SVC, Order R5-2014-0030, Dec 1st 2019, WY19, Q3         5 Central Valley
+## 684: SVC, Order R5-2014-0030, Dec 1st 2019, WY19, Q3         5 Central Valley
+## 685: SVC, Order R5-2014-0030, Dec 1st 2019, WY19, Q3         5 Central Valley
+## 686: SVC, Order R5-2014-0030, Dec 1st 2019, WY19, Q3         5 Central Valley
+##       Result   RL Source StationCode                          StationName
+##   1:   0.028 0.07  CEDEN       3-217             28-ft RVTS Strip Station
+##   2:   0.028 0.07  CEDEN       3-217             28-ft RVTS Strip Station
+##   3:   2.400 6.50  CEDEN       3-217             28-ft RVTS Strip Station
+##   4:   2.400 6.50  CEDEN       3-217             28-ft RVTS Strip Station
+##   5:   0.028 0.07  CEDEN       3-217             28-ft RVTS Strip Station
+##  ---                                                                     
+## 682: -88.000   NA  CEDEN   511ULCABR           Ulatis Creek at Brown Road
+## 683: -88.000   NA  CEDEN   511ULCABR           Ulatis Creek at Brown Road
+## 684: -88.000   NA  CEDEN   511ULCABR           Ulatis Creek at Brown Road
+## 685: -88.000   NA  CEDEN   511XSSLIB Shag Slough at Liberty Island Bridge
+## 686: -88.000   NA  CEDEN   511XSSLIB Shag Slough at Liberty Island Bridge
+##             Subregion Unit
+##   1: Sacramento River ug/L
+##   2: Sacramento River ug/L
+##   3: Sacramento River mg/L
+##   4: Sacramento River mg/L
+##   5: Sacramento River ug/L
+##  ---                      
+## 682:      North Delta mg/L
+## 683:      North Delta mg/L
+## 684:      North Delta mg/L
+## 685:      North Delta mg/L
+## 686:      North Delta mg/L
 ```
 
 ```r
@@ -547,7 +536,7 @@ tibble(Entire = nrow(CEDEN_ALL_DupChecked[CEDEN_ALL_DupChecked$CollectionMethod=
 ## # A tibble: 1 x 2
 ##   Entire   Dup
 ##    <int> <int>
-## 1    307   153
+## 1    260   153
 ```
 
 ### Fix CEDEN nomenclature
@@ -577,8 +566,9 @@ CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>%
 ```
 
 ```
-## Warning: Expected 2 pieces. Missing pieces filled with `NA` in 17681 rows [2, 3,
-## 4, 5, 7, 8, 9, 10, 11, 12, 14, 19, 20, 22, 23, 24, 28, 94, 118, 144, ...].
+## Warning: Expected 2 pieces. Missing pieces filled with `NA` in 19377 rows [54,
+## 55, 57, 58, 101, 103, 104, 106, 140, 144, 145, 146, 673, 678, 681, 682, 2657,
+## 2658, 2660, 2664, ...].
 ```
 
 ```r
@@ -591,12 +581,12 @@ head(sort(unique(CEDEN_ALL_DupChecked$Analyte))) # 908 unique Analytes total
 ```
 
 ```
-## [1] ""                                          
-## [2] "1,2-bis(2,4,6- tribromophenoxy)ethane"     
-## [3] "2-ethyl-1-hexyl-2,3,4,5-tetrabromobenzoate"
-## [4] "2-ethylhexyl-diphenyl phosphate"           
-## [5] "2,4,6-tribromophenyl allyl ether"          
-## [6] "abamectin"
+## [1] ""                                     
+## [2] "1,2-bis(2,4,6- tribromophenoxy)ethane"
+## [3] "2-ethylhexyl-diphenyl phosphate"      
+## [4] "2,4,6-tribromophenyl allyl ether"     
+## [5] "acenaphthene"                         
+## [6] "acenaphthenes"
 ```
 
 ```r
@@ -627,7 +617,7 @@ CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, Collection
 
 ### CEDEN merge result
 
-Using these QA/QC methods, 127874 unique records are available through the CEDEN datasets. 
+Using these QA/QC methods, 87794 unique records are available through the CEDEN datasets. 
 
 <br>
 
@@ -636,8 +626,8 @@ Using these QA/QC methods, 127874 unique records are available through the CEDEN
 
 ## SURF data {.tabset}
 
-There are 129323 records in the WQ dataset
-and 36027 in the SED dataset. 
+There are 91021 records in the WQ dataset
+and 35346 in the SED dataset. 
 
 ### SURF Water
 
@@ -676,7 +666,7 @@ summary(SURFMod_WQ$DupCheck)
 
 ```
 ##    Mode   FALSE 
-## logical  129323
+## logical   91021
 ```
 
 Fantastic. There are no exact duplicates within the SURF water data - even when we include the CEDEN allowed in SURF
@@ -695,7 +685,7 @@ nrow(SURFMod_WQ) - nrow(NoDupWQ)
 ```
 
 ```
-## [1] 17756
+## [1] 15333
 ```
 <br>
 
@@ -735,7 +725,7 @@ summary(SURFMod_SED$DupCheck)
 
 ```
 ##    Mode   FALSE 
-## logical   36027
+## logical   35346
 ```
 
 Fantastic. There are no exact duplicates within the SURF sediment data, even with CEDEN also contained.
@@ -754,7 +744,7 @@ nrow(SURFMod_SED) - nrow(NoDupSED)
 ```
 
 ```
-## [1] 4120
+## [1] 4080
 ```
 <br>
 
@@ -855,7 +845,7 @@ length(unique(SURF_ALL$Result)) # how many different "result" values are represe
 ```
 
 ```
-## [1] 2467
+## [1] 1598
 ```
 
 ```r
@@ -863,8 +853,8 @@ unique(DIF$Result) # All unique "result" values within the duplicates that were 
 ```
 
 ```
-##  [1] 0.0000 0.9000 0.0036 0.0160 0.0100 0.0140 0.0250 0.0130 0.0032 0.0270
-## [11] 0.0430 0.0024 0.0029 0.1500 0.0470
+##  [1] 0.0000 0.0036 0.0160 0.0100 0.0140 0.0250 0.0130 0.0032 0.0270 0.0430
+## [11] 0.0024 0.0029 0.1500 0.0470
 ```
 
 These duplicates have some commonalities;
@@ -895,208 +885,198 @@ Example
 
 ```
 ##                                     Agency            Analyte
-##  1:        Aquatic Toxicology LaboratoryÂ              diuron
-##  2:     Sacramento River Watershed Program             diuron
-##  3:                      ADH Environmental       tetramethrin
-##  4: San Francisco Estuary Institute (SFEI)       tetramethrin
-##  5:                      ADH Environmental   fipronil sulfone
-##  6: San Francisco Estuary Institute (SFEI)   fipronil sulfone
-##  7:                      ADH Environmental           fipronil
-##  8: San Francisco Estuary Institute (SFEI)           fipronil
-##  9:                      ADH Environmental   fipronil sulfone
-## 10: San Francisco Estuary Institute (SFEI)   fipronil sulfone
-## 11:                      ADH Environmental         cyfluthrin
-## 12: San Francisco Estuary Institute (SFEI)         cyfluthrin
-## 13:                      ADH Environmental   fipronil sulfone
-## 14: San Francisco Estuary Institute (SFEI)   fipronil sulfone
-## 15:                      ADH Environmental lambda cyhalothrin
-## 16: San Francisco Estuary Institute (SFEI) lambda cyhalothrin
+##  1:                      ADH Environmental       tetramethrin
+##  2: San Francisco Estuary Institute (SFEI)       tetramethrin
+##  3:                      ADH Environmental   fipronil sulfone
+##  4: San Francisco Estuary Institute (SFEI)   fipronil sulfone
+##  5:                      ADH Environmental           fipronil
+##  6: San Francisco Estuary Institute (SFEI)           fipronil
+##  7:                      ADH Environmental   fipronil sulfone
+##  8: San Francisco Estuary Institute (SFEI)   fipronil sulfone
+##  9:                      ADH Environmental         cyfluthrin
+## 10: San Francisco Estuary Institute (SFEI)         cyfluthrin
+## 11:                      ADH Environmental   fipronil sulfone
+## 12: San Francisco Estuary Institute (SFEI)   fipronil sulfone
+## 13:                      ADH Environmental lambda cyhalothrin
+## 14: San Francisco Estuary Institute (SFEI) lambda cyhalothrin
+## 15:                      ADH Environmental         bifenthrin
+## 16: San Francisco Estuary Institute (SFEI)         bifenthrin
 ## 17:                      ADH Environmental         bifenthrin
 ## 18: San Francisco Estuary Institute (SFEI)         bifenthrin
-## 19:                      ADH Environmental         bifenthrin
-## 20: San Francisco Estuary Institute (SFEI)         bifenthrin
+## 19:                      ADH Environmental         cyfluthrin
+## 20: San Francisco Estuary Institute (SFEI)         cyfluthrin
 ## 21:                      ADH Environmental         cyfluthrin
 ## 22: San Francisco Estuary Institute (SFEI)         cyfluthrin
-## 23:                      ADH Environmental         cyfluthrin
-## 24: San Francisco Estuary Institute (SFEI)         cyfluthrin
+## 23:                      ADH Environmental           fipronil
+## 24: San Francisco Estuary Institute (SFEI)           fipronil
 ## 25:                      ADH Environmental           fipronil
 ## 26: San Francisco Estuary Institute (SFEI)           fipronil
-## 27:                      ADH Environmental           fipronil
-## 28: San Francisco Estuary Institute (SFEI)           fipronil
-## 29:                      ADH Environmental   fipronil sulfone
-## 30: San Francisco Estuary Institute (SFEI)   fipronil sulfone
-## 31:                      ADH Environmental         bifenthrin
-## 32: San Francisco Estuary Institute (SFEI)         bifenthrin
-## 33:                      ADH Environmental         cyfluthrin
-## 34: San Francisco Estuary Institute (SFEI)         cyfluthrin
-## 35:                      ADH Environmental           fipronil
-## 36: San Francisco Estuary Institute (SFEI)           fipronil
-## 37:                      ADH Environmental         bifenthrin
-## 38: San Francisco Estuary Institute (SFEI)         bifenthrin
+## 27:                      ADH Environmental   fipronil sulfone
+## 28: San Francisco Estuary Institute (SFEI)   fipronil sulfone
+## 29:                      ADH Environmental         bifenthrin
+## 30: San Francisco Estuary Institute (SFEI)         bifenthrin
+## 31:                      ADH Environmental         cyfluthrin
+## 32: San Francisco Estuary Institute (SFEI)         cyfluthrin
+## 33:                      ADH Environmental           fipronil
+## 34: San Francisco Estuary Institute (SFEI)           fipronil
+## 35:                      ADH Environmental         bifenthrin
+## 36: San Francisco Estuary Institute (SFEI)         bifenthrin
 ##                                     Agency            Analyte
 ##              CollectionMethod       County Data.source       Date
-##  1:       Sample-type unknown       Solano       CEDEN 2000-02-16
-##  2:               Grab sample       Solano       Other 2000-02-16
-##  3: Single whole water sample Contra Costa       CEDEN 2013-04-05
-##  4:                           Contra Costa       CEDEN 2013-04-05
-##  5:       Sample-type unknown Contra Costa       CEDEN 2012-12-01
-##  6:                           Contra Costa       CEDEN 2012-12-01
+##  1: Single whole water sample Contra Costa       CEDEN 2013-04-05
+##  2:                           Contra Costa       CEDEN 2013-04-05
+##  3:       Sample-type unknown Contra Costa       CEDEN 2012-12-01
+##  4:                           Contra Costa       CEDEN 2012-12-01
+##  5:       Sample-type unknown Contra Costa       CEDEN 2012-11-29
+##  6:                           Contra Costa       CEDEN 2012-11-29
 ##  7:       Sample-type unknown Contra Costa       CEDEN 2012-11-29
 ##  8:                           Contra Costa       CEDEN 2012-11-29
-##  9:       Sample-type unknown Contra Costa       CEDEN 2012-11-29
-## 10:                           Contra Costa       CEDEN 2012-11-29
-## 11: Single whole water sample Contra Costa       CEDEN 2012-12-01
-## 12:                           Contra Costa       CEDEN 2012-12-01
-## 13:       Sample-type unknown Contra Costa       CEDEN 2012-12-22
-## 14:                           Contra Costa       CEDEN 2012-12-22
-## 15: Single whole water sample Contra Costa       CEDEN 2012-12-01
-## 16:                           Contra Costa       CEDEN 2012-12-01
-## 17: Single whole water sample Contra Costa       CEDEN 2013-04-05
-## 18:                           Contra Costa       CEDEN 2013-04-05
-## 19: Single whole water sample Contra Costa       CEDEN 2012-12-22
-## 20:                           Contra Costa       CEDEN 2012-12-22
-## 21: Single whole water sample Contra Costa       CEDEN 2013-04-05
-## 22:                           Contra Costa       CEDEN 2013-04-05
-## 23: Single whole water sample Contra Costa       CEDEN 2012-11-29
-## 24:                           Contra Costa       CEDEN 2012-11-29
-## 25:       Sample-type unknown Contra Costa       CEDEN 2012-12-01
-## 26:                           Contra Costa       CEDEN 2012-12-01
-## 27:       Sample-type unknown Contra Costa       CEDEN 2012-12-22
-## 28:                           Contra Costa       CEDEN 2012-12-22
-## 29:       Sample-type unknown Contra Costa       CEDEN 2013-04-05
-## 30:                           Contra Costa       CEDEN 2013-04-05
-## 31: Single whole water sample Contra Costa       CEDEN 2012-12-01
-## 32:                           Contra Costa       CEDEN 2012-12-01
-## 33: Single whole water sample Contra Costa       CEDEN 2012-12-22
-## 34:                           Contra Costa       CEDEN 2012-12-22
-## 35:       Sample-type unknown Contra Costa       CEDEN 2013-04-05
-## 36:                           Contra Costa       CEDEN 2013-04-05
-## 37: Single whole water sample Contra Costa       CEDEN 2012-11-29
-## 38:                           Contra Costa       CEDEN 2012-11-29
+##  9: Single whole water sample Contra Costa       CEDEN 2012-12-01
+## 10:                           Contra Costa       CEDEN 2012-12-01
+## 11:       Sample-type unknown Contra Costa       CEDEN 2012-12-22
+## 12:                           Contra Costa       CEDEN 2012-12-22
+## 13: Single whole water sample Contra Costa       CEDEN 2012-12-01
+## 14:                           Contra Costa       CEDEN 2012-12-01
+## 15: Single whole water sample Contra Costa       CEDEN 2013-04-05
+## 16:                           Contra Costa       CEDEN 2013-04-05
+## 17: Single whole water sample Contra Costa       CEDEN 2012-12-22
+## 18:                           Contra Costa       CEDEN 2012-12-22
+## 19: Single whole water sample Contra Costa       CEDEN 2013-04-05
+## 20:                           Contra Costa       CEDEN 2013-04-05
+## 21: Single whole water sample Contra Costa       CEDEN 2012-11-29
+## 22:                           Contra Costa       CEDEN 2012-11-29
+## 23:       Sample-type unknown Contra Costa       CEDEN 2012-12-01
+## 24:                           Contra Costa       CEDEN 2012-12-01
+## 25:       Sample-type unknown Contra Costa       CEDEN 2012-12-22
+## 26:                           Contra Costa       CEDEN 2012-12-22
+## 27:       Sample-type unknown Contra Costa       CEDEN 2013-04-05
+## 28:                           Contra Costa       CEDEN 2013-04-05
+## 29: Single whole water sample Contra Costa       CEDEN 2012-12-01
+## 30:                           Contra Costa       CEDEN 2012-12-01
+## 31: Single whole water sample Contra Costa       CEDEN 2012-12-22
+## 32:                           Contra Costa       CEDEN 2012-12-22
+## 33:       Sample-type unknown Contra Costa       CEDEN 2013-04-05
+## 34:                           Contra Costa       CEDEN 2013-04-05
+## 35: Single whole water sample Contra Costa       CEDEN 2012-11-29
+## 36:                           Contra Costa       CEDEN 2012-11-29
 ##              CollectionMethod       County Data.source       Date
-##                   geometry Latitude Longitude    LOQ        MDL Record_id
-##  1:    c(-121.6593, 38.19) 38.19000 -121.6593 0.4000 -9.990e+02   1616574
-##  2:    c(-121.6593, 38.19) 38.19000 -121.6593 0.4000         NA    104422
-##  3: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015  1.324e-04   1105972
-##  4: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015  1.324e-04    464883
-##  5: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020  5.000e-04   1206612
-##  6: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020  5.000e-04    472857
-##  7: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020  5.000e-04   1206615
-##  8: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020  5.000e-04    478238
-##  9: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020  5.000e-04   1206611
-## 10: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020  5.000e-04    465500
-## 11: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015  2.000e-04   1105938
-## 12: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015  2.000e-04    470161
-## 13: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020  5.000e-04   1206613
-## 14: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020  5.000e-04    479675
-## 15: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015  2.000e-04   1105942
-## 16: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015  2.000e-04    470985
-## 17: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015  6.620e-05   1105936
-## 18: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015  6.620e-05    470154
-## 19: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0017  3.000e-04   1105935
-## 20: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0017  3.000e-04    470960
-## 21: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015  1.324e-04   1105940
-## 22: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015  1.324e-04    469790
-## 23: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015  2.000e-04   1105937
-## 24: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015  2.000e-04    469794
-## 25: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020  5.000e-04   1206616
-## 26: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020  5.000e-04    479007
-## 27: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020  5.000e-04   1206617
-## 28: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020  5.000e-04    479721
-## 29: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020  5.000e-04   1206614
-## 30: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020  5.000e-04    465543
-## 31: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015  1.000e-04   1105934
-## 32: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015  1.000e-04    470522
-## 33: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0017  7.000e-04   1105939
-## 34: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0017  7.000e-04    470532
-## 35: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020  5.000e-04   1206618
-## 36: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020  5.000e-04    465162
-## 37: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015  1.000e-04   1105933
-## 38: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015  1.000e-04    464882
-##                   geometry Latitude Longitude    LOQ        MDL Record_id
-##     Result Source StationCode
-##  1: 0.9000   SURF       48_12
-##  2: 0.9000   SURF       48_12
-##  3: 0.0036   SURF        07_4
-##  4: 0.0036   SURF        07_4
-##  5: 0.0160   SURF        07_4
-##  6: 0.0160   SURF        07_4
-##  7: 0.0100   SURF        07_4
-##  8: 0.0100   SURF        07_4
-##  9: 0.0140   SURF        07_4
-## 10: 0.0140   SURF        07_4
-## 11: 0.0250   SURF        07_4
-## 12: 0.0250   SURF        07_4
-## 13: 0.0130   SURF        07_4
-## 14: 0.0130   SURF        07_4
-## 15: 0.0032   SURF        07_4
-## 16: 0.0032   SURF        07_4
-## 17: 0.0270   SURF        07_4
-## 18: 0.0270   SURF        07_4
-## 19: 0.0430   SURF        07_4
-## 20: 0.0430   SURF        07_4
-## 21: 0.0024   SURF        07_4
-## 22: 0.0024   SURF        07_4
-## 23: 0.0029   SURF        07_4
-## 24: 0.0029   SURF        07_4
-## 25: 0.0130   SURF        07_4
-## 26: 0.0130   SURF        07_4
-## 27: 0.0100   SURF        07_4
-## 28: 0.0100   SURF        07_4
-## 29: 0.0140   SURF        07_4
-## 30: 0.0140   SURF        07_4
-## 31: 0.1500   SURF        07_4
-## 32: 0.1500   SURF        07_4
-## 33: 0.0024   SURF        07_4
-## 34: 0.0024   SURF        07_4
-## 35: 0.0100   SURF        07_4
-## 36: 0.0100   SURF        07_4
-## 37: 0.0470   SURF        07_4
-## 38: 0.0470   SURF        07_4
-##     Result Source StationCode
-##                                                  StationName Study_cd
-##  1:                            Cache Slough near Ryers Ferry      451
-##  2:                            Cache Slough near Ryers Ferry       80
-##  3: Marsh Creek at Cypress Rd bridge (trib to western Delta)      523
-##  4: Marsh Creek at Cypress Rd bridge (trib to western Delta)      305
-##  5: Marsh Creek at Cypress Rd bridge (trib to western Delta)      523
-##  6: Marsh Creek at Cypress Rd bridge (trib to western Delta)      305
-##  7: Marsh Creek at Cypress Rd bridge (trib to western Delta)      523
-##  8: Marsh Creek at Cypress Rd bridge (trib to western Delta)      305
-##  9: Marsh Creek at Cypress Rd bridge (trib to western Delta)      523
-## 10: Marsh Creek at Cypress Rd bridge (trib to western Delta)      305
-## 11: Marsh Creek at Cypress Rd bridge (trib to western Delta)      523
-## 12: Marsh Creek at Cypress Rd bridge (trib to western Delta)      305
-## 13: Marsh Creek at Cypress Rd bridge (trib to western Delta)      523
-## 14: Marsh Creek at Cypress Rd bridge (trib to western Delta)      305
-## 15: Marsh Creek at Cypress Rd bridge (trib to western Delta)      523
-## 16: Marsh Creek at Cypress Rd bridge (trib to western Delta)      305
-## 17: Marsh Creek at Cypress Rd bridge (trib to western Delta)      523
-## 18: Marsh Creek at Cypress Rd bridge (trib to western Delta)      305
-## 19: Marsh Creek at Cypress Rd bridge (trib to western Delta)      523
-## 20: Marsh Creek at Cypress Rd bridge (trib to western Delta)      305
-## 21: Marsh Creek at Cypress Rd bridge (trib to western Delta)      523
-## 22: Marsh Creek at Cypress Rd bridge (trib to western Delta)      305
-## 23: Marsh Creek at Cypress Rd bridge (trib to western Delta)      523
-## 24: Marsh Creek at Cypress Rd bridge (trib to western Delta)      305
-## 25: Marsh Creek at Cypress Rd bridge (trib to western Delta)      523
-## 26: Marsh Creek at Cypress Rd bridge (trib to western Delta)      305
-## 27: Marsh Creek at Cypress Rd bridge (trib to western Delta)      523
-## 28: Marsh Creek at Cypress Rd bridge (trib to western Delta)      305
-## 29: Marsh Creek at Cypress Rd bridge (trib to western Delta)      523
-## 30: Marsh Creek at Cypress Rd bridge (trib to western Delta)      305
-## 31: Marsh Creek at Cypress Rd bridge (trib to western Delta)      523
-## 32: Marsh Creek at Cypress Rd bridge (trib to western Delta)      305
-## 33: Marsh Creek at Cypress Rd bridge (trib to western Delta)      523
-## 34: Marsh Creek at Cypress Rd bridge (trib to western Delta)      305
-## 35: Marsh Creek at Cypress Rd bridge (trib to western Delta)      523
-## 36: Marsh Creek at Cypress Rd bridge (trib to western Delta)      305
-## 37: Marsh Creek at Cypress Rd bridge (trib to western Delta)      523
-## 38: Marsh Creek at Cypress Rd bridge (trib to western Delta)      305
-##                                                  StationName Study_cd
+##                   geometry Latitude Longitude    LOQ       MDL Record_id Result
+##  1: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015 0.0001324   1105972 0.0036
+##  2: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015 0.0001324    464883 0.0036
+##  3: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020 0.0005000   1206612 0.0160
+##  4: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020 0.0005000    472857 0.0160
+##  5: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020 0.0005000   1206615 0.0100
+##  6: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020 0.0005000    478238 0.0100
+##  7: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020 0.0005000   1206611 0.0140
+##  8: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020 0.0005000    465500 0.0140
+##  9: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015 0.0002000   1105938 0.0250
+## 10: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015 0.0002000    470161 0.0250
+## 11: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020 0.0005000   1206613 0.0130
+## 12: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020 0.0005000    479675 0.0130
+## 13: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015 0.0002000   1105942 0.0032
+## 14: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015 0.0002000    470985 0.0032
+## 15: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015 0.0000662   1105936 0.0270
+## 16: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015 0.0000662    470154 0.0270
+## 17: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0017 0.0003000   1105935 0.0430
+## 18: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0017 0.0003000    470960 0.0430
+## 19: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015 0.0001324   1105940 0.0024
+## 20: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015 0.0001324    469790 0.0024
+## 21: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015 0.0002000   1105937 0.0029
+## 22: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015 0.0002000    469794 0.0029
+## 23: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020 0.0005000   1206616 0.0130
+## 24: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020 0.0005000    479007 0.0130
+## 25: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020 0.0005000   1206617 0.0100
+## 26: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020 0.0005000    479721 0.0100
+## 27: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020 0.0005000   1206614 0.0140
+## 28: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020 0.0005000    465543 0.0140
+## 29: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015 0.0001000   1105934 0.1500
+## 30: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015 0.0001000    470522 0.1500
+## 31: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0017 0.0007000   1105939 0.0024
+## 32: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0017 0.0007000    470532 0.0024
+## 33: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020 0.0005000   1206618 0.0100
+## 34: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0020 0.0005000    465162 0.0100
+## 35: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015 0.0001000   1105933 0.0470
+## 36: c(-121.7083, 37.99151) 37.99151 -121.7083 0.0015 0.0001000    464882 0.0470
+##                   geometry Latitude Longitude    LOQ       MDL Record_id Result
+##     Source StationCode                                              StationName
+##  1:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+##  2:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+##  3:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+##  4:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+##  5:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+##  6:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+##  7:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+##  8:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+##  9:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 10:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 11:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 12:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 13:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 14:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 15:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 16:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 17:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 18:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 19:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 20:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 21:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 22:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 23:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 24:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 25:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 26:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 27:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 28:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 29:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 30:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 31:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 32:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 33:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 34:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 35:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+## 36:   SURF        07_4 Marsh Creek at Cypress Rd bridge (trib to western Delta)
+##     Source StationCode                                              StationName
+##     Study_cd
+##  1:      523
+##  2:      305
+##  3:      523
+##  4:      305
+##  5:      523
+##  6:      305
+##  7:      523
+##  8:      305
+##  9:      523
+## 10:      305
+## 11:      523
+## 12:      305
+## 13:      523
+## 14:      305
+## 15:      523
+## 16:      305
+## 17:      523
+## 18:      305
+## 19:      523
+## 20:      305
+## 21:      523
+## 22:      305
+## 23:      523
+## 24:      305
+## 25:      523
+## 26:      305
+## 27:      523
+## 28:      305
+## 29:      523
+## 30:      305
+## 31:      523
+## 32:      305
+## 33:      523
+## 34:      305
+## 35:      523
+## 36:      305
+##     Study_cd
 ##                                                                                                     Study_description
-##  1: Sacramento River Watershed Program , Sacramento River Watershed Program , Sacramento River Watershed Program 2000
-##  2:  Sacramento River Watershed Program data, 1998-2002, monitoring years 1-4.(No pesticide data collected for 1998).
+##  1:                         STLS Monitoring WY2013 , SF Bay STLS Monitoring , STLS Monitoring Contra Costa CWP WY2013
+##  2: SFEI River Loading Study 2013 , SFEI Stormwater Monitoring Study , 2013 Tributary Loading Study (CEDEN May, 2015)
 ##  3:                         STLS Monitoring WY2013 , SF Bay STLS Monitoring , STLS Monitoring Contra Costa CWP WY2013
 ##  4: SFEI River Loading Study 2013 , SFEI Stormwater Monitoring Study , 2013 Tributary Loading Study (CEDEN May, 2015)
 ##  5:                         STLS Monitoring WY2013 , SF Bay STLS Monitoring , STLS Monitoring Contra Costa CWP WY2013
@@ -1131,49 +1111,45 @@ Example
 ## 34: SFEI River Loading Study 2013 , SFEI Stormwater Monitoring Study , 2013 Tributary Loading Study (CEDEN May, 2015)
 ## 35:                         STLS Monitoring WY2013 , SF Bay STLS Monitoring , STLS Monitoring Contra Costa CWP WY2013
 ## 36: SFEI River Loading Study 2013 , SFEI Stormwater Monitoring Study , 2013 Tributary Loading Study (CEDEN May, 2015)
-## 37:                         STLS Monitoring WY2013 , SF Bay STLS Monitoring , STLS Monitoring Contra Costa CWP WY2013
-## 38: SFEI River Loading Study 2013 , SFEI Stormwater Monitoring Study , 2013 Tributary Loading Study (CEDEN May, 2015)
 ##                                                                                                     Study_description
-##                Study_weblink   Subregion Total organic carbon (%) Unit
-##  1: http://www.sacriver.org/ North Delta                       NA  ppb
-##  2:                       NA North Delta                       NA  ppb
-##  3:    http://www.ceden.org/  Confluence                       NA  ppb
-##  4:    http://www.ceden.org/  Confluence                       NA  ppb
-##  5:    http://www.ceden.org/  Confluence                       NA  ppb
-##  6:    http://www.ceden.org/  Confluence                       NA  ppb
-##  7:    http://www.ceden.org/  Confluence                       NA  ppb
-##  8:    http://www.ceden.org/  Confluence                       NA  ppb
-##  9:    http://www.ceden.org/  Confluence                       NA  ppb
-## 10:    http://www.ceden.org/  Confluence                       NA  ppb
-## 11:    http://www.ceden.org/  Confluence                       NA  ppb
-## 12:    http://www.ceden.org/  Confluence                       NA  ppb
-## 13:    http://www.ceden.org/  Confluence                       NA  ppb
-## 14:    http://www.ceden.org/  Confluence                       NA  ppb
-## 15:    http://www.ceden.org/  Confluence                       NA  ppb
-## 16:    http://www.ceden.org/  Confluence                       NA  ppb
-## 17:    http://www.ceden.org/  Confluence                       NA  ppb
-## 18:    http://www.ceden.org/  Confluence                       NA  ppb
-## 19:    http://www.ceden.org/  Confluence                       NA  ppb
-## 20:    http://www.ceden.org/  Confluence                       NA  ppb
-## 21:    http://www.ceden.org/  Confluence                       NA  ppb
-## 22:    http://www.ceden.org/  Confluence                       NA  ppb
-## 23:    http://www.ceden.org/  Confluence                       NA  ppb
-## 24:    http://www.ceden.org/  Confluence                       NA  ppb
-## 25:    http://www.ceden.org/  Confluence                       NA  ppb
-## 26:    http://www.ceden.org/  Confluence                       NA  ppb
-## 27:    http://www.ceden.org/  Confluence                       NA  ppb
-## 28:    http://www.ceden.org/  Confluence                       NA  ppb
-## 29:    http://www.ceden.org/  Confluence                       NA  ppb
-## 30:    http://www.ceden.org/  Confluence                       NA  ppb
-## 31:    http://www.ceden.org/  Confluence                       NA  ppb
-## 32:    http://www.ceden.org/  Confluence                       NA  ppb
-## 33:    http://www.ceden.org/  Confluence                       NA  ppb
-## 34:    http://www.ceden.org/  Confluence                       NA  ppb
-## 35:    http://www.ceden.org/  Confluence                       NA  ppb
-## 36:    http://www.ceden.org/  Confluence                       NA  ppb
-## 37:    http://www.ceden.org/  Confluence                       NA  ppb
-## 38:    http://www.ceden.org/  Confluence                       NA  ppb
-##                Study_weblink   Subregion Total organic carbon (%) Unit
+##             Study_weblink  Subregion Total organic carbon (%) Unit
+##  1: http://www.ceden.org/ Confluence                       NA  ppb
+##  2: http://www.ceden.org/ Confluence                       NA  ppb
+##  3: http://www.ceden.org/ Confluence                       NA  ppb
+##  4: http://www.ceden.org/ Confluence                       NA  ppb
+##  5: http://www.ceden.org/ Confluence                       NA  ppb
+##  6: http://www.ceden.org/ Confluence                       NA  ppb
+##  7: http://www.ceden.org/ Confluence                       NA  ppb
+##  8: http://www.ceden.org/ Confluence                       NA  ppb
+##  9: http://www.ceden.org/ Confluence                       NA  ppb
+## 10: http://www.ceden.org/ Confluence                       NA  ppb
+## 11: http://www.ceden.org/ Confluence                       NA  ppb
+## 12: http://www.ceden.org/ Confluence                       NA  ppb
+## 13: http://www.ceden.org/ Confluence                       NA  ppb
+## 14: http://www.ceden.org/ Confluence                       NA  ppb
+## 15: http://www.ceden.org/ Confluence                       NA  ppb
+## 16: http://www.ceden.org/ Confluence                       NA  ppb
+## 17: http://www.ceden.org/ Confluence                       NA  ppb
+## 18: http://www.ceden.org/ Confluence                       NA  ppb
+## 19: http://www.ceden.org/ Confluence                       NA  ppb
+## 20: http://www.ceden.org/ Confluence                       NA  ppb
+## 21: http://www.ceden.org/ Confluence                       NA  ppb
+## 22: http://www.ceden.org/ Confluence                       NA  ppb
+## 23: http://www.ceden.org/ Confluence                       NA  ppb
+## 24: http://www.ceden.org/ Confluence                       NA  ppb
+## 25: http://www.ceden.org/ Confluence                       NA  ppb
+## 26: http://www.ceden.org/ Confluence                       NA  ppb
+## 27: http://www.ceden.org/ Confluence                       NA  ppb
+## 28: http://www.ceden.org/ Confluence                       NA  ppb
+## 29: http://www.ceden.org/ Confluence                       NA  ppb
+## 30: http://www.ceden.org/ Confluence                       NA  ppb
+## 31: http://www.ceden.org/ Confluence                       NA  ppb
+## 32: http://www.ceden.org/ Confluence                       NA  ppb
+## 33: http://www.ceden.org/ Confluence                       NA  ppb
+## 34: http://www.ceden.org/ Confluence                       NA  ppb
+## 35: http://www.ceden.org/ Confluence                       NA  ppb
+## 36: http://www.ceden.org/ Confluence                       NA  ppb
+##             Study_weblink  Subregion Total organic carbon (%) Unit
 ```
 
 
@@ -1182,7 +1158,7 @@ unique(Example$Data.source)
 ```
 
 ```
-## [1] "CEDEN" "Other"
+## [1] "CEDEN"
 ```
 
 ```r
@@ -1190,7 +1166,7 @@ unique(Example$Study_cd)
 ```
 
 ```
-## [1] 451  80 523 305
+## [1] 523 305
 ```
 
 Given this info, it is worthwhile to ask if there are any unique entries by Study_cd 305, or if all are duplications of more complete data by Study_523.
@@ -1259,7 +1235,7 @@ length(unique(SURF_ALL_NC$Result)) # how many different "result" values are repr
 ```
 
 ```
-## [1] 1210
+## [1] 1047
 ```
 
 ```r
@@ -1282,7 +1258,7 @@ nrow(SURF_ALL_DupChecked)
 ```
 
 ```
-## [1] 143410
+## [1] 106890
 ```
 There are 143,000 unique records available through SURF.
 
@@ -1377,7 +1353,7 @@ nrow(filter(CEDENSURF, Data.source == "CEDEN"))
 ```
 
 ```
-## [1] 45064
+## [1] 28100
 ```
 
 ```r
@@ -1411,62 +1387,69 @@ head(filter(CEDENSURF, Data.source == "CEDEN"))
 ```
 
 ```
-##                                      Agency             Analyte
-## 1: Applied Marine Sciences, Inc. California  endosulfan sulfate
-## 2: Applied Marine Sciences, Inc. California          endosulfan
-## 3: Applied Marine Sciences, Inc. California        methoxychlor
-## 4: Applied Marine Sciences, Inc. California  chlorthal-dimethyl
-## 5: Applied Marine Sciences, Inc. California lindane (gamma-bhc)
-## 6: Applied Marine Sciences, Inc. California lindane (gamma-bhc)
-##         CollectionMethod       County Data.source       Date Datum
-## 1: Filtered water sample       Solano       CEDEN 1997-04-22  <NA>
-## 2: Filtered water sample       Solano       CEDEN 1998-07-28  <NA>
-## 3: Filtered water sample   Sacramento       CEDEN 1997-01-29  <NA>
-## 4: Filtered water sample       Solano       CEDEN 1995-08-22  <NA>
-## 5: Filtered water sample Contra Costa       CEDEN 1994-02-09  <NA>
-## 6: Filtered water sample   Sacramento       CEDEN 1995-08-23  <NA>
-##                   geometry Latitude LocationCode Longitude     LOQ MatrixName
-## 1: c(-122.03972, 38.11708) 38.11708         <NA> -122.0397 1.0e-06       <NA>
-## 2: c(-122.03972, 38.11708) 38.11708         <NA> -122.0397 1.0e-06       <NA>
-## 3: c(-121.80972, 38.05944) 38.05944         <NA> -121.8097 1.0e-06       <NA>
-## 4: c(-122.03972, 38.11708) 38.11708         <NA> -122.0397 9.0e-07       <NA>
-## 5:     c(-121.805, 38.021) 38.02100         <NA> -121.8050 5.0e-07       <NA>
-## 6: c(-121.80972, 38.05944) 38.05944         <NA> -121.8097 1.6e-06       <NA>
-##        MDL ParentProject Program Project rb_number Record_id regional_board
-## 1: 1.0e-06          <NA>    <NA>    <NA>        NA   1246085           <NA>
-## 2: 1.0e-06          <NA>    <NA>    <NA>        NA   1246140           <NA>
-## 3: 1.0e-06          <NA>    <NA>    <NA>        NA   1246411           <NA>
-## 4: 9.0e-07          <NA>    <NA>    <NA>        NA   1233010           <NA>
-## 5: 5.0e-07          <NA>    <NA>    <NA>        NA   1229115           <NA>
-## 6: 1.6e-06          <NA>    <NA>    <NA>        NA   1233193           <NA>
-##     Result Source StationCode
-## 1: 8.6e-05   SURF       48_52
-## 2: 0.0e+00   SURF       48_52
-## 3: 0.0e+00   SURF        34_2
-## 4: 7.7e-06   SURF       48_52
-## 5: 0.0e+00   SURF       07_38
-## 6: 9.6e-06   SURF        34_2
+##                                                                                     Agency
+## 1: USGS Pesticide Fate Research Group (PFRG), Organic Chemistry Research Laboratory (OCRL)
+## 2: USGS Pesticide Fate Research Group (PFRG), Organic Chemistry Research Laboratory (OCRL)
+## 3:                                                    USGS California Water Science Center
+## 4:                                                    USGS California Water Science Center
+## 5:                                                    USGS California Water Science Center
+## 6:                                                    USGS California Water Science Center
+##                Analyte      CollectionMethod       County Data.source
+## 1:          fenhexamid Filtered water sample  San Joaquin       CEDEN
+## 2: chlorantraniliprole Filtered water sample       Solano       CEDEN
+## 3:              diuron Filtered water sample   Sacramento       CEDEN
+## 4:  piperonyl butoxide Filtered water sample   Sacramento       CEDEN
+## 5:             linuron Filtered water sample       Solano       CEDEN
+## 6:           malathion Filtered water sample Contra Costa       CEDEN
+##          Date Datum                   geometry Latitude LocationCode Longitude
+## 1: 2015-08-18  <NA> c(-121.4188919, 38.236111) 38.23611         <NA> -121.4189
+## 2: 2015-11-10  <NA> c(-121.7941971, 38.306999) 38.30700         <NA> -121.7942
+## 3: 2012-03-27  <NA>    c(-121.82051, 38.06242) 38.06242         <NA> -121.8205
+## 4: 2013-04-04  <NA>    c(-121.50134, 38.45602) 38.45602         <NA> -121.5013
+## 5: 2011-04-21  <NA>    c(-122.03972, 38.11708) 38.11708         <NA> -122.0397
+## 6: 2011-04-18  <NA>    c(-121.92013, 38.04278) 38.04278         <NA> -121.9201
+##       LOQ MatrixName       MDL ParentProject Program Project rb_number
+## 1: 0.0076       <NA>    0.0076          <NA>    <NA>    <NA>        NA
+## 2: 0.0040       <NA>    0.0040          <NA>    <NA>    <NA>        NA
+## 3: 0.0032       <NA> -999.0000          <NA>    <NA>    <NA>        NA
+## 4: 0.0023       <NA> -999.0000          <NA>    <NA>    <NA>        NA
+## 5: 0.0043       <NA> -999.0000          <NA>    <NA>    <NA>        NA
+## 6: 0.0037       <NA> -999.0000          <NA>    <NA>    <NA>        NA
+##    Record_id regional_board Result RL Source StationCode
+## 1:   1808445           <NA> 0.0000 NA   SURF       39_19
+## 2:   1802814           <NA> 0.0000 NA   SURF        48_6
+## 3:   1810745           <NA> 0.0301 NA   SURF       34_72
+## 4:   1809789           <NA> 0.0000 NA   SURF        34_5
+## 5:   1805592           <NA> 0.0000 NA   SURF       48_52
+## 6:   1803940           <NA> 0.0000 NA   SURF      07_113
 ##                                                   StationName Study_cd
-## 1: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7      399
-## 2: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7      400
-## 3:                       Sacramento River near Sherman Island      399
-## 4: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7      397
-## 5:                      San Joaquin River (BG30). CEDEN: BG30      396
-## 6:                       Sacramento River near Sherman Island      397
-##                                                                                                              Study_description
-## 1: Regional Monitoring Program - Status and Trends , SF Bay Regional Monitoring for Water Quality , 1997 RMP Status and Trends
-## 2: Regional Monitoring Program - Status and Trends , SF Bay Regional Monitoring for Water Quality , 1998 RMP Status and Trends
-## 3: Regional Monitoring Program - Status and Trends , SF Bay Regional Monitoring for Water Quality , 1997 RMP Status and Trends
-## 4: Regional Monitoring Program - Status and Trends , SF Bay Regional Monitoring for Water Quality , 1995 RMP Status and Trends
-## 5: Regional Monitoring Program - Status and Trends , SF Bay Regional Monitoring for Water Quality , 1994 RMP Status and Trends
-## 6: Regional Monitoring Program - Status and Trends , SF Bay Regional Monitoring for Water Quality , 1995 RMP Status and Trends
-##              Study_weblink  Subregion Total organic carbon (%) Unit
-## 1: http://www.sfei.org/rmp Suisun Bay                       NA  ppb
-## 2: http://www.sfei.org/rmp Suisun Bay                       NA  ppb
-## 3: http://www.sfei.org/rmp Confluence                       NA  ppb
-## 4: http://www.sfei.org/rmp Suisun Bay                       NA  ppb
-## 5: http://www.sfei.org/rmp Confluence                       NA  ppb
-## 6: http://www.sfei.org/rmp Confluence                       NA  ppb
+## 1:           Mokelumne River at New Hope Rd Bridge (in Delta)      364
+## 2:                                 Ulatis Creek at Brown Road      364
+## 3:  Sacramento River above Point Sacramento. CEDEN: 510SAC0D4      825
+## 4:               Sacramento River at Freeport (USGS-11447650)      746
+## 5: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7      825
+## 6:                                          Mallard Island-MI      825
+##                                                                                                 Study_description
+## 1: Delta RMP - Current Use Pesticides , Delta Regional Monitoring Program , 2015 Delta RMP Current Use Pesticides
+## 2: Delta RMP - Current Use Pesticides , Delta Regional Monitoring Program , 2015 Delta RMP Current Use Pesticides
+## 3: SuisunBayMonitoring _SFCWA_USGS , Suisun Bay Monitoring Project , USGS Suisun Bay Monitoring Project 2011-2012
+## 4:    SFCWA FreeportVernalis , State and Federal Contractors Water Agency , SFCWA FreeportVernalis PEST 2012-2013
+## 5: SuisunBayMonitoring _SFCWA_USGS , Suisun Bay Monitoring Project , USGS Suisun Bay Monitoring Project 2011-2012
+## 6: SuisunBayMonitoring _SFCWA_USGS , Suisun Bay Monitoring Project , USGS Suisun Bay Monitoring Project 2011-2012
+##                                                                                                         Study_weblink
+## 1: http://www.waterboards.ca.gov/centralvalley/water_issues/delta_water_quality/delta_regional_monitoring/index.shtml
+## 2: http://www.waterboards.ca.gov/centralvalley/water_issues/delta_water_quality/delta_regional_monitoring/index.shtml
+## 3:                                                                                              http://www.ceden.org/
+## 4:                                                                                              http://www.ceden.org/
+## 5:                                                                                              http://www.ceden.org/
+## 6:                                                                                              http://www.ceden.org/
+##           Subregion Total organic carbon (%) Unit
+## 1:    Central Delta                       NA  ppb
+## 2:      North Delta                       NA  ppb
+## 3:       Confluence                       NA  ppb
+## 4: Sacramento River                       NA  ppb
+## 5:       Suisun Bay                       NA  ppb
+## 6:       Confluence                       NA  ppb
 ```
 
 ```r
@@ -1490,14 +1473,12 @@ C[15:30]
 ```
 
 ```
-##  [1] "dichlorobenzenamine"          "dichlorophenoxyacetic acid"  
-##  [3] "dichlorophenoxybutyric acid"  "dichlorophenyl-3-methyl urea"
-##  [5] "dichlorophenyl urea"          "dichloroprop"                
-##  [7] "dichloropropionic acid"       "dinoseb"                     
-##  [9] "dissolved organic carbon"     "diuron"                      
-## [11] "ethalfluralin"                "fluridone"                   
-## [13] "glyphosate"                   "hexazinone"                  
-## [15] "imidacloprid"                 "lead"
+##  [1] "lead"                "manganese"           "mbas"               
+##  [4] "mercury"             "nickel"              "nitrate as n"       
+##  [7] "nitrite as n"        "nitrogen"            "orthophosphate as p"
+## [10] "oxygen"              "ph"                  "phosphorus as p"    
+## [13] "salinity"            "secchi depth"        "silicate as si"     
+## [16] "silver"
 ```
 
 2. 
@@ -1531,33 +1512,33 @@ rbind(A[1,], B[1,])
 ```
 
 ```
-##                                      Agency            Analyte
-## 1: Applied Marine Sciences, Inc. California endosulfan sulfate
-## 2:                                     <NA>             oxygen
-##         CollectionMethod County Data.source       Date Datum
-## 1: Filtered water sample Solano       CEDEN 1997-04-22  <NA>
-## 2:          Field Method   <NA>        <NA> 2010-03-17 NAD83
-##                          geometry Latitude LocationCode Longitude   LOQ
-## 1:        c(-122.03972, 38.11708) 38.11708         <NA> -122.0397 1e-06
-## 2: c(-122.03971862793, 38.117081) 38.11708    OpenWater -122.0397    NA
-##     MatrixName   MDL                      ParentProject
-## 1:        <NA> 1e-06                               <NA>
-## 2: samplewater    NA Suisun Bay Monitoring Project RWB2
-##                          Program                               Project
-## 1:                          <NA>                                  <NA>
-## 2: Suisun Bay Monitoring Project RWB2 Suisun Bay Monitoring Study 2010
-##    rb_number Record_id    regional_board   Result Source StationCode
-## 1:        NA   1246085              <NA> 0.000086   SURF       48_52
-## 2:         2        NA San Francisco Bay 9.160000  CEDEN   207SNB0D7
+##                                  Agency Analyte      CollectionMethod County
+## 1: USGS California Water Science Center linuron Filtered water sample Solano
+## 2:                                 <NA>  oxygen          Field Method   <NA>
+##    Data.source       Date Datum                       geometry Latitude
+## 1:       CEDEN 2011-04-21  <NA>        c(-122.03972, 38.11708) 38.11708
+## 2:        <NA> 2010-03-17 NAD83 c(-122.03971862793, 38.117081) 38.11708
+##    LocationCode Longitude    LOQ  MatrixName  MDL
+## 1:         <NA> -122.0397 0.0043        <NA> -999
+## 2:    OpenWater -122.0397     NA samplewater   NA
+##                         ParentProject                       Program
+## 1:                               <NA>                          <NA>
+## 2: Suisun Bay Monitoring Project RWB2 Suisun Bay Monitoring Project
+##                                  Project rb_number Record_id    regional_board
+## 1:                                  <NA>        NA   1805592              <NA>
+## 2: RWB2 Suisun Bay Monitoring Study 2010         2        NA San Francisco Bay
+##    Result RL Source StationCode
+## 1:   0.00 NA   SURF       48_52
+## 2:   9.16 NA  CEDEN   207SNB0D7
 ##                                                   StationName Study_cd
-## 1: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7      399
+## 1: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7      825
 ## 2:                   Grizzly Bay at Dolphin nr. Suisun Slough       NA
-##                                                                                                              Study_description
-## 1: Regional Monitoring Program - Status and Trends , SF Bay Regional Monitoring for Water Quality , 1997 RMP Status and Trends
-## 2:                                                                                                                        <NA>
-##              Study_weblink  Subregion Total organic carbon (%) Unit
-## 1: http://www.sfei.org/rmp Suisun Bay                       NA  ppb
-## 2:                    <NA> Suisun Bay                       NA mg/L
+##                                                                                                 Study_description
+## 1: SuisunBayMonitoring _SFCWA_USGS , Suisun Bay Monitoring Project , USGS Suisun Bay Monitoring Project 2011-2012
+## 2:                                                                                                           <NA>
+##            Study_weblink  Subregion Total organic carbon (%) Unit
+## 1: http://www.ceden.org/ Suisun Bay                       NA  ppb
+## 2:                  <NA> Suisun Bay                       NA mg/L
 ```
 
 #### Example of C
@@ -1576,14 +1557,14 @@ rbind(A[1,c(23, 25, 7:10,12)], C[1,c(23, 25, 7:10,12)], B[1,c(23, 25, 7:10,12)])
 ```
 
 ```
-##    StationCode Study_cd Datum                       geometry Latitude
-## 1:       48_52      399  <NA>        c(-122.03972, 38.11708) 38.11708
-## 2:       48_52      825  <NA>        c(-122.03972, 38.11708) 38.11708
-## 3:   207SNB0D7       NA NAD83 c(-122.03971862793, 38.117081) 38.11708
-##    LocationCode     LOQ
-## 1:         <NA> 1.0e-06
-## 2:         <NA> 3.7e-03
-## 3:    OpenWater      NA
+##    Source                                                StationName Datum
+## 1:   SURF Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7  <NA>
+## 2:   SURF Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7  <NA>
+## 3:  CEDEN                   Grizzly Bay at Dolphin nr. Suisun Slough NAD83
+##                          geometry Latitude LocationCode    LOQ
+## 1:        c(-122.03972, 38.11708) 38.11708         <NA> 0.0043
+## 2:        c(-122.03972, 38.11708) 38.11708         <NA> 0.0037
+## 3: c(-122.03971862793, 38.117081) 38.11708    OpenWater     NA
 ```
 
 # Next Steps
@@ -1612,16 +1593,17 @@ aggregate(DupCheck~year,FUN=length,data=CEDENMod_WQ[CEDENMod_WQ$DupCheck=="TRUE"
 ```
 
 ```
-##   year DupCheck
-## 1 2010       79
-## 2 2011      193
-## 3 2012       76
-## 4 2013       21
-## 5 2014      140
-## 6 2015       40
-## 7 2016        7
-## 8 2017       84
-## 9 2018       17
+##    year DupCheck
+## 1  2010       79
+## 2  2011       41
+## 3  2012       49
+## 4  2013       21
+## 5  2014      138
+## 6  2015       40
+## 7  2016        7
+## 8  2017       84
+## 9  2018       32
+## 10 2019        8
 ```
 
 #### CEDEN Tox
@@ -1640,12 +1622,12 @@ aggregate(DupCheck~year,FUN=length,data=CEDENMod_Tox[CEDENMod_Tox$DupCheck=="TRU
 ## 1  2009      139
 ## 2  2010     2162
 ## 3  2011     1095
-## 4  2012      734
+## 4  2012      777
 ## 5  2013     1070
 ## 6  2014     1238
-## 7  2015     3273
-## 8  2016     4774
+## 7  2015     2007
+## 8  2016     2607
 ## 9  2017     1660
-## 10 2018     1098
-## 11 2019     1031
+## 10 2018     1214
+## 11 2019     1876
 ```
