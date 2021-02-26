@@ -23,6 +23,7 @@ library(data.table)
 library(lubridate)
 library(sf)
 library(tidyverse)
+library(zoo)
 ```
 
 # Intro
@@ -45,21 +46,24 @@ CEDENMod_Tox <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/D
 
 CEDENMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_WQ.csv")
 ```
-```{r}
-cSeq<- zoo(CEDENMod_WQ, as.Date(CEDENMod_WQ$Date))
+Date range of CEDEN water data:
 
-start(cSeq)
-end(cSeq)
+```{r}
+zSeq<- zoo(CEDENMod_WQ, 
+           as.Date(CEDENMod_WQ$Date))
 ```
+
+From `r start(zSeq)` to `r end(zSeq)`
+
 Date range of CEDEN tox data
 ```{r}
 # ID start and end of data range
 zSeq <- zoo(CEDENMod_Tox, 
             as.Date(CEDENMod_Tox$Date)) 
-
-start(zSeq)
-end(zSeq)
 ```
+
+From `r start(zSeq)` to `r end(zSeq)`
+
 
 ### SURF
 
@@ -69,24 +73,23 @@ SURFMod_SED <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/mai
 
 SURFMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/SURFMod_water.csv")
 ```
-Date range of SURF water data
+Date range of SURF water data:
 ```{r}
 # ID start and end of data range
 zSeq <- zoo(SURFMod_WQ, 
             as.Date(SURFMod_WQ$Sample_date)) 
-
-start(zSeq)
-end(zSeq)
 ```
-Date range of SURF sediment data
+From `r start(zSeq)` to `r end(zSeq)`
+
+
+Date range of SURF sediment data:
 ```{r}
 # ID start and end of data range
 zSeq <- zoo(SURFMod_SED, 
             as.Date(SURFMod_SED$Sample_date)) 
-
-start(zSeq)
-end(zSeq)
 ```
+From `r start(zSeq)` to `r end(zSeq)`
+
 
 ### Append with source
 
@@ -154,18 +157,20 @@ We're left with only `r nrow(NoDup_Tox)` unique, useful records in the tox datas
 
 ### CEDEN WQ
 
-Utilizing the distinct() function to assume that records in the same location on the same date, measuring the same analyte via the same collection method and obtaining the same result are duplicates, we find 1536 duplicate records.
-
-That is more than double the number of exact duplicates found, yet still only `r 100*1536/nrow(CEDENMod_WQ)`% of the entire WQ dataset.
+Utilize the distinct() function to assume that records in the same location on the same date, measuring the same analyte via the same collection method and obtaining the same result are duplicates
 
 ```{r}
+# 499 exact duplicates in the newest download
+
 # Remove duplicate rows of the dataframe using multiple variables
 
 NoDup_WQ <- distinct(CEDENMod_WQ, Date, Analyte, StationName, CollectionMethod, Result, .keep_all= TRUE)
 
-nrow(CEDENMod_WQ) - nrow(NoDup_WQ)
-
+nrow(CEDENMod_WQ) - nrow(NoDup_WQ) # 1336
 ```
+
+We find `r nrow(CEDENMod_WQ) - nrow(NoDup_WQ)` duplicates - over double the number of exact duplicates, yet still only `r 100*1336/(nrow(CEDENMod_WQ))`% of the entire WQ dataset.
+
 <br>
 
 <br>

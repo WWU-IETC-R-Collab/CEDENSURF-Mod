@@ -22,6 +22,7 @@ library(data.table)
 library(lubridate)
 library(sf)
 library(tidyverse)
+library(zoo)
 ```
 
 # Intro
@@ -32,7 +33,7 @@ This markdown covers the process to identify duplication within the CEDEN and SU
 
 SURF Data was acquired at the DPR SURF database web page as CSVs via FTP download on 2/17/2021, and modified via the methods outlined in https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/blob/main/CEDENSURF.md prior to this work.
 
-CEDEN Data was acquired from https://ceden.waterboards.ca.gov/AdvancedQueryTool, for the Central Valley and San Francisco Bay regions, and spatially queried to the USFE project area. This original data set can be found within the IETC Tox Box at: Upper San Francisco Project\Data & Analyses\Original\CEDEN. The methods of prior modification are at: https://github.com/WWU-IETC-R-Collab/CEDEN-mod/blob/main/CEDEN_ModMaster.md
+CEDEN Data was acquired from https://ceden.waterboards.ca.gov/AdvancedQueryTool on January 29 2020 for the Central Valley and San Francisco Bay regions, and spatially queried to the USFE project area. This original data set can be found within the IETC Tox Box at: Upper San Francisco Project\Data & Analyses\Original\CEDEN. The methods of prior modification are at: https://github.com/WWU-IETC-R-Collab/CEDEN-mod/blob/main/CEDEN_ModMaster.md
 
 ### CEDEN
 
@@ -45,6 +46,36 @@ CEDENMod_Tox <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/D
 
 CEDENMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_WQ.csv")
 ```
+Date range of CEDEN water data:
+
+
+```r
+zSeq<- zoo(CEDENMod_WQ, 
+           as.Date(CEDENMod_WQ$Date))
+```
+
+```
+## Warning in zoo(CEDENMod_WQ, as.Date(CEDENMod_WQ$Date)): some methods for "zoo"
+## objects do not work if the index entries in 'order.by' are not unique
+```
+
+From 2009-10-06 to 2019-09-26
+
+Date range of CEDEN tox data
+
+```r
+# ID start and end of data range
+zSeq <- zoo(CEDENMod_Tox, 
+            as.Date(CEDENMod_Tox$Date)) 
+```
+
+```
+## Warning in zoo(CEDENMod_Tox, as.Date(CEDENMod_Tox$Date)): some methods for "zoo"
+## objects do not work if the index entries in 'order.by' are not unique
+```
+
+From 2009-10-06 to 2019-09-25
+
 
 ### SURF
 
@@ -55,6 +86,35 @@ SURFMod_SED <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/mai
 
 SURFMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/SURFMod_water.csv")
 ```
+Date range of SURF water data:
+
+```r
+# ID start and end of data range
+zSeq <- zoo(SURFMod_WQ, 
+            as.Date(SURFMod_WQ$Sample_date)) 
+```
+
+```
+## Warning in zoo(SURFMod_WQ, as.Date(SURFMod_WQ$Sample_date)): some methods for
+## "zoo" objects do not work if the index entries in 'order.by' are not unique
+```
+From 1975-03-12 to 2020-01-16
+
+
+Date range of SURF sediment data:
+
+```r
+# ID start and end of data range
+zSeq <- zoo(SURFMod_SED, 
+            as.Date(SURFMod_SED$Sample_date)) 
+```
+
+```
+## Warning in zoo(SURFMod_SED, as.Date(SURFMod_SED$Sample_date)): some methods for
+## "zoo" objects do not work if the index entries in 'order.by' are not unique
+```
+From 1976-06-15 to 2019-09-17
+
 
 ### Append with source
 
@@ -75,9 +135,9 @@ Due to reported combined efforts to translate CEDEN data to SURF and vice versa,
 
 ## CEDEN Data
 
-There are 117144 records in the original WQ dataset
+There are 60429 records in the original WQ dataset
 
-and 60637 in the original Tox dataset. 
+and 60531 in the original Tox dataset. 
 
 ### CEDEN Tox 
 
@@ -99,7 +159,7 @@ nrow(CEDENMod_Tox) - nrow(NoDup_Tox)
 ```
 
 ```
-## [1] 25729
+## [1] 23518
 ```
 
 Because of the way we are going to use this data, we are essentially scavenging the WQ parameters associated with each of these tox tests. It is worth considering whether it is worth using this database at all for this purpose;
@@ -115,7 +175,7 @@ length(unique(NoDup_Tox$Analyte))
 ```
 
 ```
-## [1] 23
+## [1] 26
 ```
 
 ```r
@@ -128,28 +188,31 @@ NoDup_Tox <- NoDup_Tox %>% filter(Analyte != "Survival") %>%
   select(-OrganismName)
 ```
 
-We're left with only 27872 unique, useful records in the tox dataset - or 45.9653347 % of the original tox data.
+We're left with only 29695 unique, useful records in the tox dataset - or 49.0575077 % of the original tox data.
 
 <br>
 
 ### CEDEN WQ
 
-Utilizing the distinct() function to assume that records in the same location on the same date, measuring the same analyte via the same collection method and obtaining the same result are duplicates, we find 1536 duplicate records.
-
-That is more than double the number of exact duplicates found, yet still only 1.3112067% of the entire WQ dataset.
+Utilize the distinct() function to assume that records in the same location on the same date, measuring the same analyte via the same collection method and obtaining the same result are duplicates
 
 
 ```r
+# 499 exact duplicates in the newest download
+
 # Remove duplicate rows of the dataframe using multiple variables
 
 NoDup_WQ <- distinct(CEDENMod_WQ, Date, Analyte, StationName, CollectionMethod, Result, .keep_all= TRUE)
 
-nrow(CEDENMod_WQ) - nrow(NoDup_WQ)
+nrow(CEDENMod_WQ) - nrow(NoDup_WQ) # 1336
 ```
 
 ```
-## [1] 1536
+## [1] 1336
 ```
+
+We find 1336 duplicates - over double the number of exact duplicates, yet still only 2.210859% of the entire WQ dataset.
+
 <br>
 
 <br>
@@ -222,18 +285,6 @@ Further assessment revealed problematic data duplication that was not caught whe
 # While there were 307 entries marked "Not Recorded" in the entire combined dataset, 153 were identified as duplicated data. To err on the safe side, we removed all records for which the Collection Method was "Not Recorded"
 
 CEDEN_ALL_DupChecked <- filter(CEDEN_ALL_DupChecked, CollectionMethod != "Not Recorded")
-
-# How to check to see how many more duplicates (of non-zero results) would have been removed if we don't restrict to identical "CollectionMethod" values
-
-Check <- distinct(CEDEN_ALL, Date, Analyte, 
-              StationName, Result, 
-              .keep_all= TRUE)
-
-nrow(CEDEN_ALL_DupChecked[CEDEN_ALL_DupChecked$Result != 0]) - nrow(Check[Check$Result != 0])
-```
-
-```
-## [1] 83
 ```
 
 ### Fix nomenclature
@@ -259,8 +310,9 @@ CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>%
 ```
 
 ```
-## Warning: Expected 2 pieces. Missing pieces filled with `NA` in 17681 rows [2, 3,
-## 4, 5, 7, 8, 9, 10, 11, 12, 14, 19, 20, 22, 23, 24, 28, 94, 118, 144, ...].
+## Warning: Expected 2 pieces. Missing pieces filled with `NA` in 19377 rows [54,
+## 55, 57, 58, 101, 103, 104, 106, 140, 144, 145, 146, 673, 678, 681, 682, 2657,
+## 2658, 2660, 2664, ...].
 ```
 
 ```r
@@ -273,19 +325,21 @@ head(sort(unique(CEDEN_ALL_DupChecked$Analyte))) # 908 unique Analytes total
 ```
 
 ```
-## [1] ""                                          
-## [2] "1,2-bis(2,4,6- tribromophenoxy)ethane"     
-## [3] "2-ethyl-1-hexyl-2,3,4,5-tetrabromobenzoate"
-## [4] "2-ethylhexyl-diphenyl phosphate"           
-## [5] "2,4,6-tribromophenyl allyl ether"          
-## [6] "abamectin"
+## [1] ""                                     
+## [2] "1,2-bis(2,4,6- tribromophenoxy)ethane"
+## [3] "2-ethylhexyl-diphenyl phosphate"      
+## [4] "2,4,6-tribromophenyl allyl ether"     
+## [5] "acenaphthene"                         
+## [6] "acenaphthenes"
 ```
 
 ```r
 # Looks like requiring the separation from extra to analyte to contain a comma and a space allowed the full names to be retained. Without that, the separation led to an analyte "1" which should have been 1,2-bis(2,4,6- tribromophenoxy)ethane, etc.
 ```
 
-This simplification of Analyte name would lead to 15,290 more records being considered "duplication" using our current method, mostly (14,776) containing a zero-result. Because these differences in analytes are not retained in the SURF dataset, it makes sense to condense them prior to merging the databases.
+This simplification of Analyte name would lead to 15,290 more records being considered "duplication" using our current method, mostly (14,776) containing a zero-result. Because these differences in analytes are not retained in the SURF dataset, it makes sense to condense them (remove duplicates) prior to merging the databases.
+
+Removal of these simplified duplicates also eliminates the utility of retaining the "Analyte Type" column. For example, a reading of Analyte X with Type = Total Type = Suspended have the exact same result. Removing duplicates would keep the first record (Analyte = X, Type = Total) and remove the second (Analyte X, Type = S). In the dataframe, if you are trying to reason backwards to the meaning of that remaining meaning (Analyte X, Type = Total), you're missing the other half of the story (Type = Sus too). So, to avoid improper interpretation of this dataframe, Analyte Type should be removed. 
 
 
 ```r
@@ -299,12 +353,13 @@ length(DIF$Result[DIF$Result == "0"])
 
 
 ```r
-CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
+CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE) %>%
+  select(-Analyte_type)
 ```
 
 ### CEDEN merge result
 
-Using these QA/QC methods, 127874 unique records are available through the CEDEN datasets. 
+Using these QA/QC methods, 87794 unique records are available through the CEDEN datasets. 
 
 <br>
 
@@ -364,6 +419,7 @@ Used distinct() to remove duplicates (records in the same location on the same d
 
 NoDup_WQ <- distinct(SURFMod_WQ, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
 ```
+
 We find 17756, 5,676 of which come from the SURF data sourced from CEDEN
 
 <br>
@@ -520,62 +576,3 @@ CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>% select(all_of(C))
 CEDENSURF <- rbind(SURF_ALL_DupChecked, CEDEN_ALL_DupChecked)
 ```
 
-### Check for duplicates
-
-Even retaining the CEDEN data in SURF prior to merge, we locate no duplicates using this method. There are likely still issues with matching nomenclature (ie: Anaylte names) between the data sources preventing this.
-
-
-```r
-# Ideas from: https://www.datasciencemadesimple.com/remove-duplicate-rows-r-using-dplyr-distinct-function/
-
-# Remove duplicate rows of the dataframe using multiple variables
-
-CEDENSURF_DupChecked <- distinct(CEDENSURF, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
-
-nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
-```
-
-```
-## [1] 0
-```
-
-# Next Steps
-
-### Naming conventions
-
-We should check whether splitting the Analyte column in CEDEN helped to unify the nomenclature between datasets, before we can confidently suggest there is no more duplication.
-
-The lists of analytes are MUCH closer to the same length using this method, though still all names in CEDEN are different than those in SURF (908 unique analytes in CEDEN, and 908 in the difference between CEDEN and SURF)
-
-For example, a subset of "Analytes" in each database follow:
-
-
-```r
-## Example analytes observed in each dataset
-
-analyte_C <- sort(unique(CEDENSURF$Analyte[CEDENSURF$Source == "CEDEN"]))
-# 908 (was >1800 before splitting the column)
-
-analyte_S <- sort(unique(CEDENSURF$Analyte[CEDENSURF$Source == "SURF"]))
-# 307
-
-# Show example of differences
-tibble(CEDEN = c(analyte_C[20:40]), SURF = c(analyte_S[10:30]))
-```
-
-```
-## # A tibble: 21 x 2
-##    CEDEN               SURF                    
-##    <chr>               <chr>                   
-##  1 alkalinity as caco3 acephate                
-##  2 allethrin           acet                    
-##  3 aluminum            acetamiprid             
-##  4 ametryn             acibenzolar-s-methyl    
-##  5 aminocarb           acifluorfen, sodium salt
-##  6 ammonia as n        alachlor                
-##  7 ammonia as nh3      aldicarb                
-##  8 ammonium as n       aldicarb sulfone        
-##  9 analysisweight      aldicarb sulfoxide      
-## 10 anatoxin-a          aldrin                  
-## # ... with 11 more rows
-```
