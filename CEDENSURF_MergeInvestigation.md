@@ -1367,90 +1367,55 @@ nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
 ```
 ## [1] 0
 ```
+
 Causes of these records being retained include:
 
 A. No match actually exists in CEDEN. Record SHOULD be retained.
 
 B. CEDEN and SURF have different naming protocols - both Station Name and Station Code differ for the same sites.
 
-C. Latitude and Longitude are rounded differently between the databases.
+C. Latitude and Longitude differ between the databases. ## I don't think this should be an issue now that Skyler has unified projection datum for all data
 
 #### Examples of A
 
-1. There is a measure of endosulfan sulfate at Grizzly Bay in the SURF dataset, but a list of ALL analytes measured at Grizzley Bay in the CEDEN set reveals none including "endosulfan") 
 
+**1. Glyphosate in SURF-CEDEN data, but not in CEDEN data.**
+
+Comparing analytes measured at Grizzley Bay includes a number of records of glyphosate in SURF-CEDEN data, yet the CEDEN set reveals none including glyphosate.
+
+An example record from SURF cited as coming from CEDEN:
 
 ```r
-# Subset to preview CEDEN Data in the SURF set
+A <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
+  filter(grepl('Dolphin', StationName)) %>%
+  filter(Source == "SURF") %>%
+  filter(Data.source == "CEDEN")%>%
+  filter(Analyte == "glyphosate")
 
-head(filter(CEDENSURF, Data.source == "CEDEN"))
+A[1]
 ```
 
 ```
-##                                                                                     Agency
-## 1: USGS Pesticide Fate Research Group (PFRG), Organic Chemistry Research Laboratory (OCRL)
-## 2: USGS Pesticide Fate Research Group (PFRG), Organic Chemistry Research Laboratory (OCRL)
-## 3:                                                    USGS California Water Science Center
-## 4:                                                    USGS California Water Science Center
-## 5:                                                    USGS California Water Science Center
-## 6:                                                    USGS California Water Science Center
-##                Analyte      CollectionMethod       County Data.source
-## 1:          fenhexamid Filtered water sample  San Joaquin       CEDEN
-## 2: chlorantraniliprole Filtered water sample       Solano       CEDEN
-## 3:              diuron Filtered water sample   Sacramento       CEDEN
-## 4:  piperonyl butoxide Filtered water sample   Sacramento       CEDEN
-## 5:             linuron Filtered water sample       Solano       CEDEN
-## 6:           malathion Filtered water sample Contra Costa       CEDEN
-##          Date Datum                   geometry Latitude LocationCode Longitude
-## 1: 2015-08-18  <NA> c(-121.4188919, 38.236111) 38.23611         <NA> -121.4189
-## 2: 2015-11-10  <NA> c(-121.7941971, 38.306999) 38.30700         <NA> -121.7942
-## 3: 2012-03-27  <NA>    c(-121.82051, 38.06242) 38.06242         <NA> -121.8205
-## 4: 2013-04-04  <NA>    c(-121.50134, 38.45602) 38.45602         <NA> -121.5013
-## 5: 2011-04-21  <NA>    c(-122.03972, 38.11708) 38.11708         <NA> -122.0397
-## 6: 2011-04-18  <NA>    c(-121.92013, 38.04278) 38.04278         <NA> -121.9201
-##       LOQ MatrixName       MDL ParentProject Program Project rb_number
-## 1: 0.0076       <NA>    0.0076          <NA>    <NA>    <NA>        NA
-## 2: 0.0040       <NA>    0.0040          <NA>    <NA>    <NA>        NA
-## 3: 0.0032       <NA> -999.0000          <NA>    <NA>    <NA>        NA
-## 4: 0.0023       <NA> -999.0000          <NA>    <NA>    <NA>        NA
-## 5: 0.0043       <NA> -999.0000          <NA>    <NA>    <NA>        NA
-## 6: 0.0037       <NA> -999.0000          <NA>    <NA>    <NA>        NA
+##                     Agency    Analyte          CollectionMethod County
+## 1: Michael L. Johnson, LLC glyphosate Single whole water sample Solano
+##    Data.source       Date Datum                geometry Latitude LocationCode
+## 1:       CEDEN 2012-05-08  <NA> c(-122.03972, 38.11708) 38.11708         <NA>
+##    Longitude LOQ MatrixName MDL ParentProject Program Project rb_number
+## 1: -122.0397   5       <NA> 1.7          <NA>    <NA>    <NA>        NA
 ##    Record_id regional_board Result RL Source StationCode
-## 1:   1808445           <NA> 0.0000 NA   SURF       39_19
-## 2:   1802814           <NA> 0.0000 NA   SURF        48_6
-## 3:   1810745           <NA> 0.0301 NA   SURF       34_72
-## 4:   1809789           <NA> 0.0000 NA   SURF        34_5
-## 5:   1805592           <NA> 0.0000 NA   SURF       48_52
-## 6:   1803940           <NA> 0.0000 NA   SURF      07_113
+## 1:   1763867           <NA>      0 NA   SURF       48_52
 ##                                                   StationName Study_cd
-## 1:           Mokelumne River at New Hope Rd Bridge (in Delta)      364
-## 2:                                 Ulatis Creek at Brown Road      364
-## 3:  Sacramento River above Point Sacramento. CEDEN: 510SAC0D4      825
-## 4:               Sacramento River at Freeport (USGS-11447650)      746
-## 5: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7      825
-## 6:                                          Mallard Island-MI      825
-##                                                                                                 Study_description
-## 1: Delta RMP - Current Use Pesticides , Delta Regional Monitoring Program , 2015 Delta RMP Current Use Pesticides
-## 2: Delta RMP - Current Use Pesticides , Delta Regional Monitoring Program , 2015 Delta RMP Current Use Pesticides
-## 3: SuisunBayMonitoring _SFCWA_USGS , Suisun Bay Monitoring Project , USGS Suisun Bay Monitoring Project 2011-2012
-## 4:    SFCWA FreeportVernalis , State and Federal Contractors Water Agency , SFCWA FreeportVernalis PEST 2012-2013
-## 5: SuisunBayMonitoring _SFCWA_USGS , Suisun Bay Monitoring Project , USGS Suisun Bay Monitoring Project 2011-2012
-## 6: SuisunBayMonitoring _SFCWA_USGS , Suisun Bay Monitoring Project , USGS Suisun Bay Monitoring Project 2011-2012
-##                                                                                                         Study_weblink
-## 1: http://www.waterboards.ca.gov/centralvalley/water_issues/delta_water_quality/delta_regional_monitoring/index.shtml
-## 2: http://www.waterboards.ca.gov/centralvalley/water_issues/delta_water_quality/delta_regional_monitoring/index.shtml
-## 3:                                                                                              http://www.ceden.org/
-## 4:                                                                                              http://www.ceden.org/
-## 5:                                                                                              http://www.ceden.org/
-## 6:                                                                                              http://www.ceden.org/
-##           Subregion Total organic carbon (%) Unit
-## 1:    Central Delta                       NA  ppb
-## 2:      North Delta                       NA  ppb
-## 3:       Confluence                       NA  ppb
-## 4: Sacramento River                       NA  ppb
-## 5:       Suisun Bay                       NA  ppb
-## 6:       Confluence                       NA  ppb
+## 1: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7      244
+##                                                                                        Study_description
+## 1: SuisunBayMonitoring _BACWA , Suisun Bay Monitoring Project , BACWA Suisun Bay Monitoring Project 2012
+##                                                                                Study_weblink
+## 1: http://www.swrcb.ca.gov/sanfranciscobay/water_issues/programs/SWAMP/SB_Workplan_11-12.pdf
+##     Subregion Total organic carbon (%) Unit
+## 1: Suisun Bay                       NA  ppb
 ```
+All of the records in SURF measuring glyphosate at this station, cited as coming from CEDEN, are from the same agency: Michael L. Johnson, LLC
+
+In contrast, none of the records from CEDEN at this site claim to measure glyphosate. We can preview all analytes observed in CEDEN's records at this site to confirm that these are not simply due to naming errors:
 
 ```r
 # Locate similar location records in CEDEN and SURF using queries
@@ -1461,32 +1426,108 @@ head(filter(CEDENSURF, Data.source == "CEDEN"))
 
 A <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
   filter(grepl('Dolphin', StationName)) %>%
-  filter(Source == "SURF")
+  filter(Source == "SURF") %>%
+  filter(Data.source == "CEDEN")
+
+CS <- sort(unique(A$Analyte)) # 27
 
 B <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
   filter(grepl('Dolphin', StationName)) %>%
   filter(Source == "CEDEN")
 
-# Sort analytes alphabetically, then display chunk around where "endosulfan" should be
-C<- sort(unique(B$Analyte))
-C[15:30]
+C <- sort(unique(B$Analyte)) # 34
+C
 ```
 
 ```
-##  [1] "lead"                "manganese"           "mbas"               
-##  [4] "mercury"             "nickel"              "nitrate as n"       
-##  [7] "nitrite as n"        "nitrogen"            "orthophosphate as p"
-## [10] "oxygen"              "ph"                  "phosphorus as p"    
-## [13] "salinity"            "secchi depth"        "silicate as si"     
-## [16] "silver"
+##  [1] "ammonia as n"                 "arsenic"                     
+##  [3] "atrazine"                     "azoxystrobin"                
+##  [5] "cadmium"                      "chlorophyll a"               
+##  [7] "chromium"                     "copper"                      
+##  [9] "dichlorobenzenamine"          "dichlorophenyl-3-methyl urea"
+## [11] "dissolved organic carbon"     "diuron"                      
+## [13] "hexazinone"                   "imidacloprid"                
+## [15] "lead"                         "manganese"                   
+## [17] "mbas"                         "mercury"                     
+## [19] "nickel"                       "nitrate as n"                
+## [21] "nitrite as n"                 "nitrogen"                    
+## [23] "orthophosphate as p"          "oxygen"                      
+## [25] "ph"                           "phosphorus as p"             
+## [27] "salinity"                     "secchi depth"                
+## [29] "silicate as si"               "silver"                      
+## [31] "simazine"                     "specificconductivity"        
+## [33] "temperature"                  "zinc"
 ```
 
-2. 
+There are other analytes at this site recorded in SURF-CEDEN data but not in the data brought directly from CEDEN, too: Datum, LocationCode, MatrixName, ParentProject, Program, Project, rb_number, regional_board, RL
+
+
+```r
+DIF<- setdiff(CS, C) #Analytes in ceden-surf and not in ceden
+DIF
+```
+
+
+**2. CEDEN-SURF data at Toe Drain Nr Babel Slough not in CEDEN** 
+
 SURF Name: "Toe Drain Nr Babel Slough Nr Freeport Ca"
 SURF Code: "57_58"
 
-Could not ID this location in CEDEN data, using grepl() to allow approximate naming. None with "Babel" in StationName
+Could not ID this location in CEDEN data, using grepl() to allow approximate naming. None with "Babel" and T in StationName
 
+
+```r
+# From SURF, identified as coming from CEDEN
+CS <- CEDENSURF %>% filter(grepl('Toe', StationName)) %>%
+  filter(grepl('Babel', StationName)) %>%
+  filter(Data.source == "CEDEN")%>%
+  filter(Source == "SURF")
+
+# Direct from CEDEN
+C <- CEDENSURF %>%
+  filter(grepl('Babel', StationName)) %>%
+  filter(Source == "CEDEN")
+```
+There are 657 records at this site from SURF, all from the same agency, and identified as coming from CEDEN. 
+Here is one example record:
+
+
+```r
+nrow(CS)
+```
+
+```
+## [1] 657
+```
+
+```r
+unique(CS$Agency)
+```
+
+```
+## [1] "USGS California Water Science Center"
+```
+
+```r
+CS[1]
+```
+
+```
+##                                  Agency      Analyte      CollectionMethod
+## 1: USGS California Water Science Center pyrimethanil Filtered water sample
+##    County Data.source       Date Datum                   geometry Latitude
+## 1:   Yolo       CEDEN 2016-07-28  <NA> c(-121.588225, 38.4747806) 38.47478
+##    LocationCode Longitude    LOQ MatrixName  MDL ParentProject Program Project
+## 1:         <NA> -121.5882 0.0041       <NA> -999          <NA>    <NA>    <NA>
+##    rb_number Record_id regional_board Result RL Source StationCode
+## 1:        NA   1805112           <NA>      0 NA   SURF       57_58
+##                                 StationName Study_cd
+## 1: Toe Drain Nr Babel Slough Nr Freeport Ca      747
+##                                                                                                Study_description
+## 1: SFCWA YoloBypassFoodWeb , State and Federal Contractors Water Agency , SFCWA YoloBypassFoodWeb PEST 2015-2016
+##            Study_weblink   Subregion Total organic carbon (%) Unit
+## 1: http://www.ceden.org/ North Delta                       NA  ppb
+```
 
 #### Examples of B
 

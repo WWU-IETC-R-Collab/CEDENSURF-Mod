@@ -503,15 +503,27 @@ CEDENSURF <- rbind(SURF_ALL_DupChecked, CEDEN_ALL_DupChecked)
 
 There are 194684 total records in the initial merge of CEDEN with SURF.
 
+Due to initial barriers to removing duplicates between the datasets (see below), I will simply filter out data identified as being sourced from CEDEN within SURF to eliminate duplicates. This is not an ideal solution though, because there is a large amount of data identified as coming from CEDEN which is not present in our CEDEN WQ data (again, see below).
+
+
+```r
+CEDENSURFMod <- filter(CEDENSURF, Data.source != "CEDEN")
+
+write_csv(CEDENSURFMod, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
+```
+
 <br>
 
-#### Remove duplicate entries
+## Next Steps
 
+### 1. Investigate barriers to duplicate removal {.tabset}
 *(area of active investigation)*
 
 Because the station names differ between these databases, we used Lat and Long in lieu of StationName to detect duplicates.
 
 This only works if the projection and rounding of latitude and longitude have been made consistent both within and between the datasets (see linked protocols for our CEDENMod and SURFMod data preparation).
+
+It seems to only detect 11 duplicates, while there are 28100 labeled in SURF as having come from CEDEN. Some may be unique, and some may be additional duplicates that we are not catching. 
 
 
 ```r
@@ -525,4 +537,252 @@ nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
 ```
 ## [1] 11
 ```
+
+**Causes of these records being retained include:**
+
+A. No match actually exists in CEDEN. Record SHOULD be retained.
+
+B. CEDEN and SURF have different naming protocols - both Station Name and Station Code differ for the same sites.
+
+C. Latitude and Longitude may differ between the databases - this ought to be corrected now that Skyler has unified the projections used for all data.
+
+#### Examples of A
+
+**1. Glyphosate in SURF-CEDEN data, but not in CEDEN data.**
+
+Comparing analytes measured at Grizzley Bay includes a number of records of glyphosate in SURF-CEDEN data, yet the CEDEN set reveals none including glyphosate.
+
+An example record from SURF cited as coming from CEDEN:
+
+```r
+A <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
+  filter(grepl('Dolphin', StationName)) %>%
+  filter(Source == "SURF") %>%
+  filter(Data.source == "CEDEN")%>%
+  filter(Analyte == "glyphosate")
+
+A[1]
+```
+
+```
+##                     Agency    Analyte          CollectionMethod County
+## 1: Michael L. Johnson, LLC glyphosate Single whole water sample Solano
+##    Data.source       Date Datum                geometry Latitude LocationCode
+## 1:       CEDEN 2012-05-08  <NA> c(-122.03972, 38.11708) 38.11708         <NA>
+##    Longitude LOQ MatrixName MDL ParentProject Program Project rb_number
+## 1: -122.0397   5       <NA> 1.7          <NA>    <NA>    <NA>        NA
+##    Record_id regional_board Result RL Source StationCode
+## 1:   1763867           <NA>      0 NA   SURF       48_52
+##                                                   StationName Study_cd
+## 1: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7      244
+##                                                                                        Study_description
+## 1: SuisunBayMonitoring _BACWA , Suisun Bay Monitoring Project , BACWA Suisun Bay Monitoring Project 2012
+##                                                                                Study_weblink
+## 1: http://www.swrcb.ca.gov/sanfranciscobay/water_issues/programs/SWAMP/SB_Workplan_11-12.pdf
+##     Subregion Total organic carbon (%) Unit
+## 1: Suisun Bay                       NA  ppb
+```
+All of the records in SURF measuring glyphosate at this station, cited as coming from CEDEN, are from the same agency: Michael L. Johnson, LLC
+
+In contrast, none of the records from CEDEN at this site claim to measure glyphosate. We can preview all analytes observed in CEDEN's records at this site to confirm that these are not simply due to naming errors:
+
+```r
+# Locate similar location records in CEDEN and SURF using queries
+
+# Record Analyte = "endosulfan sulfate", Agency = Applied Marine Sciences, Inc. California, Collection Method = Filtered water sample, Date = 1997-04-22, Station Name: "Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7", StationCode: "48_52"
+
+# Locate similar location records in CEDEN and SURF using flexible queries
+
+A <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
+  filter(grepl('Dolphin', StationName)) %>%
+  filter(Source == "SURF") %>%
+  filter(Data.source == "CEDEN")
+
+CS <- sort(unique(A$Analyte)) # 27
+
+B <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
+  filter(grepl('Dolphin', StationName)) %>%
+  filter(Source == "CEDEN")
+
+C <- sort(unique(B$Analyte)) # 34
+C
+```
+
+```
+##  [1] "ammonia as n"                 "arsenic"                     
+##  [3] "atrazine"                     "azoxystrobin"                
+##  [5] "cadmium"                      "chlorophyll a"               
+##  [7] "chromium"                     "copper"                      
+##  [9] "dichlorobenzenamine"          "dichlorophenyl-3-methyl urea"
+## [11] "dissolved organic carbon"     "diuron"                      
+## [13] "hexazinone"                   "imidacloprid"                
+## [15] "lead"                         "manganese"                   
+## [17] "mbas"                         "mercury"                     
+## [19] "nickel"                       "nitrate as n"                
+## [21] "nitrite as n"                 "nitrogen"                    
+## [23] "orthophosphate as p"          "oxygen"                      
+## [25] "ph"                           "phosphorus as p"             
+## [27] "salinity"                     "secchi depth"                
+## [29] "silicate as si"               "silver"                      
+## [31] "simazine"                     "specificconductivity"        
+## [33] "temperature"                  "zinc"
+```
+
+There are other analytes at this site recorded in SURF-CEDEN data but not in the data brought directly from CEDEN, too: Datum, LocationCode, MatrixName, ParentProject, Program, Project, rb_number, regional_board, RL
+
+
+```r
+DIF<- setdiff(CS, C) #Analytes in ceden-surf and not in ceden
+DIF
+```
+
+
+**2. CEDEN-SURF data at Toe Drain Nr Babel Slough not in CEDEN** 
+
+SURF Name: "Toe Drain Nr Babel Slough Nr Freeport Ca"
+SURF Code: "57_58"
+
+Could not ID this location in CEDEN data, using grepl() to allow approximate naming. None with "Babel" and T in StationName
+
+
+```r
+# From SURF, identified as coming from CEDEN
+CS <- CEDENSURF %>% filter(grepl('Toe', StationName)) %>%
+  filter(grepl('Babel', StationName)) %>%
+  filter(Data.source == "CEDEN")%>%
+  filter(Source == "SURF")
+
+# Direct from CEDEN
+C <- CEDENSURF %>%
+  filter(grepl('Babel', StationName)) %>%
+  filter(Source == "CEDEN")
+```
+There are 657 records at this site from SURF, all from the same agency, and identified as coming from CEDEN. 
+Here is one example record:
+
+
+```r
+nrow(CS)
+```
+
+```
+## [1] 657
+```
+
+```r
+unique(CS$Agency)
+```
+
+```
+## [1] "USGS California Water Science Center"
+```
+
+```r
+CS[1]
+```
+
+```
+##                                  Agency      Analyte      CollectionMethod
+## 1: USGS California Water Science Center pyrimethanil Filtered water sample
+##    County Data.source       Date Datum                   geometry Latitude
+## 1:   Yolo       CEDEN 2016-07-28  <NA> c(-121.588225, 38.4747806) 38.47478
+##    LocationCode Longitude    LOQ MatrixName  MDL ParentProject Program Project
+## 1:         <NA> -121.5882 0.0041       <NA> -999          <NA>    <NA>    <NA>
+##    rb_number Record_id regional_board Result RL Source StationCode
+## 1:        NA   1805112           <NA>      0 NA   SURF       57_58
+##                                 StationName Study_cd
+## 1: Toe Drain Nr Babel Slough Nr Freeport Ca      747
+##                                                                                                Study_description
+## 1: SFCWA YoloBypassFoodWeb , State and Federal Contractors Water Agency , SFCWA YoloBypassFoodWeb PEST 2015-2016
+##            Study_weblink   Subregion Total organic carbon (%) Unit
+## 1: http://www.ceden.org/ North Delta                       NA  ppb
+```
+
+
+#### Examples of B
+
+It appears that SURF has appended station names from CEDEN with extra info. For example:
+
+SURF: "Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7"
+SURF Code: "48_52"
+
+CEDEN: "Grizzly Bay at Dolphin nr. Suisun Slough"
+CEDEN Code: "207SNB0D7"
+
+and 
+
+SURF Name: "Sacramento River at Freeport (USGS-11447650)"
+SURF Code: "34_5"
+
+CEDEN Name: "Sacramento River at Freeport, CA"
+CEDEN Code: 11447650
+
+
+```r
+rbind(A[1,], B[1,])
+```
+
+```
+##                                  Agency Analyte      CollectionMethod County
+## 1: USGS California Water Science Center linuron Filtered water sample Solano
+## 2:                                 <NA>  oxygen          Field Method   <NA>
+##    Data.source       Date Datum                       geometry Latitude
+## 1:       CEDEN 2011-04-21  <NA>        c(-122.03972, 38.11708) 38.11708
+## 2:        <NA> 2010-03-17 NAD83 c(-122.03971862793, 38.117081) 38.11708
+##    LocationCode Longitude    LOQ  MatrixName  MDL
+## 1:         <NA> -122.0397 0.0043        <NA> -999
+## 2:    OpenWater -122.0397     NA samplewater   NA
+##                         ParentProject                       Program
+## 1:                               <NA>                          <NA>
+## 2: Suisun Bay Monitoring Project RWB2 Suisun Bay Monitoring Project
+##                                  Project rb_number Record_id    regional_board
+## 1:                                  <NA>        NA   1805592              <NA>
+## 2: RWB2 Suisun Bay Monitoring Study 2010         2        NA San Francisco Bay
+##    Result RL Source StationCode
+## 1:   0.00 NA   SURF       48_52
+## 2:   9.16 NA  CEDEN   207SNB0D7
+##                                                   StationName Study_cd
+## 1: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7      825
+## 2:                   Grizzly Bay at Dolphin nr. Suisun Slough       NA
+##                                                                                                 Study_description
+## 1: SuisunBayMonitoring _SFCWA_USGS , Suisun Bay Monitoring Project , USGS Suisun Bay Monitoring Project 2011-2012
+## 2:                                                                                                           <NA>
+##            Study_weblink  Subregion Total organic carbon (%) Unit
+## 1: http://www.ceden.org/ Suisun Bay                       NA  ppb
+## 2:                  <NA> Suisun Bay                       NA mg/L
+```
+
+#### Example of C
+
+Same station at Grizzly Bay; differences in coordinates listed in SURF (1998 and 2012), compared to CEDEN (2010)
+
+
+```r
+C <- CEDENSURF %>%
+  filter(grepl('Grizzly', StationName)) %>%
+  filter(grepl('Dolphin', StationName)) %>%
+  filter(grepl('2012', Date)) %>%
+  filter(Data.source == "CEDEN")
+
+rbind(A[1,c(23, 25, 7:10,12)], C[1,c(23, 25, 7:10,12)], B[1,c(23, 25, 7:10,12)])
+```
+
+```
+##    Source                                                StationName Datum
+## 1:   SURF Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7  <NA>
+## 2:   SURF Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7  <NA>
+## 3:  CEDEN                   Grizzly Bay at Dolphin nr. Suisun Slough NAD83
+##                          geometry Latitude LocationCode    LOQ
+## 1:        c(-122.03972, 38.11708) 38.11708         <NA> 0.0043
+## 2:        c(-122.03972, 38.11708) 38.11708         <NA> 0.0037
+## 3: c(-122.03971862793, 38.117081) 38.11708    OpenWater     NA
+```
+
+### 2. Decide whether to retain composite samples
+
+If we decide to remove them, determine how to identify.
+
+In CEDEN, might be able to locate by CollectionMethod OR CollectionDeviceDescription
+
+ie: "7 day auto sampler" and "AutoSampler" collection methods may indicate composite over time, or "depth-integrating" collection device description may indivate composite over depths.
 
