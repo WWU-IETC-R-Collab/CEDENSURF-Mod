@@ -498,9 +498,7 @@ A <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
 
 A[1:4]
 ```
-All of the records in SURF measuring glyphosate at this station, cited as coming from CEDEN, are from the same agency: `r unique(A$Agency)`
 
-In contrast, none of the records from CEDEN at this site claim to measure glyphosate. We can preview all analytes observed in CEDEN's records at this site to confirm that these are not simply due to naming errors:
 ```{r}
 # Locate similar location records in CEDEN and SURF using queries
 
@@ -531,7 +529,7 @@ DIF
 
 **Could this be due to those datum being filtered out during our CEDEN-Mod?** NA, ND, and NR vs 0 results?
 
-YES THEY ARE. In the original CEDEN data download, the results column is empty for these records. The comments suggest these data are also recorded elsewhere, so perhaps it was a mistake to include no result here. 
+YES THEY ARE (in this specific instance). In the original CEDEN data download, the results column is empty for these records. The comments suggest these data are also recorded elsewhere, so perhaps it was a mistake to include no result here. 
 
 ```{r}
 CEDEN_OriginalWQ <- fread("Data/CEDEN_WQ_20212259571.txt")
@@ -544,7 +542,7 @@ C_OG[1:4,]
 C_OG$SampleComments[2]
 ```
 
-#### **2. CEDEN-SURF data at Toe Drain Nr Babel Slough not in CEDEN** 
+**2. CEDEN-SURF data at Toe Drain Nr Babel Slough not in CEDEN** 
 
 SURF Name: "Toe Drain Nr Babel Slough Nr Freeport Ca"
 SURF Code: "57_58"
