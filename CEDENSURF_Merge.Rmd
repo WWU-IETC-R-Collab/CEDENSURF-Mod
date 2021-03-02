@@ -64,9 +64,9 @@ SURFMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main
 ```
 Two files - one with wq data, and one with sediment data
 
-Date range of SURF water data: from `r min(as.Date(SURFMod_WQ$Date))` to `r max(as.Date(SURFMod_WQ$Date))`
+Date range of SURF water data: from `r min(as.Date(SURFMod_WQ$Sample_date))` to `r max(as.Date(SURFMod_WQ$Sample_date))`
 
-Date range of SURF sediment data: from from `r min(as.Date(SURFMod_SED$Date))` to `r max(as.Date(SURFMod_SED$Date))`
+Date range of SURF sediment data: from from `r min(as.Date(SURFMod_SED$Sample_date))` to `r max(as.Date(SURFMod_SED$Sample_date))`
 
 <br>
 
@@ -445,10 +445,12 @@ There are `r nrow(CEDENSURF)` total records in the initial merge of CEDEN with S
 
 Due to initial barriers to removing duplicates between the datasets (see below), I will simply filter out data identified as being sourced from CEDEN within SURF to eliminate duplicates. This is not an ideal solution though, because there is a large amount of data identified as coming from CEDEN which is not present in our CEDEN WQ data (again, see below).
 
-```{r, eval=F}
-CEDENSURFMod <- filter(CEDENSURF, Data.source != "CEDEN")
+```{r}
+SURFMod_NC <- filter(SURF_ALL_DupChecked, Data.source != "CEDEN")
 
-# write_csv(CEDENSURFMod, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
+CEDENSURFMod <- rbind(SURFMod_NC, CEDEN_ALL_DupChecked)
+
+#write_csv(CEDENSURFMod, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
 ```
 
 <br>
@@ -494,7 +496,7 @@ A <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
   filter(Data.source == "CEDEN")%>%
   filter(Analyte == "glyphosate")
 
-A[1]
+A[1:4]
 ```
 All of the records in SURF measuring glyphosate at this station, cited as coming from CEDEN, are from the same agency: `r unique(A$Agency)`
 
@@ -502,7 +504,7 @@ In contrast, none of the records from CEDEN at this site claim to measure glypho
 ```{r}
 # Locate similar location records in CEDEN and SURF using queries
 
-# Record Analyte = "endosulfan sulfate", Agency = Applied Marine Sciences, Inc. California, Collection Method = Filtered water sample, Date = 1997-04-22, Station Name: "Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7", StationCode: "48_52"
+#Station Name: "Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7"
 
 # Locate similar location records in CEDEN and SURF using flexible queries
 
@@ -518,7 +520,6 @@ B <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
   filter(Source == "CEDEN")
 
 C <- sort(unique(B$Analyte)) # 34
-C
 ```
 
 There are other analytes at this site recorded in SURF-CEDEN data but not in the data brought directly from CEDEN, too: `r DIF`
@@ -528,8 +529,22 @@ DIF<- setdiff(CS, C) #Analytes in ceden-surf and not in ceden
 DIF
 ```
 
+**Could this be due to those datum being filtered out during our CEDEN-Mod?** NA, ND, and NR vs 0 results?
 
-**2. CEDEN-SURF data at Toe Drain Nr Babel Slough not in CEDEN** 
+YES THEY ARE. In the original CEDEN data download, the results column is empty for these records. The comments suggest these data are also recorded elsewhere, so perhaps it was a mistake to include no result here. 
+
+```{r}
+CEDEN_OriginalWQ <- fread("Data/CEDEN_WQ_20212259571.txt")
+
+C_OG <- CEDEN_OriginalWQ %>% filter(grepl('Grizzly', StationName)) %>%
+  filter(grepl('Dolphin', StationName)) %>%
+  filter(grepl('lyphos', Analyte))
+
+C_OG[1:4,]
+C_OG$SampleComments[2]
+```
+
+#### **2. CEDEN-SURF data at Toe Drain Nr Babel Slough not in CEDEN** 
 
 SURF Name: "Toe Drain Nr Babel Slough Nr Freeport Ca"
 SURF Code: "57_58"

@@ -64,9 +64,9 @@ SURFMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main
 ```
 Two files - one with wq data, and one with sediment data
 
-Date range of SURF water data: from NA to NA
+Date range of SURF water data: from 2009-10-06 to 2019-09-17
 
-Date range of SURF sediment data: from from NA to NA
+Date range of SURF sediment data: from from 2010-02-09 to 2019-09-17
 
 <br>
 
@@ -509,7 +509,7 @@ Due to initial barriers to removing duplicates between the datasets (see below),
 ```r
 CEDENSURFMod <- filter(CEDENSURF, Data.source != "CEDEN")
 
-write_csv(CEDENSURFMod, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
+# write_csv(CEDENSURFMod, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
 ```
 
 <br>
