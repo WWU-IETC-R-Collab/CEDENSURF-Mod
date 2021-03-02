@@ -16,7 +16,6 @@ library(data.table)
 library(lubridate)
 library(sf)
 library(tidyverse)
-library(zoo)
 ```
 
 <br>
@@ -32,21 +31,69 @@ According to email correspondence with Dr. Xuyang Zhang at CDPR on 2/17/2021, la
 
 <br>
 
-#### Load Data
+#### Load Data & Temporal Query
 
 
 ```r
 ### Read SURF Tables and restrict to project time frame
+
 SURF.Sed <- fread("Data/SURF_SED.csv") %>% 
   filter(between(Sample_date, 
         as_date("2009-10-01"),as_date("2019-09-30"))) # filter dates before transform to sf, otherwise errors arise. 
 
 SURF.WQ <- fread("Data/SURF_water.csv") %>% 
   filter(between(Sample_date, 
-        as_date("2009-10-01"),as_date("2019-09-30"))) # filter dates before transform to sf, otherwise errors arise. 
+        as_date("2009-10-01"),as_date("2019-09-30"))) # filter dates before transform to sf, otherwise errors arise.
+```
+
+<br>
+
+#### Rename columns
+
+We renamed columns with analogous data to match CEDEN column names.
 
 
-### Transform to SF
+```r
+### SURF WATER
+
+# Move units from embedded in Result column name to their own column
+SURF.WQ$Unit <- "ppb"
+
+# Rename columns with analogous data to match CEDEN column names.
+SURF.WQ <- SURF.WQ %>% rename(Date = Sample_date,
+          Analyte = Chemical_name, 
+          Result = Concentration..ppb., 
+          CollectionMethod = Sample_type, 
+          StationCode = Site_code,
+          StationName = Site_name,
+          MDL = Method_detection_level..ppb.,
+          LOQ = Level_of_quantification..ppb.)
+
+### SURF SEDIMENT
+
+# Move units from embedded in Result column name to their own column
+SURF.Sed$Unit <- "ppb"
+
+# Rename columns with analogous data to match CEDEN column names.
+SURF.Sed <- SURF.Sed %>% rename(Date = Sample_date,
+          Analyte = Chemical_name, 
+          Result = Concentration..ppb., 
+          CollectionMethod = Sample_type, 
+          StationCode = Site_code,
+          StationName = Site_name,
+          MDL = Method_detection_level..ppb.,
+          LOQ = Level_of_quantification..ppb.)
+```
+
+<br>
+
+#### Spatial query
+
+Retain only data within our project boundaries.
+
+
+```r
+### Transform SURF data to SF
 SURF.Sed.sf <- st_as_sf(SURF.Sed, coords = c("Longitude", "Latitude"), remove = F, crs = "WGS84")
 
 SURF.WQ.sf <- st_as_sf(SURF.WQ, coords = c( "Longitude", "Latitude"), remove = F, crs = "WGS84")
@@ -65,14 +112,9 @@ unzip_shape <- function(InputShapeZip){
 }
 
 USFE.RiskRegions <- unzip_shape(USFE.RiskRegions.z) # CRS is WGS 84
-```
- 
-<br>
 
-#### Spatial Query
+#### Spatially query data within the project boundaries
 
-
-```r
 # SURF Sed
 SURF.Sed.sf <- st_join(SURF.Sed.sf, USFE.RiskRegions[1], left = T) %>%
   filter(!is.na(Subregion))
@@ -80,9 +122,16 @@ SURF.Sed.sf <- st_join(SURF.Sed.sf, USFE.RiskRegions[1], left = T) %>%
 #SURF Water
 SURF.WQ.sf <- st_join(SURF.WQ.sf, USFE.RiskRegions[1], left = T) %>%
   filter(!is.na(Subregion))
+```
+After temporal and spatial query, there are 35,346 records in SURF.sediment, and 91,021 records in SURF.water
 
+#### Save modified data
+
+
+```r
 # Export SURF Tables
 write_csv(SURF.WQ.sf, "Data/Output/SURFMod_water.csv") # Note: coerces empty data fields to NA
+
 write_csv(SURF.Sed.sf, "Data/Output/SURFMod_SED.csv") # Note: coerces empty data fields to NA
 ```
 
