@@ -494,7 +494,8 @@ A <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
   filter(grepl('Dolphin', StationName)) %>%
   filter(Source == "SURF") %>%
   filter(Data.source == "CEDEN")%>%
-  filter(Analyte == "glyphosate")
+  filter(Analyte == "glyphosate")%>%
+  select(Agency, Date, StationName, Analyte, Result)
 
 A[1:4]
 ```
@@ -520,9 +521,9 @@ B <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
 C <- sort(unique(B$Analyte)) # 34
 ```
 
-There are other analytes at this site recorded in SURF-CEDEN data but not in the data brought directly from CEDEN, too: `r DIF`
+There are other analytes at this site recorded in SURF-CEDEN data but not in the data brought directly from CEDEN, too:
 
-```{r, eval = F}
+```{r}
 DIF<- setdiff(CS, C) #Analytes in ceden-surf and not in ceden
 DIF
 ```
@@ -536,7 +537,8 @@ CEDEN_OriginalWQ <- fread("Data/CEDEN_WQ_20212259571.txt")
 
 C_OG <- CEDEN_OriginalWQ %>% filter(grepl('Grizzly', StationName)) %>%
   filter(grepl('Dolphin', StationName)) %>%
-  filter(grepl('lyphos', Analyte))
+  filter(grepl('lyphos', Analyte))%>%
+  select(SampleDate, StationName, Analyte, Result)
 
 C_OG[1:4,]
 C_OG$SampleComments[2]

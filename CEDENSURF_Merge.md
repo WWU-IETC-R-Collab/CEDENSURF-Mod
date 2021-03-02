@@ -561,52 +561,23 @@ A <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
   filter(grepl('Dolphin', StationName)) %>%
   filter(Source == "SURF") %>%
   filter(Data.source == "CEDEN")%>%
-  filter(Analyte == "glyphosate")
+  filter(Analyte == "glyphosate")%>%
+  select(Agency, Date, StationName, Analyte, Result)
 
 A[1:4]
 ```
 
 ```
-##                     Agency    Analyte          CollectionMethod County
-## 1: Michael L. Johnson, LLC glyphosate Single whole water sample Solano
-## 2: Michael L. Johnson, LLC glyphosate Single whole water sample Solano
-## 3: Michael L. Johnson, LLC glyphosate Single whole water sample Solano
-## 4: Michael L. Johnson, LLC glyphosate Single whole water sample Solano
-##    Data.source       Date Datum                geometry Latitude LocationCode
-## 1:       CEDEN 2012-05-08  <NA> c(-122.03972, 38.11708) 38.11708         <NA>
-## 2:       CEDEN 2011-04-26  <NA> c(-122.03972, 38.11708) 38.11708         <NA>
-## 3:       CEDEN 2011-04-05  <NA> c(-122.03972, 38.11708) 38.11708         <NA>
-## 4:       CEDEN 2012-04-24  <NA> c(-122.03972, 38.11708) 38.11708         <NA>
-##    Longitude LOQ MatrixName MDL ParentProject Program Project rb_number
-## 1: -122.0397   5       <NA> 1.7          <NA>    <NA>    <NA>        NA
-## 2: -122.0397   5       <NA> 1.7          <NA>    <NA>    <NA>        NA
-## 3: -122.0397   5       <NA> 1.7          <NA>    <NA>    <NA>        NA
-## 4: -122.0397   5       <NA> 1.7          <NA>    <NA>    <NA>        NA
-##    Record_id regional_board Result RL Source StationCode
-## 1:   1763867           <NA>      0 NA   SURF       48_52
-## 2:   1215213           <NA>      0 NA   SURF       48_52
-## 3:   1215210           <NA>      0 NA   SURF       48_52
-## 4:   1764595           <NA>      0 NA   SURF       48_52
-##                                                   StationName Study_cd
-## 1: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7      244
-## 2: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7      243
-## 3: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7      243
-## 4: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7      244
-##                                                                                        Study_description
-## 1: SuisunBayMonitoring _BACWA , Suisun Bay Monitoring Project , BACWA Suisun Bay Monitoring Project 2012
-## 2: SuisunBayMonitoring _BACWA , Suisun Bay Monitoring Project , BACWA Suisun Bay Monitoring Project 2011
-## 3: SuisunBayMonitoring _BACWA , Suisun Bay Monitoring Project , BACWA Suisun Bay Monitoring Project 2011
-## 4: SuisunBayMonitoring _BACWA , Suisun Bay Monitoring Project , BACWA Suisun Bay Monitoring Project 2012
-##                                                                                Study_weblink
-## 1: http://www.swrcb.ca.gov/sanfranciscobay/water_issues/programs/SWAMP/SB_Workplan_11-12.pdf
-## 2: http://www.swrcb.ca.gov/sanfranciscobay/water_issues/programs/SWAMP/SB_Workplan_11-12.pdf
-## 3: http://www.swrcb.ca.gov/sanfranciscobay/water_issues/programs/SWAMP/SB_Workplan_11-12.pdf
-## 4: http://www.swrcb.ca.gov/sanfranciscobay/water_issues/programs/SWAMP/SB_Workplan_11-12.pdf
-##     Subregion Total organic carbon (%) Unit
-## 1: Suisun Bay                       NA  ppb
-## 2: Suisun Bay                       NA  ppb
-## 3: Suisun Bay                       NA  ppb
-## 4: Suisun Bay                       NA  ppb
+##                     Agency       Date
+## 1: Michael L. Johnson, LLC 2012-05-08
+## 2: Michael L. Johnson, LLC 2011-04-26
+## 3: Michael L. Johnson, LLC 2011-04-05
+## 4: Michael L. Johnson, LLC 2012-04-24
+##                                                   StationName    Analyte Result
+## 1: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7 glyphosate      0
+## 2: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7 glyphosate      0
+## 3: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7 glyphosate      0
+## 4: Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7 glyphosate      0
 ```
 
 
@@ -631,12 +602,23 @@ B <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
 C <- sort(unique(B$Analyte)) # 34
 ```
 
-There are other analytes at this site recorded in SURF-CEDEN data but not in the data brought directly from CEDEN, too: Datum, LocationCode, MatrixName, ParentProject, Program, Project, rb_number, regional_board, RL
+There are other analytes at this site recorded in SURF-CEDEN data but not in the data brought directly from CEDEN, too:
 
 
 ```r
 DIF<- setdiff(CS, C) #Analytes in ceden-surf and not in ceden
 DIF
+```
+
+```
+##  [1] "bentazon, sodium salt" "bifenthrin"            "carbofuran"           
+##  [4] "chlorthal-dimethyl"    "clomazone"             "clothianidin"         
+##  [7] "cyprodinil"            "eptc"                  "ethalfluralin"        
+## [10] "fluridone"             "glyphosate"            "imazalil"             
+## [13] "linuron"               "malathion"             "napropamide"          
+## [16] "oxyfluorfen"           "paraquat dichloride"   "pendimethalin"        
+## [19] "propanil"              "thiamethoxam"          "thiobencarb"          
+## [22] "triclopyr"
 ```
 
 **Could this be due to those datum being filtered out during our CEDEN-Mod?** NA, ND, and NR vs 0 results?
@@ -664,117 +646,18 @@ CEDEN_OriginalWQ <- fread("Data/CEDEN_WQ_20212259571.txt")
 ```r
 C_OG <- CEDEN_OriginalWQ %>% filter(grepl('Grizzly', StationName)) %>%
   filter(grepl('Dolphin', StationName)) %>%
-  filter(grepl('lyphos', Analyte))
+  filter(grepl('lyphos', Analyte))%>%
+  select(SampleDate, StationName, Analyte, Result)
 
 C_OG[1:4,]
 ```
 
 ```
-##                          Program              ParentProject
-## 1: Suisun Bay Monitoring Project SuisunBayMonitoring _BACWA
-## 2: Suisun Bay Monitoring Project SuisunBayMonitoring _BACWA
-## 3: Suisun Bay Monitoring Project SuisunBayMonitoring _BACWA
-## 4: Suisun Bay Monitoring Project SuisunBayMonitoring _BACWA
-##                                     Project
-## 1: BACWA Suisun Bay Monitoring Project 2011
-## 2: BACWA Suisun Bay Monitoring Project 2011
-## 3: BACWA Suisun Bay Monitoring Project 2011
-## 4: BACWA Suisun Bay Monitoring Project 2011
-##                                 StationName StationCode SampleDate
-## 1: Grizzly Bay at Dolphin nr. Suisun Slough   207SNB0D7 2011-04-05
-## 2: Grizzly Bay at Dolphin nr. Suisun Slough   207SNB0D7 2011-04-12
-## 3: Grizzly Bay at Dolphin nr. Suisun Slough   207SNB0D7 2011-04-21
-## 4: Grizzly Bay at Dolphin nr. Suisun Slough   207SNB0D7 2011-04-26
-##    CollectionTime LocationCode CollectionDepth UnitCollectionDepth
-## 1:       11:32:00    OpenWater             0.1                   m
-## 2:       12:25:00    OpenWater             0.1                   m
-## 3:       10:42:00    OpenWater             0.1                   m
-## 4:       13:11:00    OpenWater             0.1                   m
-##    SampleTypeCode CollectionReplicate ResultsReplicate                LabBatch
-## 1:           Grab                   1                1  NCL_SuBay_R65776_W_GLY
-## 2:           Grab                   1                1 NCL_SuBay_R65880A_W_GLY
-## 3:           Grab                   1                1 NCL_SuBay_R65938B_W_GLY
-## 4:           Grab                   1                1  NCL_SuBay_R66042_W_GLY
-##    LabSampleID  MatrixName MethodName           Analyte Unit Result Observation
-## 1: 1104130-10C samplewater   EPA 547M Glyphosate, Total ug/L                 NA
-## 2: 1104262-10C samplewater   EPA 547M Glyphosate, Total ug/L                 NA
-## 3: 1104433-10C samplewater   EPA 547M Glyphosate, Total ug/L                 NA
-## 4: 1104500-10C samplewater   EPA 547M Glyphosate, Total ug/L                 NA
-##    MDL RL ResultQualCode QACode BatchVerification ComplianceCode
-## 1: 1.7  5             ND   None               VAC             NR
-## 2: 1.7  5             ND   None               VAC             NR
-## 3: 1.7  5             ND   None               VAC             NR
-## 4: 1.7  5             ND   None               VAC             NR
-##                                                                                                                                                                                              SampleComments
-## 1:                                                                                   Field data collected with protocol RTC_SuisunBay_v2.0 and are also recorded under ProjectCode RWB2_SuBay_2011 by RWB2.
-## 2:                                                                                   Field data collected with protocol RTC_SuisunBay_v2.0 and are also recorded under ProjectCode RWB2_SuBay_2011 by RWB2.
-## 3: Contamination of cell cultures occured and toxicity tests could not be initiated. Field data collected with protocol RTC_SuisunBay_v2.0 and are also recorded under ProjectCode RWB2_SuBay_2011 by RWB2.
-## 4:                                                                                   Field data collected with protocol RTC_SuisunBay_v2.0 and are also recorded under ProjectCode RWB2_SuBay_2011 by RWB2.
-##    CollectionComments ResultsComments
-## 1:                                   
-## 2:                                   
-## 3:                                   
-## 4:                                   
-##                                                                                                                                                                            BatchComments
-## 1:                                                                                                                                                                  Batch ran overnight.
-## 2: The MS/MSD recovery was above the acceptance limit. The elevated recovery equates to a high bias. No detectable levels of analyte in the samples; data accepted. Batch ran overnight.
-## 3:                  The LCS/LCSD recoveries were below the acceptance limit. Response of RL standard was such that analytes would have been detected with low recoveries; data accepted.
-## 4:                                                                                                                                                                  Batch ran overnight.
-##    EventCode        ProtocolCode SampleAgency GroupSamples CollectionMethodName
-## 1:        WQ SuBay_MLJLLC_040611      MLJ-LLC           NA           Water_Grab
-## 2:        WQ SuBay_MLJLLC_040611      MLJ-LLC           NA           Water_Grab
-## 3:        WQ SuBay_MLJLLC_040611      MLJ-LLC           NA           Water_Grab
-## 4:        WQ SuBay_MLJLLC_040611      MLJ-LLC           NA           Water_Grab
-##    TargetLatitude  TargetLongitude             CollectionDeviceDescription
-## 1:      38.117081 -122.03971862793 Individual Collection by bucket sampler
-## 2:      38.117081 -122.03971862793 Individual Collection by bucket sampler
-## 3:      38.117081 -122.03971862793 Individual Collection by bucket sampler
-## 4:      38.117081 -122.03971862793 Individual Collection by bucket sampler
-##    CalibrationDate PositionWaterColumn PrepPreservationName
-## 1:      0000-00-00          subsurface            LabFrozen
-## 2:      0000-00-00          subsurface            LabFrozen
-## 3:      0000-00-00          subsurface            LabFrozen
-## 4:      0000-00-00          subsurface            LabFrozen
-##    PrepPreservationDate DigestExtractMethod DigestExtractDate AnalysisDate
-## 1:  2011-04-07 00:00:00                None        1950-01-01   2011-04-15
-## 2:  2011-04-14 00:00:00                None        1950-01-01   2011-04-21
-## 3:  2011-04-26 00:00:00                None        1950-01-01   2011-04-28
-## 4:  2011-04-28 00:00:00                None        1950-01-01   2011-05-10
-##    DilutionFactor ExpectedValue LabAgency SubmittingAgency SubmissionCode
-## 1:              1                     NCL              NCL              A
-## 2:              1                     NCL              NCL           A,MD
-## 3:              1                     NCL              NCL           A,MD
-## 4:              1                     NCL              NCL              A
-##    OccupationMethod StartingBank DistanceFromBank UnitDistanceFromBank
-## 1:                                             NA                     
-## 2:                                             NA                     
-## 3:                                             NA                     
-## 4:                                             NA                     
-##    StreamWidth UnitStreamWidth StationWaterDepth UnitStationWaterDepth HydroMod
-## 1:          NA                                NA                               
-## 2:          NA                                NA                               
-## 3:          NA                                NA                               
-## 4:          NA                                NA                               
-##    HydroModLoc LocationDetailWQComments ChannelWidth UpstreamLength
-## 1:                                                NA             NA
-## 2:                                                NA             NA
-## 3:                                                NA             NA
-## 4:                                                NA             NA
-##    DownstreamLength TotalReach LocationDetailBAComments county county_fips
-## 1:               NA         NA                       NA Solano          95
-## 2:               NA         NA                       NA Solano          95
-## 3:               NA         NA                       NA Solano          95
-## 4:               NA         NA                       NA Solano          95
-##       regional_board rb_number huc8 huc8_number huc10 huc10_number huc12
-## 1: San Francisco Bay         2 NULL        NULL  NULL         NULL  NULL
-## 2: San Francisco Bay         2 NULL        NULL  NULL         NULL  NULL
-## 3: San Francisco Bay         2 NULL        NULL  NULL         NULL  NULL
-## 4: San Francisco Bay         2 NULL        NULL  NULL         NULL  NULL
-##    huc12_number waterbody_type SampleID
-## 1:         NULL    Grizzly Bay         
-## 2:         NULL    Grizzly Bay         
-## 3:         NULL    Grizzly Bay         
-## 4:         NULL    Grizzly Bay
+##    SampleDate                              StationName           Analyte Result
+## 1: 2011-04-05 Grizzly Bay at Dolphin nr. Suisun Slough Glyphosate, Total       
+## 2: 2011-04-12 Grizzly Bay at Dolphin nr. Suisun Slough Glyphosate, Total       
+## 3: 2011-04-21 Grizzly Bay at Dolphin nr. Suisun Slough Glyphosate, Total       
+## 4: 2011-04-26 Grizzly Bay at Dolphin nr. Suisun Slough Glyphosate, Total
 ```
 
 ```r
@@ -782,7 +665,7 @@ C_OG$SampleComments[2]
 ```
 
 ```
-## [1] "Field data collected with protocol RTC_SuisunBay_v2.0 and are also recorded under ProjectCode RWB2_SuBay_2011 by RWB2."
+## NULL
 ```
 
 **2. CEDEN-SURF data at Toe Drain Nr Babel Slough not in CEDEN** 
