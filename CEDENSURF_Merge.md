@@ -19,6 +19,7 @@ output:
 
 ```r
 rm(list = ls())
+#setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 library(data.table)
 library(lubridate)
 library(sf)
@@ -31,9 +32,13 @@ This markdown covers the process to identify duplication within the CEDEN and SU
 
 # Load Data
 
-SURF Data was acquired at the DPR SURF database web page as CSVs via FTP download on 2/17/2021, and modified via the methods outlined in https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/blob/main/CEDENSURF.md prior to this work.
+**SURF** Data was acquired at the DPR SURF database web page as CSVs via FTP download on 2/17/2021, then spatially and temporally restricted via methods outlined in https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/blob/main/CEDENSURF.md prior to this work.
 
-CEDEN Data was acquired from https://ceden.waterboards.ca.gov/AdvancedQueryTool on January 29 2020 for the Central Valley and San Francisco Bay regions, and spatially queried to the USFE project area. This original data set can be found within the IETC Tox Box at: Upper San Francisco Project\Data & Analyses\Original\CEDEN. The methods of prior modification are at: https://github.com/WWU-IETC-R-Collab/CEDEN-mod/blob/main/CEDEN_ModMaster.md
+This original data set can be found within the IETC Tox Box at: Upper San Francisco Project\Data & Analyses\Original\SURF.
+
+**CEDEN** Data was acquired from https://ceden.waterboards.ca.gov/AdvancedQueryTool on January 29 2020 for the Central Valley and San Francisco Bay regions, and spatially queried to the USFE project area and modified via methods described at: https://github.com/WWU-IETC-R-Collab/CEDEN-mod/blob/main/CEDEN_ModMaster.md
+
+This original data set can be found within the IETC Tox Box at: Upper San Francisco Project\Data & Analyses\Original\CEDEN.
 
 <br>
 
@@ -48,9 +53,9 @@ CEDENMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Da
 ```
 Two files - one with tox data, and one with wq data
 
-Date range of CEDEN water data: from 2009-10-06 to 2019-09-26
+CEDEN water data contains 60429 records, between 2009-10-06 to 2019-09-26
 
-Date range of CEDEN tox data: from 2009-10-06 to 2019-09-25
+CEDEN tox data contains 60531 records, between 2009-10-06 to 2019-09-25
 
 <br> 
 
@@ -64,9 +69,10 @@ SURFMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main
 ```
 Two files - one with wq data, and one with sediment data
 
-Date range of SURF water data: from 2009-10-06 to 2019-09-17
+SURF water contains 91021 records, from 2009-10-06 to 2019-09-17
 
-Date range of SURF sediment data: from from 2010-02-09 to 2019-09-17
+
+SURF sediment contains 35346 records, from from NA to 2019-09-17
 
 <br>
 
@@ -95,15 +101,9 @@ Due to reported combined efforts to translate CEDEN data to SURF and vice versa,
 
 ## CEDEN
 
-There are 60429 records in the original WQ dataset
-
-and 60531 in the original Tox dataset. 
-
-<br>
-
 ### Data prep
 
-#### Remove duplicates
+**Remove duplicates**
 
 Removing exact duplicates via duplicated() misses duplication of wq data due to multiple species assessments, different sources of data upload, etc. 
 
@@ -128,7 +128,7 @@ nrow(CEDENMod_Tox) - nrow(NoDup_Tox) # 23,518
 
 
 ```r
-# 499 exact duplicates in the newest download
+# 499 exact duplicates
 
 # Remove duplicate rows of the dataframe using multiple variables
 
@@ -142,7 +142,7 @@ nrow(CEDENMod_WQ) - nrow(NoDup_WQ) # 1336
 ```
 <br>
 
-#### Remove irrelevant data
+**Remove irrelevant data**
 
 Since we are using the Tox database for the water parameters, not the associated organism survival, we can also remove records that assess organism status.
 
@@ -156,9 +156,8 @@ NoDup_Tox <- NoDup_Tox %>% filter(Analyte != "Survival") %>%
   filter(Analyte != "Total Cell Count") %>%
   select(-OrganismName)
 ```
-<br>
 
-####
+<br>
 
 After CEDEN data prep, there are 29695 unique, useful records in the tox dataset, and 59093 unique records in the WQ dataset.
 
@@ -176,17 +175,10 @@ After dealing with duplication WITHIN the CEDEN tox and wq datasets, there were 
 WQ <- names(NoDup_WQ)
 TOX <- names(NoDup_Tox)
 
-#Add missing columns to CEDEN WQ
-DIF<- setdiff(TOX, WQ) # gives items in T that are not in W
-NoDup_WQ[, DIF] <- NA
-```
+# Add missing columns to CEDEN WQ: SKIP, there were no missing columns
+# DIF<- setdiff(TOX, WQ) ## gives items in T that are not in W
+# NoDup_WQ[, DIF] <- NA 
 
-```
-## Warning in `[<-.data.table`(`*tmp*`, , DIF, value = NA): length(LHS)==0; no
-## columns to delete or assign RHS to.
-```
-
-```r
 #Add missing columns to CEDEN TOX
 DIF<- setdiff(WQ, TOX) # gives items in W that are not in T
 NoDup_Tox[, DIF] <- NA
@@ -311,51 +303,11 @@ Using these QA/QC methods, 87794 unique records are available through the CEDEN 
 
 ## SURF data
 
-There are 91021 records in the WQ dataset
-and 35346 in the SED dataset. 
-
 There were no exact duplicates in either the WQ or SED data from SURF. Far fewer duplicates were located using our flexible methods than in the CEDEN dataset.
 
 <br>
 
 ### Data prep
-
-#### Rename columns
-
-We renamed columns with analogous data to match CEDEN column names.
-
-
-```r
-### SURF WATER
-
-# Move units from embedded in Result column name to their own column
-SURFMod_WQ$Unit <- "ppb"
-
-# Rename columns with analogous data to match CEDEN column names.
-SURFMod_WQ <- SURFMod_WQ %>% rename(Date = Sample_date,
-          Analyte = Chemical_name, 
-          Result = Concentration..ppb., 
-          CollectionMethod = Sample_type, 
-          StationCode = Site_code,
-          StationName = Site_name,
-          MDL = Method_detection_level..ppb.,
-          LOQ = Level_of_quantification..ppb.)
-
-### SURF SEDIMENT
-
-# Move units from embedded in Result column name to their own column
-SURFMod_SED$Unit <- "ppb"
-
-# Rename columns with analogous data to match CEDEN column names.
-SURFMod_SED <- SURFMod_SED %>% rename(Date = Sample_date,
-          Analyte = Chemical_name, 
-          Result = Concentration..ppb., 
-          CollectionMethod = Sample_type, 
-          StationCode = Site_code,
-          StationName = Site_name,
-          MDL = Method_detection_level..ppb.,
-          LOQ = Level_of_quantification..ppb.)
-```
 
 #### Remove duplicates
 
@@ -414,7 +366,6 @@ NoDup_WQ <- NoDup_WQ %>% select(all_of(WQ))
 # MERGE
 SURF_ALL <- rbind(NoDup_WQ,NoDup_SED)
 ```
-
 <br>
 
 ### Further refine
