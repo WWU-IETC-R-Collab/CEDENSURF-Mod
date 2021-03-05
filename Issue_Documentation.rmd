@@ -19,8 +19,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, warning=F, message=F}
-rm(list = ls())
+rm(list=setdiff(ls(), c("CEDENSURF")))
+
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
 library(data.table)
 library(lubridate)
 library(sf)
@@ -36,12 +38,6 @@ This document is to contain QA/QC issues that have come up during the merge effo
 Start with all objects from **CEDENSURF_MERGE.rmd** in global environment (Open that rmd and choose "run all chunks")
 
 Then remove all extra objects from working directory but CEDENSURF, which is the merged CEDEN and SURF dataset retaining data from CEDEN in SURF.
-
-```{r}
-library(zoo)
-
-rm(list=setdiff(ls(), c("CEDENSURF")))
-```
 
 ```{r}
 # Load data
@@ -61,7 +57,7 @@ CEDENMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Da
 
 # Merged output (as of 3/5/2021)
 
-# CEDENSURFNC <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURFMod.csv")
+CEDENSURFNC <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURFMod.csv")
 ```
 
 ### 1. Non-results in CEDEN (NA) appear in SURF as "0" result concentration.
@@ -182,7 +178,7 @@ Also not in original water data...
 ```{r}
 C_OG <- CEDEN_OriginalWQ %>%
   filter(grepl('Babel', StationName)) %>%
-  select(SampleDate, StationName, Analyte, Result, SampleComments)
+  select(SampleDate, StationName, Analyte, Result, ResultQualCode, SampleComments)
 ```
 
 ### 3. Naming inconsistencies between SURF and CEDEN
@@ -225,6 +221,109 @@ Same station at Grizzly Bay; despite same Lat and Long coordinates listed in SUR
 ```{r}
 rbind(A[1,], B[1,])
 ```
+
+### Other instances of data in SURF-CEDEN not in CEDEN, and vice versa
+
+If we subset just the data that occurs in CEDEN-SURF and not in our CEDEN set, we can hone in on some specific agencies and/or sites that account for the majority of the discrepancies.
+
+```{r}
+CS <- CEDENSURF %>%
+  filter(Data.source == "CEDEN")%>%
+  filter(Source == "SURF")
+
+# Direct from CEDEN
+C <- CEDENSURF %>%
+  filter(Source == "CEDEN")
+
+DIF<- setdiff(CS, C) #Analytes in ceden-surf and not in ceden
+
+# Summarize by agency - sort descending (agency with the most in CS not in C at top)
+
+SumDif <- DIF %>% group_by(Agency) %>%
+  summarise(n = length(Latitude), 
+            n_results = length(unique(Result))) %>%
+  arrange(desc(n))
+
+head(SumDif)
+```
+There are 93 stations represented.
+```{r}
+# Summarize by station - sort descending (agency with the most in CS not in C at top)
+
+SumDif <- DIF %>% group_by(StationName) %>%
+  summarise(n = length(Latitude), 
+            n_results = length(unique(Result))) %>%
+  arrange(desc(n))
+
+head(SumDif)
+```
+**Let's take Ulatis Creek, n = 3,990**
+
+Almost all the instances are with Result = 0; 3689/3990
+
+```{r}
+## Preview data, anything in common?
+
+DIF %>%
+  filter(grepl('Ulatis', StationName)) %>%
+  filter(grepl('Creek', StationName)) %>%
+  filter(grepl('Brown', StationName)) %>% 
+  filter(Result == "0") %>% 
+  nrow(.)
+```
+
+Subsetting from the merged dataset to see if the thousands of non-detects at this station are retained in CEDEN, we find that there are only 17 0-results at this station in the CEDEN data, compared with the CEDEN-SURF data.
+
+```{r}
+CS <- CEDENSURF %>%
+  filter(Data.source == "CEDEN") %>%
+  filter(Source == "SURF") %>%
+  filter(grepl('Ulatis', StationName)) %>%
+  filter(grepl('Creek', StationName)) %>%
+  filter(grepl('Brown', StationName)) %>%
+  filter(Result == "0")
+
+C <- CEDENSURF %>%
+  filter(Source == "CEDEN") %>%
+  filter(grepl('Ulatis', StationName)) %>%
+  filter(grepl('Creek', StationName))%>%
+  filter(grepl('Brown', StationName))%>%
+  filter(Result == "0")
+```
+
+In the original data at this site, there are 7492 NA results at this site, which were removed during our CEDEN data prep process. Within these, 7462 are ND qualcodes (indicating non-detect, or results below the MDL), and only 32 with NR qualcodes (which indicates the test failed)
+
+```{r}
+C_OG <- CEDEN_OriginalWQ %>% 
+  filter(grepl('Ulatis', StationName)) %>%
+  filter(grepl('Creek', StationName)) %>%
+  filter(grepl('Brown', StationName)) %>%
+  filter(is.na(Result)) %>%
+  select(SampleDate, StationName, Analyte, Result, ResultQualCode, SampleComments)
+
+head(C_OG)
+
+# How many ND?
+
+CEDEN_OriginalWQ %>% 
+  filter(grepl('Ulatis', StationName)) %>%
+  filter(grepl('Creek', StationName)) %>%
+  filter(grepl('Brown', StationName)) %>%
+  filter(is.na(Result)) %>%
+  filter(ResultQualCode == "ND") %>%
+  nrow(.)
+
+# How many NR?
+
+CEDEN_OriginalWQ %>% 
+  filter(grepl('Ulatis', StationName)) %>%
+  filter(grepl('Creek', StationName)) %>%
+  filter(grepl('Brown', StationName)) %>%
+  filter(is.na(Result)) %>%
+  filter(ResultQualCode == "NR") %>%
+  nrow(.)
+```
+
 
 ### Up next: Whether to retain or remove composite samples
 
