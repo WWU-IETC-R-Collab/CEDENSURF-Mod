@@ -214,15 +214,7 @@ B <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
 rbind(A[1,], B[1,])
 ```
 
-#### 3. Differences in geometry btwn SURF and CEDEN
-
-Same station at Grizzly Bay; despite same Lat and Long coordinates listed in SURF (1998 and 2012), compared to CEDEN (2010), the shapefile conversion to geometry is different.
-
-```{r}
-rbind(A[1,], B[1,])
-```
-
-### Other instances of data in SURF-CEDEN not in CEDEN, and vice versa
+### **3. Other instances of data in SURF-CEDEN not in CEDEN, and vice versa**
 
 If we subset just the data that occurs in CEDEN-SURF and not in our CEDEN set, we can hone in on some specific agencies and/or sites that account for the majority of the discrepancies.
 
@@ -257,6 +249,7 @@ SumDif <- DIF %>% group_by(StationName) %>%
 
 head(SumDif)
 ```
+
 **Let's take Ulatis Creek, n = 3,990**
 
 Almost all the instances are with Result = 0; 3689/3990
@@ -324,6 +317,81 @@ CEDEN_OriginalWQ %>%
   nrow(.)
 ```
 
+
+#### 4. **Differences in geometry btwn SURF and CEDEN**
+
+Same station at Grizzly Bay; despite same Lat and Long coordinates listed in SURF (1998 and 2012), compared to CEDEN (2010), the shapefile conversion to geometry is different.
+
+```{r}
+rbind(A[1,], B[1,])
+```
+
+
+#### 5. **Results in SURF vs CEDEN**
+
+I'm interested, if SURF changed ND's in CEDEN from blank --> 0, would they also have changed values listed that were below MDL to 0? (Because theoretically also labeled ND)
+
+Selected data in original set at one site, with qual code ND, and result above zero, then looked for that data in SURF by filtering on a specific analyte.
+
+Prodiamine? No, also not found under value = 0 in C-S.
+Penoxsulam? No, but YES in CS as result = 0. 
+Fluridone?  Not in CEDENSURF with results 1-4, but YES in CEDENSURF 
+
+*NOTE: Results in CEDEN are in ng/L whereas in CEDENSURF they're in PPB. Some results < MDL may be recorded as 0 in SURF*
+
+**Example 1**
+```{r}
+# Subset records at one station with ND code and results above 0 (btwn 1-4)
+
+C <- CEDEN_OriginalWQ %>% 
+  filter(grepl('Ulatis', StationName)) %>%
+  filter(grepl('Creek', StationName)) %>%
+  filter(grepl('Brown', StationName)) %>%
+  filter(ResultQualCode == "ND") %>%
+  filter(between(Result,1,4) ) 
+
+CSR <- CEDENSURF %>%
+  filter(Data.source == "CEDEN") %>%
+  filter(Source == "SURF") %>%
+  filter(grepl('Ulatis', StationName)) %>%
+  filter(grepl('Creek', StationName)) %>%
+  filter(grepl('Brown', StationName)) %>%
+  filter(between(Result,1,4) )
+
+## Look for that ND record in SURF as ANY record with results in the appropriate range and with that analyte name. Not found. 
+
+# Matches in Ceden OG
+C2<- C %>%
+  filter(grepl('Fluridone', Analyte)) %>%
+  select(Agency = SubmittingAgency, StationName, Date = SampleDate, CollectionMethod = CollectionMethodName, Analyte, Result, Unit, ResultQualCode)
+
+# Example: Delta RMP, on 2016-02-17
+C2[2,]
+
+# Matches in Ceden-sourced Surf data - none
+CSR2<- CSR %>%
+  filter(grepl('fluridone', Analyte))
+
+# Matches in the CEDENSURF data allowing  another result value?
+CS <- CEDENSURF %>%
+  filter(Data.source == "CEDEN") %>%
+  filter(Source == "SURF") %>%
+  filter(grepl('Ulatis', StationName)) %>%
+  filter(grepl('Creek', StationName)) %>%
+  filter(grepl('Brown', StationName)) %>%
+  filter(grepl('fluridone', Analyte))
+
+CS2<- CS %>%
+  filter(Date == "2016-02-17") %>%
+  select(Agency, StationName, Date,CollectionMethod, Analyte, Result, Unit)
+
+rbind(C2[2,], CS2, fill = TRUE)
+```
+This shows two samples that are likely duplicates, one "from ceden" in SURF, and the other from the original CEDEN file. The original CEDEN file has methods further described under "prep preservation name" = "lab filtered", which could explain the differences in collection method nomenclature.
+
+**Example 2**
+
+Lets try a new station with ND results - Freeport? It was actually really hard to find other examples! I may have been lucky with my first station/process.  Can come back to this. 
 
 ### Up next: Whether to retain or remove composite samples
 

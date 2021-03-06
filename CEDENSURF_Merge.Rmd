@@ -409,7 +409,7 @@ SURFMod_NC <- filter(SURF_ALL_DupChecked, Data.source != "CEDEN")
 
 CEDENSURFMod <- rbind(SURFMod_NC, CEDEN_ALL_DupChecked)
 
-#write_csv(CEDENSURFMod, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
+#  THE CURRENT CEDENSURFMOD CSV, THAT SAID< NOW CAN DETECT DUPLICATION BETWEEN DATASETS> PREFER TO WRITE FROM FINISHED METHODS BELOW. write_csv(CEDENSURFMod, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
 ```
 
 <br>
@@ -425,14 +425,18 @@ This only works if the projection and rounding of latitude and longitude have be
 
 It seems to only detect 11 duplicates, while there are 28100 labeled in SURF as having come from CEDEN. Some may be unique, and some may be additional duplicates that we are not catching. 
 
+Because all values in SURF are in units PPB, while units of records in CEDEN vary, those results cannot be expected to be identical. 
+
+We must assume that records of the same analyte collected by the same method on the same date at the same station are duplicates. Through this, we find 29710 duplicates - almost exactly the number expected given those labeled as from CEDEN. 
 ```{r}
 # Remove duplicate rows of the dataframe using multiple variables
 
-CEDENSURF_DupChecked <- distinct(CEDENSURF, Date, Analyte, CollectionMethod, Latitude, Longitude, Result, .keep_all= TRUE)
+CEDENSURF_DupChecked <- distinct(CEDENSURF, Date, Analyte, CollectionMethod, Latitude, Longitude, .keep_all= TRUE)
 
 nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
-```
 
+# THIS IS PREFERRED, BUT NOT YET WRITTEN: write_csv(CEDENSURF_DupChecked, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
+```
 **Causes of these records being retained include:**
 
 A. No match actually exists in CEDEN. Record SHOULD be retained.
@@ -440,6 +444,8 @@ A. No match actually exists in CEDEN. Record SHOULD be retained.
 B. CEDEN and SURF have different naming protocols - both Station Name and Station Code differ for the same sites.
 
 C. Station Latitude and Longitude appear to be consistent between the databases, yet the projection to geometry results in different outcomes.
+
+D. Results are in different units. Important to remember for future analyses. Need to convert? Can all be converted to ppb (except temperature?)
 
 *See the IssueDocumentation.rmd for examples and details about each of these issues.*
 
@@ -450,6 +456,14 @@ A. Minimal instances, low priority issue
 B. Discovered that blank results in CEDEN are usually paired with a ResultQualCode "ND" meaning that they were tested for and not detected. Replacing with a 0 would therefore be a more appropriate approach than our current method of removal.
 
 C. Should review the projection method between these datasets, and the code to convert to shapefile, and locate potential sources of discrepancy.
+
+D. We should go through and unify these as much as possible. May have to happen manually (ie: in original Mod documents for each dataset, subset these units, run conversion on result)
+
+Temperature in SURF will be labeled as ppb, because rather than a "unit" column, their results column was "concentration..ppb" - implying that all results were converted prior to storing in the database.
+
+```{r}
+unique(CEDENSURF$Unit)
+```
 
 <br>
 
