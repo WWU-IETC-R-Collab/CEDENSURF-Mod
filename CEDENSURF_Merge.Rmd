@@ -121,13 +121,11 @@ nrow(CEDENMod_Tox) - nrow(NoDup_Tox) # 23,518
 ```
 
 ```{r}
-# 499 exact duplicates
-
 # Remove duplicate rows of the dataframe using multiple variables
 
 NoDup_WQ <- distinct(CEDENMod_WQ, Date, Analyte, StationName, CollectionMethod, Result, .keep_all= TRUE)
 
-nrow(CEDENMod_WQ) - nrow(NoDup_WQ) # 1336
+nrow(CEDENMod_WQ) - nrow(NoDup_WQ) # 1661
 ```
 <br>
 
@@ -142,7 +140,15 @@ NoDup_Tox <- NoDup_Tox %>% filter(Analyte != "Survival") %>%
   filter(Analyte != "Biomass (wt/orig indiv)") %>%
   filter(Analyte != "Young/female") %>%
   filter(Analyte != "Total Cell Count") %>%
+  filter(Analyte != "Mean Percent Normal Alive") %>%
+  filter(Analyte != "Ash Free Dry Mass") %>%
+  filter(Analyte != "Growth (wt/surv indiv)") %>%
+  filter(Analyte != "Growth (ash-free dry wt/surv indiv)") %>%
+  filter(Analyte != "Weight") %>%
+  filter(Analyte != "") %>%
   select(-OrganismName)
+
+# 28736 records
 ```
 
 <br>
@@ -397,7 +403,9 @@ CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>% select(all_of(C))
 
 ## MERGE ##
 
-CEDENSURF <- rbind(SURF_ALL_DupChecked, CEDEN_ALL_DupChecked)
+CEDENSURF <- rbind(CEDEN_ALL_DupChecked, SURF_ALL_DupChecked)
+
+write_csv(CEDENSURF, "Data/Output/CEDENSURF_IssueInvestigation.csv") # Note: coerces empty data fields to NA
 ```
 
 There are `r nrow(CEDENSURF)` total records in the initial merge of CEDEN with SURF.
@@ -407,9 +415,9 @@ Due to initial barriers to removing duplicates between the datasets (see below),
 ```{r}
 SURFMod_NC <- filter(SURF_ALL_DupChecked, Data.source != "CEDEN")
 
-CEDENSURFMod <- rbind(SURFMod_NC, CEDEN_ALL_DupChecked)
+CEDENSURFModNC <- rbind(SURFMod_NC, CEDEN_ALL_DupChecked)
 
-#  THE CURRENT CEDENSURFMOD CSV, THAT SAID< NOW CAN DETECT DUPLICATION BETWEEN DATASETS> PREFER TO WRITE FROM FINISHED METHODS BELOW. write_csv(CEDENSURFMod, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
+#  THE CURRENT CEDENSURFMOD CSV, THAT SAID< NOW CAN DETECT DUPLICATION BETWEEN DATASETS> PREFER TO WRITE FROM FINISHED METHODS BELOW. write_csv(CEDENSURFModNC, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
 ```
 
 <br>
@@ -427,7 +435,7 @@ It seems to only detect 11 duplicates, while there are 28100 labeled in SURF as 
 
 Because all values in SURF are in units PPB, while units of records in CEDEN vary, those results cannot be expected to be identical. 
 
-We must assume that records of the same analyte collected by the same method on the same date at the same station are duplicates. Through this, we find 29710 duplicates - almost exactly the number expected given those labeled as from CEDEN. 
+We must assume that records of the same analyte collected by the same method on the same date at the same station are duplicates. Through this, we find 30,608 duplicates - just over the number expected given those labeled as from CEDEN. 
 ```{r}
 # Remove duplicate rows of the dataframe using multiple variables
 
@@ -435,7 +443,8 @@ CEDENSURF_DupChecked <- distinct(CEDENSURF, Date, Analyte, CollectionMethod, Lat
 
 nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
 
-# THIS IS PREFERRED, BUT NOT YET WRITTEN: write_csv(CEDENSURF_DupChecked, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
+#THIS IS PREFERRED, BUT NOT YET WRITTEN: 
+write_csv(CEDENSURF_DupChecked, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
 ```
 **Causes of these records being retained include:**
 
@@ -457,7 +466,7 @@ B. Discovered that blank results in CEDEN are usually paired with a ResultQualCo
 
 C. Should review the projection method between these datasets, and the code to convert to shapefile, and locate potential sources of discrepancy.
 
-D. We should go through and unify these as much as possible. May have to happen manually (ie: in original Mod documents for each dataset, subset these units, run conversion on result)
+D. We should go through and unify these as much as possible, or folks should simply be aware of this and convert within their subsets prior to analysis. May have to happen manually (ie: in original Mod documents for each dataset, subset these units, run conversion on result)
 
 Temperature in SURF will be labeled as ppb, because rather than a "unit" column, their results column was "concentration..ppb" - implying that all results were converted prior to storing in the database.
 

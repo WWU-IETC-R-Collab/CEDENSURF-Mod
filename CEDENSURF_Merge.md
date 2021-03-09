@@ -53,7 +53,7 @@ CEDENMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Da
 ```
 Two files - one with tox data, and one with wq data
 
-CEDEN water data contains 60429 records, between 2009-10-06 to 2019-09-26
+CEDEN water data contains 122489 records, between 2009-10-06 to 2019-09-26
 
 CEDEN tox data contains 60531 records, between 2009-10-06 to 2019-09-25
 
@@ -128,17 +128,15 @@ nrow(CEDENMod_Tox) - nrow(NoDup_Tox) # 23,518
 
 
 ```r
-# 499 exact duplicates
-
 # Remove duplicate rows of the dataframe using multiple variables
 
 NoDup_WQ <- distinct(CEDENMod_WQ, Date, Analyte, StationName, CollectionMethod, Result, .keep_all= TRUE)
 
-nrow(CEDENMod_WQ) - nrow(NoDup_WQ) # 1336
+nrow(CEDENMod_WQ) - nrow(NoDup_WQ) # 1661
 ```
 
 ```
-## [1] 1336
+## [1] 1661
 ```
 <br>
 
@@ -154,12 +152,20 @@ NoDup_Tox <- NoDup_Tox %>% filter(Analyte != "Survival") %>%
   filter(Analyte != "Biomass (wt/orig indiv)") %>%
   filter(Analyte != "Young/female") %>%
   filter(Analyte != "Total Cell Count") %>%
+  filter(Analyte != "Mean Percent Normal Alive") %>%
+  filter(Analyte != "Ash Free Dry Mass") %>%
+  filter(Analyte != "Growth (wt/surv indiv)") %>%
+  filter(Analyte != "Growth (ash-free dry wt/surv indiv)") %>%
+  filter(Analyte != "Weight") %>%
+  filter(Analyte != "") %>%
   select(-OrganismName)
+
+# 28736 records
 ```
 
 <br>
 
-After CEDEN data prep, there are 29695 unique, useful records in the tox dataset, and 59093 unique records in the WQ dataset.
+After CEDEN data prep, there are 28731 unique, useful records in the tox dataset, and 120828 unique records in the WQ dataset.
 
 <br>
 
@@ -254,9 +260,9 @@ CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>%
 ```
 
 ```
-## Warning: Expected 2 pieces. Missing pieces filled with `NA` in 19377 rows [54,
-## 55, 57, 58, 101, 103, 104, 106, 140, 144, 145, 146, 673, 678, 681, 682, 2657,
-## 2658, 2660, 2664, ...].
+## Warning: Expected 2 pieces. Missing pieces filled with `NA` in 18444 rows [62,
+## 63, 65, 66, 109, 111, 112, 114, 148, 152, 153, 154, 771, 776, 779, 780, 2903,
+## 2904, 2906, 2910, ...].
 ```
 
 ```r
@@ -269,12 +275,12 @@ head(sort(unique(CEDEN_ALL_DupChecked$Analyte))) # 908 unique Analytes total
 ```
 
 ```
-## [1] ""                                     
-## [2] "1,2-bis(2,4,6- tribromophenoxy)ethane"
-## [3] "2-ethylhexyl-diphenyl phosphate"      
-## [4] "2,4,6-tribromophenyl allyl ether"     
-## [5] "acenaphthene"                         
-## [6] "acenaphthenes"
+## [1] "1,2-bis(2,4,6- tribromophenoxy)ethane"     
+## [2] "2-ethyl-1-hexyl-2,3,4,5-tetrabromobenzoate"
+## [3] "2-ethylhexyl-diphenyl phosphate"           
+## [4] "2,4,6-tribromophenyl allyl ether"          
+## [5] "abamectin"                                 
+## [6] "acenaphthene"
 ```
 
 ```r
@@ -295,7 +301,7 @@ CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, Collection
 
 ### CEDEN merge result
 
-Using these QA/QC methods, 87794 unique records are available through the CEDEN datasets. 
+Using these QA/QC methods, 133926 unique records are available through the CEDEN datasets. 
 
 <br>
 
@@ -452,7 +458,7 @@ CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>% select(all_of(C))
 CEDENSURF <- rbind(SURF_ALL_DupChecked, CEDEN_ALL_DupChecked)
 ```
 
-There are 194684 total records in the initial merge of CEDEN with SURF.
+There are 240816 total records in the initial merge of CEDEN with SURF.
 
 Due to initial barriers to removing duplicates between the datasets (see below), I will simply filter out data identified as being sourced from CEDEN within SURF to eliminate duplicates. This is not an ideal solution though, because there is a large amount of data identified as coming from CEDEN which is not present in our CEDEN WQ data (again, see below).
 
@@ -462,7 +468,7 @@ SURFMod_NC <- filter(SURF_ALL_DupChecked, Data.source != "CEDEN")
 
 CEDENSURFMod <- rbind(SURFMod_NC, CEDEN_ALL_DupChecked)
 
-#write_csv(CEDENSURFMod, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
+#  THE CURRENT CEDENSURFMOD CSV, THAT SAID< NOW CAN DETECT DUPLICATION BETWEEN DATASETS> PREFER TO WRITE FROM FINISHED METHODS BELOW. write_csv(CEDENSURFMod, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
 ```
 
 <br>
@@ -478,19 +484,25 @@ This only works if the projection and rounding of latitude and longitude have be
 
 It seems to only detect 11 duplicates, while there are 28100 labeled in SURF as having come from CEDEN. Some may be unique, and some may be additional duplicates that we are not catching. 
 
+Because all values in SURF are in units PPB, while units of records in CEDEN vary, those results cannot be expected to be identical. 
+
+We must assume that records of the same analyte collected by the same method on the same date at the same station are duplicates. Through this, we find 29710 duplicates - almost exactly the number expected given those labeled as from CEDEN. 
 
 ```r
 # Remove duplicate rows of the dataframe using multiple variables
 
-CEDENSURF_DupChecked <- distinct(CEDENSURF, Date, Analyte, CollectionMethod, Latitude, Longitude, Result, .keep_all= TRUE)
+CEDENSURF_DupChecked <- distinct(CEDENSURF, Date, Analyte, CollectionMethod, Latitude, Longitude, .keep_all= TRUE)
 
 nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
 ```
 
 ```
-## [1] 11
+## [1] 30608
 ```
 
+```r
+# THIS IS PREFERRED, BUT NOT YET WRITTEN: write_csv(CEDENSURF_DupChecked, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
+```
 **Causes of these records being retained include:**
 
 A. No match actually exists in CEDEN. Record SHOULD be retained.
@@ -498,6 +510,8 @@ A. No match actually exists in CEDEN. Record SHOULD be retained.
 B. CEDEN and SURF have different naming protocols - both Station Name and Station Code differ for the same sites.
 
 C. Station Latitude and Longitude appear to be consistent between the databases, yet the projection to geometry results in different outcomes.
+
+D. Results are in different units. Important to remember for future analyses. Need to convert? Can all be converted to ppb (except temperature?)
 
 *See the IssueDocumentation.rmd for examples and details about each of these issues.*
 
@@ -508,6 +522,26 @@ A. Minimal instances, low priority issue
 B. Discovered that blank results in CEDEN are usually paired with a ResultQualCode "ND" meaning that they were tested for and not detected. Replacing with a 0 would therefore be a more appropriate approach than our current method of removal.
 
 C. Should review the projection method between these datasets, and the code to convert to shapefile, and locate potential sources of discrepancy.
+
+D. We should go through and unify these as much as possible, or folks should simply be aware of this and convert within their subsets prior to analysis. May have to happen manually (ie: in original Mod documents for each dataset, subset these units, run conversion on result)
+
+Temperature in SURF will be labeled as ppb, because rather than a "unit" column, their results column was "concentration..ppb" - implying that all results were converted prior to storing in the database.
+
+
+```r
+unique(CEDENSURF$Unit)
+```
+
+```
+##  [1] "ppb"        "mg/L"       "NTU"        "ug/L"       "pg/L"      
+##  [6] "ng/L"       "uS/cm"      "Deg C"      "none"       "%"         
+## [11] "mg/Kg dw"   "ug/Kg dw"   "mL"         "% vol"      "% dw"      
+## [16] "g"          "ppt"        "m"          "mg/m3"      "psu"       
+## [21] "ng/g dw"    "% ww"       "cfs"        "MPN/100 mL" "1/cm"      
+## [26] "umhos/cm"   "gc/mL"      "m/s"        "mg/m2"      "g/m2"      
+## [31] "ueq/L"      "CU"         "pCi/L"      "ft/s"       "oocysts/L" 
+## [36] "cysts/L"    "mf/L"       "mL/L/hr"
+```
 
 <br>
 

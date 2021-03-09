@@ -8,9 +8,8 @@ output:
     keep_md: true
     code_folding: hide
     toc: true
-    toc_float:
-      toc_collapsed: true
-    toc_depth: 3
+    toc_float: true
+    toc_depth: 4
     theme: lumen
 ---
 
@@ -19,25 +18,20 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, warning=F, message=F}
-rm(list=setdiff(ls(), c("CEDENSURF")))
-
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+rm(list=setdiff(ls(), c("CEDENSURF", "CEDENSURF_DupChecked", "CEDENSURFModNC")))
 
 library(data.table)
 library(lubridate)
 library(sf)
 library(tidyverse)
+
 ```
 
-## Issues
+### Overview
 
 This document is to contain QA/QC issues that have come up during the merge efforts between CEDEN and SURF
 
 ### Load data
-
-Start with all objects from **CEDENSURF_MERGE.rmd** in global environment (Open that rmd and choose "run all chunks")
-
-Then remove all extra objects from working directory but CEDENSURF, which is the merged CEDEN and SURF dataset retaining data from CEDEN in SURF.
 
 ```{r}
 # Load data
@@ -55,20 +49,25 @@ SURFMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main
 
 CEDENMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_WQ.csv")
 
-# Merged output (as of 3/5/2021)
+# Original Merged output (With Dups)
+
+CEDENSURF <- fread("Data/Output/CEDENSURF_IssueInvestigation.csv")
+
+# De-dup Merged output (as of 3/5/2021)
 
 CEDENSURFNC <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURFMod.csv")
 ```
+### Issues & Investigation
 
-### 1. Non-results in CEDEN (NA) appear in SURF as "0" result concentration.
+<br>
 
-Conclusion: Our strategy to reduce CEDEN is removing valid records. 
+#### 1. *Resolved* Non-results in CEDEN (NA) appear in SURF as "0" result concentration.
 
-This example was found when searching for causes of data sourced from CEDEN in SURF which was not retained in our CEDEN data - subsetting one station to identify the causes, and then going back to the originally downloaded CEDEN data, we were able to locate the records in question. 
+Conclusion: Our strategy to reduce CEDEN was removing valid records. NA results paired with qual codes ND or DNQ replaced with 0's as in SURF.
+
+This one was FIXED by the updates to CEDENMod.rmd
 
 **Glyphosate in SURF-CEDEN data, but not in CEDEN data.**
-
-After our filtering and data mod, SURF-sourced data labeled as from CEDEN contains records of glyphosate measured at Grizzley Bay, yet the CEDEN set contains none including glyphosate.
 
 An example record from SURF cited as coming from CEDEN:
 ```{r}
@@ -80,71 +79,24 @@ A <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
   select(Agency, Date, StationName, Analyte, Result)
 
 A[1]
-```
 
-**Relocating the original data in CEDEN** confirmed that the record was not retained in our CEDEN result because it had NA results.
-
-```{r}
-C_OG <- CEDEN_OriginalWQ %>% filter(grepl('Grizzly', StationName)) %>%
-  filter(grepl('Dolphin', StationName)) %>%
-  filter(grepl('lyphos', Analyte))%>%
-  select(SampleDate, StationName, Analyte, Result, SampleComments)
-
-C_OG[1:4,]
-C_OG$SampleComments[2]
-```
-
-**Interpretation?**
-
-1. NA's could mean not tested, so it could be an error in SURF to retain those records, OR:
-
-2. NA's in CEDEN's result column are sometimes paired with a "ND" code in the ResultQualCode - which suggests that they WERE tested for, and simply not detected. 
-
-How many have a NA with no adjacent ResultQualCode can be found:
-
-There are MANY! 262995 have NA results with ND codes. 509 have 0-results with ND codes, and the others have results that are numeric but extremely low.
-
-```{r}
-B <- CEDEN_OriginalWQ %>%
-  filter(is.na(Result))
-
-A<- CEDEN_OriginalWQ %>% filter(ResultQualCode == "ND")
-
-Chk<- CEDEN_OriginalWQ %>% filter(ResultQualCode == "ND")  %>%
-  filter(is.na(Result))
-
-Chk<- CEDEN_OriginalWQ %>% filter(ResultQualCode == "ND")  %>%
-  filter(Result == "0")
-```
-
-There are other analytes at this site recorded in SURF-CEDEN data but not in the data brought directly from CEDEN, too. While I have not investigated these yet, there is a chance they are indicative of this being a widespread issue.
-
-```{r}
-#Station Name: "Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7"
-
-# Locate similar location records in CEDEN and SURF using flexible queries
+# Formerly, this would have returned no record :)
 
 A <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
   filter(grepl('Dolphin', StationName)) %>%
-  filter(Source == "SURF") %>%
-  filter(Data.source == "CEDEN")
+  filter(Source == "CEDEN") %>%
+  filter(Analyte == "glyphosate")%>%
+  select(Agency, Date, StationName, Analyte, Result)
 
-CS <- sort(unique(A$Analyte)) # 27
-
-B <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
-  filter(grepl('Dolphin', StationName)) %>%
-  filter(Source == "CEDEN")
-
-C <- sort(unique(B$Analyte)) # 34
-
-DIF<- setdiff(CS, C) #Analytes in ceden-surf and not in ceden
-
-DIF
+A[1]
 ```
 
-#### **2. CEDEN-SURF data not in CEDEN** 
 
-Conclusion: Possibly indicative that data for certain areas of our study region may be omitted in the CEDEN data download. Alternatively, this project was incorrectly labeled as sourced from CEDEN.
+<br>
+
+#### 2. CEDEN-SURF data not in CEDEN 
+
+Conclusion: Possibly indicative that data for certain areas of our study region may be omitted in the CEDEN data download. Alternatively, this project was incorrectly labeled as sourced from CEDEN?
 
 SURF Name: "Toe Drain Nr Babel Slough Nr Freeport Ca"
 SURF Code: "57_58"
@@ -152,13 +104,13 @@ SURF Code: "57_58"
 Could not ID this location in CEDEN data, using grepl() to allow approximate naming. None with "Babel" and T in StationName
 
 ```{r}
-# From SURF, identified as coming from CEDEN
+# From SURF, identified as coming from CEDEN = 657
 CS <- CEDENSURF %>% filter(grepl('Toe', StationName)) %>%
   filter(grepl('Babel', StationName)) %>%
   filter(Data.source == "CEDEN")%>%
   filter(Source == "SURF")
 
-# Direct from CEDEN
+# Direct from CEDEN = 0
 C <- CEDENSURF %>%
   filter(grepl('Babel', StationName)) %>%
   filter(Source == "CEDEN")
@@ -173,7 +125,8 @@ nrow(CS)
 unique(CS$Agency)
 CS[1]
 ```
-Also not in original water data...
+
+These aren't in CEDENMod nor in the original water data...
 
 ```{r}
 C_OG <- CEDEN_OriginalWQ %>%
@@ -181,42 +134,53 @@ C_OG <- CEDEN_OriginalWQ %>%
   select(SampleDate, StationName, Analyte, Result, ResultQualCode, SampleComments)
 ```
 
-### 3. Naming inconsistencies between SURF and CEDEN
 
-It appears that SURF has appended station names from CEDEN with extra info. Also, the methods to convert lat and long to geometry  For example:
+<br>
 
-SURF: "Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7"
-SURF Code: "48_52"
+#### 3. Naming inconsistencies between SURF and CEDEN
 
-CEDEN: "Grizzly Bay at Dolphin nr. Suisun Slough"
-CEDEN Code: "207SNB0D7"
+Conclusion: It appears that SURF has appended station names from CEDEN with extra info. 
+
+Solution: Filter using latitude and longitude
+
+**Naming:**
+
+*SURF: "Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7"*
+*SURF Code: "48_52"*
+
+*CEDEN: "Grizzly Bay at Dolphin nr. Suisun Slough"*
+*CEDEN Code: "207SNB0D7"*
 
 and 
 
-SURF Name: "Sacramento River at Freeport (USGS-11447650)"
-SURF Code: "34_5"
+*SURF Name: "Sacramento River at Freeport (USGS-11447650)"*
+*SURF Code: "34_5"*
 
-CEDEN Name: "Sacramento River at Freeport, CA"
-CEDEN Code: 11447650
+*CEDEN Name: "Sacramento River at Freeport, CA"*
+*CEDEN Code: 11447650*
 
+**Projections/geometry**
 ```{r}
 A <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
   filter(grepl('Dolphin', StationName)) %>%
   filter(Source == "SURF") %>%
   filter(Data.source == "CEDEN")%>%
-  select(Agency, StationName, StationCode, Latitude, Longitude, geometry)
+  select(StationName, StationCode, Latitude, Longitude, geometry)
 
 B <- CEDENSURF %>% filter(grepl('Grizzly', StationName)) %>%
   filter(grepl('Dolphin', StationName)) %>%
   filter(Source == "CEDEN")%>%
-  select(Agency, StationName, StationCode, Latitude, Longitude, geometry)
+  select(StationName, StationCode, Latitude, Longitude, geometry)
 
 rbind(A[1,], B[1,])
 ```
 
-### **3. Other instances of data in SURF-CEDEN not in CEDEN, and vice versa**
 
-If we subset just the data that occurs in CEDEN-SURF and not in our CEDEN set, we can hone in on some specific agencies and/or sites that account for the majority of the discrepancies.
+<br>
+
+#### 4. Data in SURF-CEDEN not in CEDEN, and vice versa
+
+If we subset just the Analytes that occur in CEDEN-SURF and not in our CEDEN set, we can hone in on some specific agencies and/or sites that account for the majority of the discrepancies.
 
 ```{r}
 CS <- CEDENSURF %>%
@@ -227,18 +191,41 @@ CS <- CEDENSURF %>%
 C <- CEDENSURF %>%
   filter(Source == "CEDEN")
 
+DIF<- setdiff(C, CS) #Ceden not in ceden-SURF
+
+CEDnotCeSu<- unique(setdiff(C$Analyte, CS$Analyte))
+
 DIF<- setdiff(CS, C) #Analytes in ceden-surf and not in ceden
 
+CeSUnotC<- unique(setdiff(CS$Analyte, C$Analyte))
+```
+
+There are only `r length(CeSUnotC)` analytes in SURF listed as 'from CEDEN' which do not occur in the CEDEN data. These are:
+```{r}
+length(CeSUnotC)
+CeSUnotC
+```
+
+Conversely, there are `r length(CEDnotCeSu)`analytes in CEDEN that do not occur in the CEDEN-SURF set, most of which are likely naming issues (ie; from the splitting of analyte from type in CEDEN), which should be corrected.
+
+For example:
+```{r}
+length(CEDnotCeSu)
+head(CEDnotCeSu)
+```
+
+
+```{r}
 # Summarize by agency - sort descending (agency with the most in CS not in C at top)
 
-SumDif <- DIF %>% group_by(Agency) %>%
+SumDifA <- DIF %>% group_by(Agency) %>%
   summarise(n = length(Latitude), 
             n_results = length(unique(Result))) %>%
   arrange(desc(n))
 
-head(SumDif)
+head(SumDifA)
 ```
-There are 93 stations represented.
+
 ```{r}
 # Summarize by station - sort descending (agency with the most in CS not in C at top)
 
@@ -249,10 +236,11 @@ SumDif <- DIF %>% group_by(StationName) %>%
 
 head(SumDif)
 ```
+There are `r nrow(SumDifA)` agencies represented, and `r nrow(SumDifA)` stations represented in these discrepancies.
 
 **Let's take Ulatis Creek, n = 3,990**
 
-Almost all the instances are with Result = 0; 3689/3990
+Only half of the instances are with Result = 0; 4624/8667
 
 ```{r}
 ## Preview data, anything in common?
@@ -261,7 +249,6 @@ DIF %>%
   filter(grepl('Ulatis', StationName)) %>%
   filter(grepl('Creek', StationName)) %>%
   filter(grepl('Brown', StationName)) %>% 
-  filter(Result == "0") %>% 
   nrow(.)
 ```
 
@@ -318,7 +305,9 @@ CEDEN_OriginalWQ %>%
 ```
 
 
-#### 4. **Differences in geometry btwn SURF and CEDEN**
+<br>
+
+#### 5. Differences in geometry btwn SURF and CEDEN
 
 Same station at Grizzly Bay; despite same Lat and Long coordinates listed in SURF (1998 and 2012), compared to CEDEN (2010), the shapefile conversion to geometry is different.
 
@@ -327,7 +316,10 @@ rbind(A[1,], B[1,])
 ```
 
 
-#### 5. **Results in SURF vs CEDEN**
+
+<br>
+
+#### 6. Results in SURF vs CEDEN
 
 I'm interested, if SURF changed ND's in CEDEN from blank --> 0, would they also have changed values listed that were below MDL to 0? (Because theoretically also labeled ND)
 
@@ -393,7 +385,17 @@ This shows two samples that are likely duplicates, one "from ceden" in SURF, and
 
 Lets try a new station with ND results - Freeport? It was actually really hard to find other examples! I may have been lucky with my first station/process.  Can come back to this. 
 
-### Up next: Whether to retain or remove composite samples
+
+
+<br>
+
+### Up next: 
+
+#### 1. Fixing name errors in CEDEN data (following automated split)
+
+We can probably focus on the setdiff list above: find those names that are clearly nonsensical, then refer back to the original data to determine what they were meant to be.
+
+#### 2. Whether to retain or remove composite samples
 
 If we decide to remove them, determine how to identify.
 
