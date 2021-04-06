@@ -46,10 +46,19 @@ This original data set can be found within the IETC Tox Box at: Upper San Franci
 
 
 ```r
-# Load CEDEN Data
-CEDENMod_Tox <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_Toxicity.csv")
+# Load Data
+# Append with source
+# Identify sample matrix
 
-CEDENMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_WQ.csv")
+CEDENMod_Tox <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_Toxicity.csv") %>% 
+      mutate(Source = "CEDEN")%>%
+      mutate(Matrix = "water") # 3 of 4 values in MatrixName reference water, so starting with that and then editing those that are sediment values to read sediment
+
+CEDENMod_Tox$Matrix[CEDENMod_Tox$MatrixName == "sediment"] <- "sediment"
+
+CEDENMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_WQ.csv") %>% 
+      mutate(Source = "CEDEN")%>% 
+      mutate(Matrix = "water")
 ```
 Two files - one with tox data, and one with wq data
 
@@ -63,31 +72,23 @@ CEDEN tox data contains 60531 records, between 2009-10-06 to 2019-09-25
 
 
 ```r
-SURFMod_SED <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/SURFMod_SED.csv")
+# Load Data
+# Append with source
+# Identify sample matrix
 
-SURFMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/SURFMod_water.csv")
+SURFMod_SED <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/SURFMod_SED.csv") %>% 
+      mutate(Source = "SURF")%>% 
+      mutate(Matrix = "sediment")
+
+SURFMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/SURFMod_water.csv") %>% 
+      mutate(Source = "CEDEN")%>% 
+      mutate(Matrix = "water")
 ```
 Two files - one with wq data, and one with sediment data
 
 SURF water contains 91021 records, from 2009-10-06 to 2019-09-17
 
-
 SURF sediment contains 35346 records, from from NA to 2019-09-17
-
-<br>
-
-#### Append with source
-
-
-```r
-CEDENMod_Tox$Source <- rep("CEDEN", times=nrow(CEDENMod_Tox))
-
-CEDENMod_WQ$Source <- rep("CEDEN", times=nrow(CEDENMod_WQ))
-
-SURFMod_SED$Source <- rep("SURF", times=nrow(SURFMod_SED))
-
-SURFMod_WQ$Source <- rep("SURF", times=nrow(SURFMod_WQ))
-```
 
 <br>
 
@@ -455,7 +456,9 @@ CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>% select(all_of(C))
 
 ## MERGE ##
 
-CEDENSURF <- rbind(SURF_ALL_DupChecked, CEDEN_ALL_DupChecked)
+CEDENSURF <- rbind(CEDEN_ALL_DupChecked, SURF_ALL_DupChecked)
+
+write_csv(CEDENSURF, "Data/Output/CEDENSURF_IssueInvestigation.csv") # Note: coerces empty data fields to NA
 ```
 
 There are 240816 total records in the initial merge of CEDEN with SURF.
@@ -466,9 +469,9 @@ Due to initial barriers to removing duplicates between the datasets (see below),
 ```r
 SURFMod_NC <- filter(SURF_ALL_DupChecked, Data.source != "CEDEN")
 
-CEDENSURFMod <- rbind(SURFMod_NC, CEDEN_ALL_DupChecked)
+CEDENSURFModNC <- rbind(SURFMod_NC, CEDEN_ALL_DupChecked)
 
-#  THE CURRENT CEDENSURFMOD CSV, THAT SAID< NOW CAN DETECT DUPLICATION BETWEEN DATASETS> PREFER TO WRITE FROM FINISHED METHODS BELOW. write_csv(CEDENSURFMod, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
+#  THE CURRENT CEDENSURFMOD CSV, THAT SAID< NOW CAN DETECT DUPLICATION BETWEEN DATASETS> PREFER TO WRITE FROM FINISHED METHODS BELOW. write_csv(CEDENSURFModNC, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
 ```
 
 <br>
@@ -486,7 +489,7 @@ It seems to only detect 11 duplicates, while there are 28100 labeled in SURF as 
 
 Because all values in SURF are in units PPB, while units of records in CEDEN vary, those results cannot be expected to be identical. 
 
-We must assume that records of the same analyte collected by the same method on the same date at the same station are duplicates. Through this, we find 29710 duplicates - almost exactly the number expected given those labeled as from CEDEN. 
+We must assume that records of the same analyte collected by the same method on the same date at the same station are duplicates. Through this, we find 30,608 duplicates - just over the number expected given those labeled as from CEDEN. 
 
 ```r
 # Remove duplicate rows of the dataframe using multiple variables
@@ -501,7 +504,8 @@ nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
 ```
 
 ```r
-# THIS IS PREFERRED, BUT NOT YET WRITTEN: write_csv(CEDENSURF_DupChecked, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
+#THIS IS PREFERRED, BUT NOT YET WRITTEN: 
+write_csv(CEDENSURF_DupChecked, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
 ```
 **Causes of these records being retained include:**
 
@@ -533,14 +537,14 @@ unique(CEDENSURF$Unit)
 ```
 
 ```
-##  [1] "ppb"        "mg/L"       "NTU"        "ug/L"       "pg/L"      
-##  [6] "ng/L"       "uS/cm"      "Deg C"      "none"       "%"         
-## [11] "mg/Kg dw"   "ug/Kg dw"   "mL"         "% vol"      "% dw"      
-## [16] "g"          "ppt"        "m"          "mg/m3"      "psu"       
-## [21] "ng/g dw"    "% ww"       "cfs"        "MPN/100 mL" "1/cm"      
-## [26] "umhos/cm"   "gc/mL"      "m/s"        "mg/m2"      "g/m2"      
-## [31] "ueq/L"      "CU"         "pCi/L"      "ft/s"       "oocysts/L" 
-## [36] "cysts/L"    "mf/L"       "mL/L/hr"
+##  [1] "mg/L"       "NTU"        "ug/L"       "pg/L"       "ng/L"      
+##  [6] "uS/cm"      "Deg C"      "none"       "%"          "mg/Kg dw"  
+## [11] "ug/Kg dw"   "mL"         "% vol"      "% dw"       "g"         
+## [16] "ppt"        "m"          "mg/m3"      "psu"        "ng/g dw"   
+## [21] "% ww"       "cfs"        "MPN/100 mL" "1/cm"       "umhos/cm"  
+## [26] "gc/mL"      "m/s"        "mg/m2"      "g/m2"       "ueq/L"     
+## [31] "CU"         "pCi/L"      "ft/s"       "oocysts/L"  "cysts/L"   
+## [36] "mf/L"       "mL/L/hr"    "ppb"
 ```
 
 <br>

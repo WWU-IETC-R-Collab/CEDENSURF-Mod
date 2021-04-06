@@ -47,10 +47,19 @@ This original data set can be found within the IETC Tox Box at: Upper San Franci
 #### CEDEN
 
 ```{r}
-# Load CEDEN Data
-CEDENMod_Tox <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_Toxicity.csv")
+# Load Data
+# Append with source
+# Identify sample matrix
 
-CEDENMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_WQ.csv")
+CEDENMod_Tox <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_Toxicity.csv") %>% 
+      mutate(Source = "CEDEN")%>%
+      mutate(Matrix = "water") # 3 of 4 values in MatrixName reference water, so starting with that and then editing those that are sediment values to read sediment
+
+CEDENMod_Tox$Matrix[CEDENMod_Tox$MatrixName == "sediment"] <- "sediment"
+
+CEDENMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_WQ.csv") %>% 
+      mutate(Source = "CEDEN")%>% 
+      mutate(Matrix = "water")
 ```
 Two files - one with tox data, and one with wq data
 
@@ -63,30 +72,24 @@ CEDEN tox data contains `r nrow(CEDENMod_Tox)` records, between `r min(as.Date(C
 #### SURF
 
 ```{r}
-SURFMod_SED <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/SURFMod_SED.csv")
 
-SURFMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/SURFMod_water.csv")
+# Load Data
+# Append with source
+# Identify sample matrix
+
+SURFMod_SED <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/SURFMod_SED.csv") %>% 
+      mutate(Source = "SURF")%>% 
+      mutate(Matrix = "sediment")
+
+SURFMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/SURFMod_water.csv") %>% 
+      mutate(Source = "CEDEN")%>% 
+      mutate(Matrix = "water")
 ```
 Two files - one with wq data, and one with sediment data
 
 SURF water contains `r nrow(SURFMod_WQ)` records, from `r min(as.Date(SURFMod_WQ$Date))` to `r max(as.Date(SURFMod_WQ$Date))`
 
-
 SURF sediment contains `r nrow(SURFMod_SED)` records, from from `r min(as.Date(SURFMod_SED$date))` to `r max(as.Date(SURFMod_SED$Date))`
-
-<br>
-
-#### Append with source
-
-```{r}
-CEDENMod_Tox$Source <- rep("CEDEN", times=nrow(CEDENMod_Tox))
-
-CEDENMod_WQ$Source <- rep("CEDEN", times=nrow(CEDENMod_WQ))
-
-SURFMod_SED$Source <- rep("SURF", times=nrow(SURFMod_SED))
-
-SURFMod_WQ$Source <- rep("SURF", times=nrow(SURFMod_WQ))
-```
 
 <br>
 
@@ -443,7 +446,7 @@ CEDENSURF_DupChecked <- distinct(CEDENSURF, Date, Analyte, CollectionMethod, Lat
 
 nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
 
-#THIS IS PREFERRED, BUT NOT YET WRITTEN: 
+#THIS IS PREFERRED: 
 write_csv(CEDENSURF_DupChecked, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
 ```
 **Causes of these records being retained include:**
