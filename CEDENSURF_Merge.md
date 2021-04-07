@@ -116,7 +116,7 @@ Instead, we used distinct() which allows us to assume that records in the same l
 
 # Since we are using the Tox database for the water parameters, not the associated organism survival, we remove duplicate WQ entries regardless of the organism assessed.
 
-NoDup_Tox<- distinct(CEDENMod_Tox, Date, StationName, Analyte, CollectionMethod, Result, .keep_all= TRUE) 
+NoDup_Tox<- distinct(CEDENMod_Tox, Date, StationName, Analyte, CollectionMethod, Matrix, Result, .keep_all= TRUE) 
 
 # How many duplicate entries were identified and removed?
 
@@ -131,7 +131,7 @@ nrow(CEDENMod_Tox) - nrow(NoDup_Tox) # 23,518
 ```r
 # Remove duplicate rows of the dataframe using multiple variables
 
-NoDup_WQ <- distinct(CEDENMod_WQ, Date, Analyte, StationName, CollectionMethod, Result, .keep_all= TRUE)
+NoDup_WQ <- distinct(CEDENMod_WQ, Date, Analyte, StationName, CollectionMethod, Matrix, Result, .keep_all= TRUE)
 
 nrow(CEDENMod_WQ) - nrow(NoDup_WQ) # 1661
 ```
@@ -214,7 +214,7 @@ CEDEN_ALL <- rbind(NoDup_WQ,NoDup_Tox)
 ```r
 # Remove duplicate rows of the dataframe using multiple variables
 
-CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
+CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL, Date, Analyte, CollectionMethod, StationName,Matrix, Result, .keep_all= TRUE)
 ```
 
 <br>
@@ -294,7 +294,7 @@ Removal of these simplified duplicates also eliminates the utility of retaining 
 
 
 ```r
-CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE) %>%
+CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, CollectionMethod, StationName, Matrix, Result, .keep_all= TRUE) %>%
   select(-Analyte_type)
 ```
 
@@ -325,10 +325,10 @@ We used distinct() to remove records in the same location on the same date, meas
 # Remove duplicate rows of the dataframe using multiple variables
 
 # SURF Water
-NoDup_WQ <- distinct(SURFMod_WQ, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
+NoDup_WQ <- distinct(SURFMod_WQ, Date, Analyte, CollectionMethod, StationName, Matrix, Result, .keep_all= TRUE)
 
 # SURF Sediment
-NoDup_SED <- distinct(SURFMod_SED, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
+NoDup_SED <- distinct(SURFMod_SED, Date, Analyte, CollectionMethod, StationName, Matrix, Result, .keep_all= TRUE)
 ```
 
 This results in 75688 unique records in the WQ dataset
@@ -385,7 +385,7 @@ ZERO duplication found between the SED and WQ datasets, assuming duplicates woul
 ```r
 # Remove duplicate rows of the dataframe using multiple variables
 
-SURF_ALL_DupChecked <- distinct(SURF_ALL, Date, Analyte, CollectionMethod, StationName, Result, .keep_all= TRUE)
+SURF_ALL_DupChecked <- distinct(SURF_ALL, Date, Analyte, CollectionMethod, StationName, Matrix, Result, .keep_all= TRUE)
 
 nrow(SURF_ALL)-nrow(SURF_ALL_DupChecked)
 ```
@@ -494,7 +494,7 @@ We must assume that records of the same analyte collected by the same method on 
 ```r
 # Remove duplicate rows of the dataframe using multiple variables
 
-CEDENSURF_DupChecked <- distinct(CEDENSURF, Date, Analyte, CollectionMethod, Latitude, Longitude, .keep_all= TRUE)
+CEDENSURF_DupChecked <- distinct(CEDENSURF, Date, Analyte, CollectionMethod, Latitude, Longitude, Matrix, .keep_all= TRUE)
 
 nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
 ```
@@ -504,7 +504,7 @@ nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
 ```
 
 ```r
-#THIS IS PREFERRED, BUT NOT YET WRITTEN: 
+#THIS IS PREFERRED: 
 write_csv(CEDENSURF_DupChecked, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
 ```
 **Causes of these records being retained include:**
