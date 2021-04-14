@@ -39,7 +39,6 @@ Because NETICA requires the nodes to be columns, this data needs to be transform
 ```{r}
 # Load data
 CEDENSURF <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURF_Limited.csv") %>% select(Analyte, Result, Unit,CollectionMethod, Matrix, Date, Subregion, StationName, Latitude, Longitude,SelectList)
-
 ```
 
 
