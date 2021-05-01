@@ -40,9 +40,9 @@ Because NETICA requires the nodes to be columns, this data needs to be transform
 # Load data
 CEDENSURF <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURF_Limited.csv") %>% select(Analyte, Result, Unit,CollectionMethod, Matrix, Date, Subregion, StationName, Latitude, Longitude,SelectList)
 ```
+<br/>
 
-
-## 2. Convert Units & Names {.tabset}
+## 2. Convert Units & Names
 
 Units should be consistent within each analyte-Matrix combination. Initially, they were not. I separated the dataframe into categories of the conceptual model, and worked within those WideSubsets to unify units of each analyte-matrix combination.
 
@@ -66,12 +66,12 @@ CEDENSURF %>% group_by(Analyte, Matrix) %>%
 ## 1 atrazine           sediment      1
 ## 2 atrazine           water         3
 ## 3 atrazine degradate water         1
-## 4 chlorpyrifos       sediment      1
-## 5 chlorpyrifos       water         5
-## 6 cyfluthrin         sediment      1
+## 4 chlorpyrifos       sediment      2
+## 5 chlorpyrifos       water         4
+## 6 cyfluthrin         sediment      3
 ```
 
-### WQP
+### WQP  {.tabset}
 
 Few discrepancies in units between analytes in each category:
 
@@ -162,7 +162,8 @@ WQP$Analyte[WQP$Analyte == "nitrite as n"] <- "nitrite"
 
     WQP %>% filter(Analyte == "nitrate + nitrite as n") %>% 
             filter(Matrix == 'water') %>% distinct(Unit)
-    WQP$Analyte[WQP$Analyte == "nitrate + nitrite as n"] <- "nitrogen" # rename
+    # rename
+    WQP$Analyte[WQP$Analyte == "nitrate + nitrite as n"] <- "nitrogen" 
 ```
 
 #### Phosphorous 
@@ -184,8 +185,7 @@ WQP %>% filter(grepl("phos", Analyte)) %>%
 WQP %>% filter(grepl("phos", Analyte)) %>% 
             filter(Matrix == 'sediment') %>% distinct(Unit)
 
-# All named same?
-WQP %>% filter(grepl("phos", Analyte)) %>% distinct(Analyte)
+# Correct Name
 
 WQP$Analyte[WQP$Analyte == "phosphorus as p"] <- "phosphorus"
 ```
@@ -194,7 +194,7 @@ WQP$Analyte[WQP$Analyte == "phosphorus as p"] <- "phosphorus"
 
 Units differ between three analytes that might refer to turbidity:
     # 1,600 turbidity (NTU), 11 settleable solids (mL/L/hr), 
-    #94 suspended sediment concentration (mg/L)
+    # 94 suspended sediment concentration (mg/L)
     
 I chose to remove all but Turbidity from our dataset.
 
@@ -204,7 +204,7 @@ I chose to remove all but Turbidity from our dataset.
 
     ## Units differ between three analytes that might refer to turbidity:
     # 1,600 turbidity (NTU), 11 settleable solids (mL/L/hr), 
-    #94 suspended sediment concentration (mg/L)
+    # 94 suspended sediment concentration (mg/L)
     
     WQP %>% filter(grepl("turb", Analyte)) %>% distinct(Unit)
     
@@ -220,19 +220,35 @@ Converted all to ppt
 
 ```r
 # Salinity
-
-WQP %>% filter(grepl("salinity", Analyte)) %>% distinct(Unit)
+  # Check units:
+  # WQP %>% filter(grepl("salinity", Analyte))%>%distinct(Unit)
 
     # ppt and psu are equivalent measures. Convert all to ppt
     
     # Run conversion on subset of data
-    Sal <- WQP %>% filter(Analyte == "salinity") %>% mutate(Unit = "ppt") 
+    Sal <- WQP %>% filter(Analyte == "salinity") %>% 
+            mutate(Unit = "ppt") 
     
     # Remove that subset from Main df
     WQP<- WQP %>% filter(!Analyte == "salinity")
     
     # Bind converted back to Main df
     WQP <- rbind(WQP, Sal)
+```
+
+#### ElectricalConductivity
+
+Units are in umhos/cm and in uS/cm
+
+A mho per meter (mho/m) is an older unit of electrical conductivity (also known as specific conductance). The mho is the reciprocal of the ohm. Though siemens was introduced in the late 1970s, this unit can still be found in some old measurement instruments. 1 mho/m = 1 S/m.
+
+1 mho/m = 1 S/m
+
+Therefore umhos/cm and uS/cm are equivalent units
+
+```r
+# Correct name for all units (equivalent)
+WQP$Unit[WQP$Analyte == "electricalconductivity"] <- "uS/cm"
 ```
 
 #### **WQP Result**
@@ -250,32 +266,30 @@ WQP %>%
 ```
 
 ```
-## # A tibble: 20 x 5
-## # Groups:   Analyte, Matrix [16]
+## # A tibble: 19 x 5
+## # Groups:   Analyte, Matrix [19]
 ##    Analyte                Matrix   Unit         n      mean
 ##    <chr>                  <chr>    <chr>    <int>     <dbl>
 ##  1 electricalconductivity sediment uS/cm        3  469.    
-##  2 electricalconductivity water    umhos/cm    24  151.    
-##  3 electricalconductivity water    uS/cm       70   NA     
-##  4 nitrate                water    mg/L       379    0.619 
-##  5 nitrite                water    mg/L       444    0.0234
-##  6 nitrogen               water    % dw        39    0.102 
-##  7 nitrogen               water    mg/L      1553    1.44  
-##  8 oxygen                 sediment mg/L       280    7.42  
-##  9 oxygen                 water    mg/L      3505   NA     
-## 10 ph                     sediment none       280    7.99  
-## 11 ph                     water    none      3360   NA     
-## 12 phosphorus             water    mg/Kg dw    27  535.    
-## 13 phosphorus             water    mg/L       819    0.321 
-## 14 salinity               sediment ppt         17   20.7   
-## 15 salinity               water    ppt        353    3.58  
-## 16 sodium                 water    mg/Kg dw     7 1676.    
-## 17 sodium                 water    mg/L        17   19.9   
-## 18 temperature            sediment Deg C      243   22.2   
-## 19 temperature            water    Deg C     3457   NA     
-## 20 turbidity              water    NTU       1639   NA
+##  2 electricalconductivity water    uS/cm       94   NA     
+##  3 nitrate                water    mg/L       379    0.619 
+##  4 nitrite                water    mg/L       444    0.0234
+##  5 nitrogen               sediment % dw        39    0.102 
+##  6 nitrogen               water    mg/L      1553    1.44  
+##  7 oxygen                 sediment mg/L       281    7.43  
+##  8 oxygen                 water    mg/L      3504   NA     
+##  9 ph                     sediment none       281    7.99  
+## 10 ph                     water    none      3359   NA     
+## 11 phosphorus             sediment mg/Kg dw    27  535.    
+## 12 phosphorus             water    mg/L       819    0.321 
+## 13 salinity               sediment ppt         17   20.7   
+## 14 salinity               water    ppt        353    3.58  
+## 15 sodium                 sediment mg/Kg dw     7 1676.    
+## 16 sodium                 water    mg/L        17   19.9   
+## 17 temperature            sediment Deg C      244   22.2   
+## 18 temperature            water    Deg C     3456   NA     
+## 19 turbidity              water    NTU       1639   NA
 ```
-
 
 
 ```r
@@ -301,7 +315,7 @@ write.csv(x = Wide.WQP.Waterdf , file = "Data/Output/WideSubsets/WQP.Wide.water.
 
 <br>
 
-### Metals
+### Metals  {.tabset}
 
 Metals were measured in ug/L and mg/Kg dw. Mercury also had few measures in ng/L and ug/Kg - these values were divided by 1000 to convert to ug/L and mg/Kg. 
 
@@ -309,11 +323,9 @@ Metals were measured in ug/L and mg/Kg dw. Mercury also had few measures in ng/L
 mercury ug/L 
 selenium (208 records) mg/L
 
-
 **sediment**
 
-
-mercury (mg/Kg dw
+mercury (mg/Kg dw)
 selenium (38 records) mg/Kg dw
 
 
@@ -377,13 +389,14 @@ Metal %>%
 ```
 
 ```
-## # A tibble: 3 x 5
-## # Groups:   Analyte, Matrix [2]
-##   Analyte  Matrix Unit         n   mean
-##   <chr>    <chr>  <chr>    <int>  <dbl>
-## 1 mercury  water  ug/L       291 0.0508
-## 2 selenium water  mg/Kg dw    38 0.251 
-## 3 selenium water  ug/L       208 0.302
+## # A tibble: 4 x 5
+## # Groups:   Analyte, Matrix [4]
+##   Analyte  Matrix   Unit         n    mean
+##   <chr>    <chr>    <chr>    <int>   <dbl>
+## 1 mercury  sediment mg/Kg dw    76 0.111  
+## 2 mercury  water    ug/L       215 0.00545
+## 3 selenium sediment mg/Kg dw    38 0.251  
+## 4 selenium water    ug/L       208 0.302
 ```
 
 
@@ -409,7 +422,7 @@ write.csv(x = Wide.Metal.Waterdf , file = "Data/Output/WideSubsets/Metal.Wide.wa
 
 <br>
 
-### Organophosphates
+### Organophosphates  {.tabset}
 
 
 ```r
@@ -450,9 +463,16 @@ OrganoP %>% filter(Analyte== "chlorpyrifos") %>% distinct(Unit)
 #### diazinon - ppb
 
 diazinon (2239 records) ppb
+
 diazinon degradate (95 records) ppb
+
 diazinon oxon (14 records) ppb
+
 diazoxon (234 records) ppb
+
+When diazinon enters the body, it is oxidatively decomposed to diazoxon, an organophosphate compound that is much more poisonous than diazinon; it mainly causes the inhibition of AChE.
+
+All three analytes (diazinon oxon, diazoxon, and diazinon degradate) refer to this oxidized degradate, and were therefore renamed for consistency to "diazoxon"
 
 
 ```r
@@ -481,16 +501,16 @@ diazoxon (234 records) ppb
       # Correct units
          OrganoP$Unit[OrganoP$Analyte == "diazinon" &
                       OrganoP$Matrix == "water"] <- "ppb"
-         
-# Diazinon degradate
-    # Correct name
-    OrganoP$Analyte[OrganoP$Analyte == "diazinon degradate"] <- "diazinon_degradate"
-    unique(OrganoP$Unit[OrganoP$Analyte == "diazinon_degradate"]) 
 ```
 
 
 ```r
 # Diazoxon
+
+    # Assess coverage
+    OrganoP %>% filter(Analyte == "diazoxon") %>%
+      distinct(Subregion) # coverage in 3 regions
+    
     # Convert ng/L to ppb
       OrganoP$Result[OrganoP$Analyte == "diazoxon" &
                 OrganoP$Unit == "ng/L"] <- OrganoP$Result[
@@ -499,8 +519,21 @@ diazoxon (234 records) ppb
     # Correct units
       OrganoP$Unit[OrganoP$Analyte == "diazoxon"] <- "ppb"
 
+# Diazinon degradate
+      
+    # Assess coverage
+    OrganoP %>% filter(Analyte == "diazinon degradate") %>%
+      distinct(Subregion) # all 95 records in Sacramento river.
+    # Units
+    OrganoP %>% filter(Analyte == "diazinon degradate") %>%
+      distinct(Unit) # all 95 records in Sacramento river.
+    # Rename
+    OrganoP$Analyte[OrganoP$Analyte == "diazinon degradate"] <-
+      "diazoxon" 
+
 # Diazinon oxon           
-    # Convert ng/L to ppb 
+    
+      # Convert ng/L to ppb 
       OrganoP$Result[OrganoP$Analyte == "diazinon oxon" &
                 OrganoP$Unit == "ng/L"] <- OrganoP$Result[
                   OrganoP$Analyte == "diazinon oxon" &
@@ -508,9 +541,12 @@ diazoxon (234 records) ppb
       
     # Correct units
       OrganoP$Unit[OrganoP$Analyte == "diazinon oxon"] <- "ppb"
-    # Correct name
-      OrganoP$Analyte[OrganoP$Analyte == "diazinon oxon"] <- "diazinon_oxon"
+      
+    # Rename
+      OrganoP$Analyte[OrganoP$Analyte == "diazinon oxon"] <-
+        "diazoxon"
 ```
+
 #### malathion - ppb
 
 
@@ -543,6 +579,8 @@ OrganoP %>% filter(Analyte== "malathion") %>% distinct(Unit)
 ##    Unit
 ## 1:  ppb
 ```
+
+
 #### **OrganoP Result**
 
 ```r
@@ -557,22 +595,19 @@ OrganoP %>%
 ```
 
 ```
-## # A tibble: 10 x 5
-## # Groups:   Analyte, Matrix [10]
-##    Analyte            Matrix   Unit      n     mean
-##    <chr>              <chr>    <chr> <int>    <dbl>
-##  1 chlorpyrifos       sediment ppb     331  0.0606 
-##  2 chlorpyrifos       water    ppb    2300  0.0159 
-##  3 diazinon           sediment ppb     312  0      
-##  4 diazinon           water    ppb    1927  0.00361
-##  5 diazinon_degradate water    ppb      95  0      
-##  6 diazinon_oxon      water    ppb      14  0      
-##  7 diazoxon           sediment ppb      48  0      
-##  8 diazoxon           water    ppb     186  0      
-##  9 malathion          sediment ppb     296  0      
-## 10 malathion          water    ppb    1649 -0.00778
+## # A tibble: 8 x 5
+## # Groups:   Analyte, Matrix [8]
+##   Analyte      Matrix   Unit      n     mean
+##   <chr>        <chr>    <chr> <int>    <dbl>
+## 1 chlorpyrifos sediment ppb     402  0.101  
+## 2 chlorpyrifos water    ppb    2229  0.00731
+## 3 diazinon     sediment ppb     361 -0.0160 
+## 4 diazinon     water    ppb    1878  0.00677
+## 5 diazoxon     sediment ppb      48  0      
+## 6 diazoxon     water    ppb     295  0      
+## 7 malathion    sediment ppb     328 -0.0677 
+## 8 malathion    water    ppb    1617  0.00579
 ```
-
 
 
 ```r
@@ -596,7 +631,7 @@ write.csv(x = Wide.OrganoP.Waterdf , file = "Data/Output/WideSubsets/OrganoP.Wid
 
 <br>
 
-### Pyrethroids
+### Pyrethroids  {.tabset}
 
 
 ```r
@@ -614,28 +649,28 @@ Pyre %>%
 
 ```
 ## # A tibble: 19 x 5
-## # Groups:   Analyte, Matrix [7]
+## # Groups:   Analyte, Matrix [8]
 ##    Analyte                     Matrix   Unit         n         mean
 ##    <chr>                       <chr>    <chr>    <int>        <dbl>
-##  1 cyfluthrin                  sediment ppb        390    0.486    
-##  2 cyfluthrin                  water    ng/g dw    111    2.05     
-##  3 cyfluthrin                  water    ng/L       245    0.0371   
-##  4 cyfluthrin                  water    pg/L         8 5638.       
-##  5 cyfluthrin                  water    ppb        602    0.000180 
-##  6 cyfluthrin                  water    ug/Kg dw    21    0        
+##  1 cyfluthrin                  sediment ng/g dw    111    2.05     
+##  2 cyfluthrin                  sediment ppb        390    0.486    
+##  3 cyfluthrin                  sediment ug/Kg dw    21    0        
+##  4 cyfluthrin                  water    ng/L       245    0.0371   
+##  5 cyfluthrin                  water    pg/L         8 5638.       
+##  6 cyfluthrin                  water    ppb        602    0.000180 
 ##  7 cyfluthrin                  water    ug/L        60    0        
-##  8 esfenvalerate               sediment ppb        387    0.582    
-##  9 esfenvalerate               water    ng/g dw     13    0.108    
+##  8 esfenvalerate               sediment ng/g dw     13    0.108    
+##  9 esfenvalerate               sediment ppb        387    0.582    
 ## 10 esfenvalerate               water    ng/L       115    0.0217   
 ## 11 esfenvalerate               water    ppb        567    0.000170 
 ## 12 esfenvalerate               water    ug/L         5    0        
-## 13 esfenvalerate/fenvalerate   water    ng/g dw     94    2.27     
-## 14 esfenvalerate/fenvalerate   water    ng/L       130    0.0485   
-## 15 esfenvalerate/fenvalerate   water    pg/L         8  175        
-## 16 esfenvalerate/fenvalerate   water    ug/Kg dw    21    0.023    
+## 13 esfenvalerate/fenvalerate   sediment ng/g dw     94    2.27     
+## 14 esfenvalerate/fenvalerate   sediment ug/Kg dw    21    0.023    
+## 15 esfenvalerate/fenvalerate   water    ng/L       130    0.0485   
+## 16 esfenvalerate/fenvalerate   water    pg/L         8  175        
 ## 17 esfenvalerate/fenvalerate   water    ug/L        67    0.0000164
-## 18 esfenvalerate/fenvalerate-1 water    ng/g dw      4    3.97     
-## 19 esfenvalerate/fenvalerate-2 water    ng/g dw      4    5.28
+## 18 esfenvalerate/fenvalerate-1 sediment ng/g dw      4    3.97     
+## 19 esfenvalerate/fenvalerate-2 sediment ng/g dw      4    5.28
 ```
 
 #### cyfluthrin - ppb
@@ -674,10 +709,16 @@ Pyre %>% filter(Analyte== "cyfluthrin") %>% distinct(Unit)
 
 #### esfenvalerate
 
-esfenvalerate
-esfenvalerate/fenvalerate
-esfenvalerate/fenvalerate-1 (sediment, 4 records)
-esfenvalerate/fenvalerate-2 (sediment, 4 records)
+In the analyte list, there are "esfenvalerate", "esfenvalerate/fenvalerate", "esfenvalerate/fenvalerate-1",
+"esfenvalerate/fenvalerate-2"
+
+Fenvalerate is a synthetic pyrethroid insecticide. It is a mixture of four optical isomers which have different insecticidal activities. 
+
+Esfenvalerate, the 2-S alpha (or SS) configuration of fenvalerate, is the most insecticidally active isomer. Fenvalerate consists of about 23% of this isomer.
+
+MM fenvalerate = MM esfenvalerate = 419.91 g/mol
+
+For our purposes, it would be appropriate to rename all of these to esfenvalerate, since by definition the isomer always contains 23% of the fenvalerate isomer. 
 
 
 ```r
@@ -733,9 +774,12 @@ esfenvalerate/fenvalerate-2 (sediment, 4 records)
   Pyre$Unit[Pyre$Analyte == "esfenvalerate/fenvalerate-2"] <- "ppb"
 
 # Correct name
-  Pyre$Analyte[Pyre$Analyte == "esfenvalerate/fenvalerate"] <- "esfenvalerate_fenvalerate"
-  Pyre$Analyte[Pyre$Analyte == "esfenvalerate/fenvalerate-1"] <- "esfenvalerate_fenvalerate"
-  Pyre$Analyte[Pyre$Analyte == "esfenvalerate/fenvalerate-2"] <- "esfenvalerate_fenvalerate"
+  
+Pyre$Analyte[Pyre$Analyte == "esfenvalerate/fenvalerate"] <- "esfenvalerate"
+
+Pyre$Analyte[Pyre$Analyte == "esfenvalerate/fenvalerate-1"] <- "esfenvalerate"
+
+Pyre$Analyte[Pyre$Analyte == "esfenvalerate/fenvalerate-2"] <- "esfenvalerate"
 ```
 
 #### **Pyre Result**
@@ -752,15 +796,14 @@ Pyre %>%
 ```
 
 ```
-## # A tibble: 5 x 5
-## # Groups:   Analyte, Matrix [5]
-##   Analyte                   Matrix   Unit      n    mean
-##   <chr>                     <chr>    <chr> <int>   <dbl>
-## 1 cyfluthrin                sediment ppb     390 0.486  
-## 2 cyfluthrin                water    ppb    1047 0.218  
-## 3 esfenvalerate             sediment ppb     387 0.582  
-## 4 esfenvalerate             water    ppb     700 0.00215
-## 5 esfenvalerate_fenvalerate water    ppb     328 0.764
+## # A tibble: 4 x 5
+## # Groups:   Analyte, Matrix [4]
+##   Analyte       Matrix   Unit      n     mean
+##   <chr>         <chr>    <chr> <int>    <dbl>
+## 1 cyfluthrin    sediment ppb     522 0.799   
+## 2 cyfluthrin    water    ppb     915 0.000178
+## 3 esfenvalerate sediment ppb     523 0.912   
+## 4 esfenvalerate water    ppb     892 0.000121
 ```
 
 
@@ -785,10 +828,9 @@ write.csv(x = Wide.Pyre.Waterdf , file = "Data/Output/WideSubsets/Pyre.Wide.wate
 ```
 <br>
 
-                     
-### GABA inhibitors
+### GABA inhibitors  {.tabset}
 
-(aka anything fipronil?)
+AKA anything fipronil. Info on Fipronil and its degradates summarized from http://npic.orst.edu/factsheets/archive/fiptech.html
 
 
 ```r
@@ -803,12 +845,18 @@ GABA %>%
 ```
 ## `summarise()` has grouped output by 'Analyte', 'Matrix'. You can override using the `.groups` argument.
 ```
+**Fipronil** is a broad-spectrum insecticide that belongs to the phenylpyrazole chemical family. Fipronil disrupts the insect central nervous system.
+
+**Fipronil-sulfone** is the primary biological metabolite of fipronil, is reported to be twenty times more active at mammalian chloride channels than at insect chloride channels. 10 Fipronil-sulfone is reportedly six times more potent in blocking vertebrate GABA-gated chloride channels than fipronil, but demonstrates similar toxicity to the parent compound in mammals.
+
+**Fipronil-desulfinyl**, the primary environmental metabolite (photoproduct) of fipronil, is 9-10 times more active at the mammalian chloride channel than the parent compound, reducing the selectivity between insects and humans when exposed to this metabolite.
+
+**Fipronil-amide** is another degradate of Fipronil (https://pubmed.ncbi.nlm.nih.gov/32574918/)
+
+
 #### Constant units, no changes needed
 
-desulfinyl fipronil - ppb
-desulfinyl fipronil amide - ppb
 fipronil detrifluoromethylsulfinyl - (sediment only) ug/Kg dw
-
 
 #### fipronil
 
@@ -850,6 +898,9 @@ fipronil amide - ppb
 
 ```r
 # fipronil amide
+  # Assess coverage
+    GABA %>% filter(Analyte == "fipronil amide") %>%
+      distinct(Subregion) # coverage in 2 regions
 
   # Sediment:	ppb	and ng/g dw, and ug/kg	(equivalent units)
     GABA$Unit[GABA$Analyte == "fipronil amide" &
@@ -863,50 +914,81 @@ fipronil amide - ppb
     GABA$Analyte[GABA$Analyte == "fipronil amide"] <- "fipronil_amide"
 ```
 
-fipronil desulfinyl & fipronil desulfinyl amide
+fipronil desulfinyl = desulfinyl fipronil
 
-sediment = ng/g dw
-water = ng/L
+sediment = ppb
+water = ppb
 
 
 ```r
 # fipronil desulfinyl
-
-  # ng/g dw, and ug/kg	(equivalent units to ppb)
-    GABA$Unit[GABA$Analyte == "fipronil desulfinyl" &
-                           GABA$Matrix == "sediment"] <- "ng/g dw"
-
-  # Water: pg/L, ng/L, ug/L
-      # ng/L = pg/L /1000
-      # ng/L= ug/L  *1000
-        
-      # Convert pg/L to ng/L
+  
+  # correct reversed name
+  GABA$Analyte[GABA$Analyte == "desulfinyl fipronil"] <- "fipronil desulfinyl"
+  
+  # Units?
+  GABA %>% filter(Analyte == "fipronil desulfinyl") %>% distinct(Unit)
+  
+  # Sediment: ppb, ng/g dw, and ug/kg	(equivalent units to ppb)
+  GABA$Unit[GABA$Analyte == "fipronil desulfinyl" &
+                           GABA$Matrix == "sediment"] <- "ppb"
+  
+  # Water: pg/L, ng/L, ug/L, ppb
+    
+      # ppb = pg/L / (1000*1000)
+      # ppb = ng/L / 1000
+      # ppb = ug/L
+    
+      # Convert pg/L to ppb
         GABA$Result[GABA$Analyte == "fipronil desulfinyl" &
-              GABA$Unit == "pg/L"] <- GABA$Result[
+              GABA$Unit == "ng/L"] <- GABA$Result[
                 GABA$Analyte == "fipronil desulfinyl" &
-                GABA$Unit == "pg/L"] /1000
+                GABA$Unit == "ng/L"]/(1000*1000)
         
-      # Convert ug/L to ng/L
+      # Convert ng/L to ppb
         GABA$Result[GABA$Analyte == "fipronil desulfinyl" &
-                  GABA$Unit == "ug/L"] <- GABA$Result[
-                    GABA$Analyte == "fipronil desulfinyl" &
-                    GABA$Unit == "ug/L"]*1000
-      
-      # Correct units
-         GABA$Unit[GABA$Analyte == "fipronil desulfinyl" &
-                      GABA$Matrix == "water"] <- "ng/L"
+              GABA$Unit == "ng/L"] <- GABA$Result[
+                GABA$Analyte == "fipronil desulfinyl" &
+                GABA$Unit == "ng/L"]/1000
         
-# fipronil desulfinyl amide
+      # Correct units
+        GABA$Unit[GABA$Analyte == "fipronil desulfinyl" &
+                      GABA$Matrix == "water"] <- "ppb"
+```
 
-      # Convert ug/L to ng/L
-        GABA$Result[GABA$Analyte == "fipronil desulfinyl amide" &
-                  GABA$Unit == "ug/L"] <- GABA$Result[
+fipronil desulfinyl amide = desulfinyl fipronil amide
+
+sediment = ppb
+water = ppb
+
+
+```r
+# fipronil desulfinyl amide
+      # correct reversed name
+      GABA$Analyte[GABA$Analyte == "desulfinyl fipronil amide"] <- 
+            "fipronil desulfinyl amide"
+      
+      # Units?
+      GABA %>% filter(Analyte == "fipronil desulfinyl amide") %>%
+        distinct(Unit, Matrix)
+  
+  # Water: pg/L, ng/L, ug/L, ppb
+      # ppb = pg/L / (1000*1000)
+      # ppb = ng/L / 1000
+      # ppb = ug/LConvert ng/L to ppb (ug/L)
+      
+      GABA$Result[GABA$Analyte == "fipronil desulfinyl amide" &
+                  GABA$Unit == "ng/L"] <- GABA$Result[
                     GABA$Analyte == "fipronil desulfinyl amide" &
-                    GABA$Unit == "ug/L"]*1000
+                    GABA$Unit == "ng/L"]/1000
       
       # Correct units
          GABA$Unit[GABA$Analyte == "fipronil desulfinyl amide" &
-                      GABA$Matrix == "water"] <- "ng/L"
+                      GABA$Matrix == "water"] <- "ppb"
+         
+  # Sediment: ppb, ng/g dw (equivalent units)
+        GABA$Unit[GABA$Analyte == "fipronil desulfinyl amide" &
+                           GABA$Matrix == "sediment"] <- "ppb"
 ```
 
 #### fipronil sulfide - ppb
@@ -974,18 +1056,20 @@ fipronil sulfone
          
 # Correct names
 
-  GABA$Analyte[GABA$Analyte == "desulfinyl fipronil"] <- "fipronil_desulfinyl"
-  GABA$Analyte[GABA$Analyte == "desulfinyl fipronil amide"] <- 
+GABA$Analyte[GABA$Analyte == "fipronil desulfinyl"] <- 
+  "fipronil_desulfinyl"
+
+GABA$Analyte[GABA$Analyte == "fipronil desulfinyl amide"] <-
     "fipronil_desulfinyl_amide"
-    
-  GABA$Analyte[GABA$Analyte == "fipronil desulfinyl"] <- "fipronil_desulfinyl"
-  GABA$Analyte[GABA$Analyte == "fipronil desulfinyl amide"] <-
-    "fipronil_desulfinyl_amide"
-  GABA$Analyte[GABA$Analyte == "fipronil sulfide"] <- "fipronil_sulfide"
-  GABA$Analyte[GABA$Analyte == "fipronil sulfone"] <- "fipronil_sulfone"
+
+GABA$Analyte[GABA$Analyte == "fipronil sulfide"] <- "fipronil_sulfide"
+
+GABA$Analyte[GABA$Analyte == "fipronil sulfone"] <- "fipronil_sulfone"
 
 # Remove if insufficient replication
-  GABA <- GABA %>% filter(!Analyte == "fipronil detrifluoromethylsulfinyl")
+  GABA <- GABA %>% 
+    filter(!Analyte == "fipronil detrifluoromethylsulfinyl") %>%
+    filter(!Analyte == "fipronil_amide")
 ```
 
 #### **GABA Result**
@@ -1002,24 +1086,20 @@ GABA %>%
 ```
 
 ```
-## # A tibble: 14 x 5
-## # Groups:   Analyte, Matrix [12]
+## # A tibble: 10 x 5
+## # Groups:   Analyte, Matrix [10]
 ##    Analyte                   Matrix   Unit      n       mean
 ##    <chr>                     <chr>    <chr> <int>      <dbl>
-##  1 fipronil                  sediment ppb     320  0.000504 
-##  2 fipronil                  water    ppb     722  0.00216  
-##  3 fipronil_amide            sediment ppb      20  0        
-##  4 fipronil_amide            water    ppb      23 -0.208    
-##  5 fipronil_desulfinyl       sediment ppb     326  0.0176   
-##  6 fipronil_desulfinyl       water    ng/L    219  0.811    
-##  7 fipronil_desulfinyl       water    ppb     500  0.000466 
-##  8 fipronil_desulfinyl_amide sediment ppb     279  0        
-##  9 fipronil_desulfinyl_amide water    ng/L    131  0.0156   
-## 10 fipronil_desulfinyl_amide water    ppb     411  0.0000849
-## 11 fipronil_sulfide          sediment ppb     108  0.264    
-## 12 fipronil_sulfide          water    ppb     312  0.113    
-## 13 fipronil_sulfone          sediment ppb     107  0.345    
-## 14 fipronil_sulfone          water    ppb     388  0.108
+##  1 fipronil                  sediment ppb     383  0.00253  
+##  2 fipronil                  water    ppb     659  0.00114  
+##  3 fipronil_desulfinyl       sediment ppb     396  0.0549   
+##  4 fipronil_desulfinyl       water    ppb     649  0.000370 
+##  5 fipronil_desulfinyl_amide sediment ppb     299 -0.00887  
+##  6 fipronil_desulfinyl_amide water    ppb     522  0.0000759
+##  7 fipronil_sulfide          sediment ppb     176  0.361    
+##  8 fipronil_sulfide          water    ppb     244  0.000237 
+##  9 fipronil_sulfone          sediment ppb     174  0.450    
+## 10 fipronil_sulfone          water    ppb     321  0.00108
 ```
 
 
@@ -1045,7 +1125,7 @@ write.csv(x = Wide.GABA.Waterdf , file = "Data/Output/WideSubsets/GABA.Wide.wate
 
 <br>
 
-### Others: Glyphosate, Atrazine, Neonicitinoids
+### Others: Glyphosate, Atrazine, Neonicitinoids  {.tabset}
 
 
 ```r
@@ -1087,8 +1167,8 @@ Other %>% filter(SelectList == "Neon") %>%
       # Correct units
          Other$Unit[Other$SelectList == "Neon"] <- "ppb"
          
-      # Remove records with insufficient replication
-         Other <- Other %>% filter(!Analyte == "hydroxy-imidacloprid")
+# Remove records with insufficient replication
+  Other <- Other %>% filter(!Analyte == "hydroxy-imidacloprid")
 ```
 
 #### Glyphosate - ppb
@@ -1144,8 +1224,8 @@ Other %>% filter(SelectList == "Atrazine") %>%
       # Correct units
          Other$Unit[Other$SelectList == "Atrazine"] <- "ppb"
          
-      # Correct name
-        Other$Analyte[Other$Analyte == "atrazine degradate"] <- "atrazine_degradate"
+# Remove records with insufficient replication
+  Other <- Other %>% filter(!Analyte == "atrazine degradate")
 ```
 
 #### **Other Result**
@@ -1162,15 +1242,14 @@ Other %>%
 ```
 
 ```
-## # A tibble: 5 x 5
-## # Groups:   Analyte, Matrix [5]
-##   Analyte            Matrix   Unit      n    mean
-##   <chr>              <chr>    <chr> <int>   <dbl>
-## 1 atrazine           sediment ppb      86 0      
-## 2 atrazine           water    ppb     480 0.00800
-## 3 atrazine_degradate water    ppb      23 0      
-## 4 glyphosate         water    ppb     229 0.551  
-## 5 imidacloprid       water    ppb     265 0.00221
+## # A tibble: 4 x 5
+## # Groups:   Analyte, Matrix [4]
+##   Analyte      Matrix   Unit      n    mean
+##   <chr>        <chr>    <chr> <int>   <dbl>
+## 1 atrazine     sediment ppb      86 0      
+## 2 atrazine     water    ppb     480 0.00800
+## 3 glyphosate   water    ppb     229 0.551  
+## 4 imidacloprid water    ppb     265 0.00221
 ```
 
 
