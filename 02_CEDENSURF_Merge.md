@@ -6,7 +6,6 @@ output:
   html_document:
     code_download: true
     keep_md: true
-    code_folding: hide
     toc: true
     toc_float:
       toc_collapsed: true
@@ -55,6 +54,7 @@ CEDENMod_Tox$Matrix[CEDENMod_Tox$MatrixName == "sediment"] <- "sediment"
 CEDENMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_WQ.csv") %>% 
       mutate(Source = "CEDEN")%>% 
       mutate(Matrix = "water")
+
 # SedimentGrab should have Matrix == "sediment".
 CEDENMod_WQ$Matrix[CEDENMod_WQ$CollectionMethod == "Sediment_Grab"]<- "sediment"
 ```

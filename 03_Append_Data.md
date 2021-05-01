@@ -123,6 +123,8 @@ Atraz_SelectList <-  c("atrazine", "atrazine degradate")
 CEDENSURF$SelectList[CEDENSURF$Analyte %in% Atraz_SelectList] <- "Atrazine"
 ```
 
+#### Save categories assigned to analytes
+
 
 ```r
 ## Save Analyte Table showing assigned categories
@@ -134,11 +136,11 @@ write.csv(x = AnalyteTable,
           na = "", row.names = F)
 ```
 
+### Save Categorized, Limited CEDENSURF 
 
 
 ```r
 ## Remove rows with irrelevant Analytes?
-
 CEDENSURF<- CEDENSURF %>% filter(!is.na(SelectList))
 ```
 
@@ -173,8 +175,6 @@ head(CEDENSURF %>% select(Date, Analyte, Result, Unit, StationName, SelectList))
 ## 6:        WQP
 ```
 
-### Save results
-
 
 ```r
 write.csv(x = CEDENSURF, file = "Data/Output/CEDENSURF_Limited.csv", 
@@ -195,7 +195,7 @@ Two files:
 A suggested structure of this table is:
 
 ```r
-# Load external table (Mock data)
+# Load external table (Mock Data)
 
 AnalyteTable <- CEDENSURF %>% select(Analyte, SelectList) %>% distinct(Analyte, .keep_all = T) # 44 records
 
