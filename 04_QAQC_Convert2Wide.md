@@ -40,6 +40,7 @@ Because NETICA requires the nodes to be columns, this data needs to be transform
 # Load data
 CEDENSURF <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURF_Limited.csv") %>% select(Analyte, Result, Unit,CollectionMethod, Matrix, Date, Subregion, StationName, Latitude, Longitude,SelectList)
 ```
+
 <br/>
 
 ## 2. Convert Units & Names
@@ -673,7 +674,7 @@ Pyre %>%
 
   # Sediment:	ppb	and ng/g dw	(equivalent units)
     Pyre$Unit[Pyre$Analyte == "cyfluthrin" &
-                           Pyre$Matrix == "sediment"] <- "ppb"
+              Pyre$Matrix == "sediment"] <- "ppb"
 
   # Water: pg/L, ng/L, ug/L, ppb
       # ppb = pg/L /(1000*1000)
@@ -697,6 +698,39 @@ Pyre %>%
                       Pyre$Matrix == "water"] <- "ppb"
 
 Pyre %>% filter(Analyte== "cyfluthrin") %>% distinct(Unit)
+```
+#### bifenthrin
+
+
+```r
+# bifenthrin
+
+  # Sediment:	ug/Kg dw, ppb, ng/g dw (equivalent units)
+    Pyre$Unit[Pyre$Analyte == "bifenthrin" &
+              Pyre$Matrix == "sediment"] <- "ppb"
+
+  # Water: pg/L, ng/L, ug/L, ppb
+      # ppb = pg/L /(1000*1000)
+      # ppb = ng/L / 1000
+      # ppb = ug/L
+      
+      # Convert pg/L to ppb
+        Pyre$Result[Pyre$Analyte == "bifenthrin" &
+              Pyre$Unit == "pg/L"] <- Pyre$Result[
+                Pyre$Analyte == "bifenthrin" &
+                Pyre$Unit == "pg/L"] /(1000*1000)
+        
+      # Convert ng/L to ppb
+        Pyre$Result[Pyre$Analyte == "bifenthrin" &
+                  Pyre$Unit == "ng/L"] <- Pyre$Result[
+                    Pyre$Analyte == "bifenthrin" &
+                    Pyre$Unit == "ng/L"] /1000
+      
+      # Correct units
+         Pyre$Unit[Pyre$Analyte == "bifenthrin" &
+                      Pyre$Matrix == "water"] <- "ppb"
+
+Pyre %>% filter(Analyte== "bifenthrin") %>% distinct(Unit)
 ```
 
 #### esfenvalerate
@@ -788,21 +822,16 @@ Pyre %>%
 ```
 
 ```
-## # A tibble: 11 x 5
+## # A tibble: 6 x 5
 ## # Groups:   Analyte, Matrix [6]
-##    Analyte       Matrix   Unit         n         mean
-##    <chr>         <chr>    <chr>    <int>        <dbl>
-##  1 bifenthrin    sediment ng/g dw    111    17.0     
-##  2 bifenthrin    sediment ppb        390     3.87    
-##  3 bifenthrin    sediment ug/Kg dw    21     0.118   
-##  4 bifenthrin    water    ng/L       275     0.662   
-##  5 bifenthrin    water    pg/L         8 77162.      
-##  6 bifenthrin    water    ppb        662     0.00133 
-##  7 bifenthrin    water    ug/L        73     0.000347
-##  8 cyfluthrin    sediment ppb        522     0.799   
-##  9 cyfluthrin    water    ppb        915     0.000178
-## 10 esfenvalerate sediment ppb        523     0.912   
-## 11 esfenvalerate water    ppb        892     0.000121
+##   Analyte       Matrix   Unit      n     mean
+##   <chr>         <chr>    <chr> <int>    <dbl>
+## 1 bifenthrin    sediment ppb     522 6.51    
+## 2 bifenthrin    water    ppb    1018 0.00168 
+## 3 cyfluthrin    sediment ppb     522 0.799   
+## 4 cyfluthrin    water    ppb     915 0.000178
+## 5 esfenvalerate sediment ppb     523 0.912   
+## 6 esfenvalerate water    ppb     892 0.000121
 ```
 
 
