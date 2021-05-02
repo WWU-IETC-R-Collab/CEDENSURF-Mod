@@ -66,9 +66,9 @@ CEDENSURF %>% group_by(Analyte, Matrix) %>%
 ## 1 atrazine           sediment      1
 ## 2 atrazine           water         3
 ## 3 atrazine degradate water         1
-## 4 chlorpyrifos       sediment      2
-## 5 chlorpyrifos       water         4
-## 6 cyfluthrin         sediment      3
+## 4 bifenthrin         sediment      3
+## 5 bifenthrin         water         4
+## 6 chlorpyrifos       sediment      2
 ```
 
 ### WQP  {.tabset}
@@ -648,29 +648,21 @@ Pyre %>%
 ```
 
 ```
-## # A tibble: 19 x 5
-## # Groups:   Analyte, Matrix [8]
-##    Analyte                     Matrix   Unit         n         mean
-##    <chr>                       <chr>    <chr>    <int>        <dbl>
-##  1 cyfluthrin                  sediment ng/g dw    111    2.05     
-##  2 cyfluthrin                  sediment ppb        390    0.486    
-##  3 cyfluthrin                  sediment ug/Kg dw    21    0        
-##  4 cyfluthrin                  water    ng/L       245    0.0371   
-##  5 cyfluthrin                  water    pg/L         8 5638.       
-##  6 cyfluthrin                  water    ppb        602    0.000180 
-##  7 cyfluthrin                  water    ug/L        60    0        
-##  8 esfenvalerate               sediment ng/g dw     13    0.108    
-##  9 esfenvalerate               sediment ppb        387    0.582    
-## 10 esfenvalerate               water    ng/L       115    0.0217   
-## 11 esfenvalerate               water    ppb        567    0.000170 
-## 12 esfenvalerate               water    ug/L         5    0        
-## 13 esfenvalerate/fenvalerate   sediment ng/g dw     94    2.27     
-## 14 esfenvalerate/fenvalerate   sediment ug/Kg dw    21    0.023    
-## 15 esfenvalerate/fenvalerate   water    ng/L       130    0.0485   
-## 16 esfenvalerate/fenvalerate   water    pg/L         8  175        
-## 17 esfenvalerate/fenvalerate   water    ug/L        67    0.0000164
-## 18 esfenvalerate/fenvalerate-1 sediment ng/g dw      4    3.97     
-## 19 esfenvalerate/fenvalerate-2 sediment ng/g dw      4    5.28
+## # A tibble: 26 x 5
+## # Groups:   Analyte, Matrix [10]
+##    Analyte    Matrix   Unit         n         mean
+##    <chr>      <chr>    <chr>    <int>        <dbl>
+##  1 bifenthrin sediment ng/g dw    111    17.0     
+##  2 bifenthrin sediment ppb        390     3.87    
+##  3 bifenthrin sediment ug/Kg dw    21     0.118   
+##  4 bifenthrin water    ng/L       275     0.662   
+##  5 bifenthrin water    pg/L         8 77162.      
+##  6 bifenthrin water    ppb        662     0.00133 
+##  7 bifenthrin water    ug/L        73     0.000347
+##  8 cyfluthrin sediment ng/g dw    111     2.05    
+##  9 cyfluthrin sediment ppb        390     0.486   
+## 10 cyfluthrin sediment ug/Kg dw    21     0       
+## # ... with 16 more rows
 ```
 
 #### cyfluthrin - ppb
@@ -796,14 +788,21 @@ Pyre %>%
 ```
 
 ```
-## # A tibble: 4 x 5
-## # Groups:   Analyte, Matrix [4]
-##   Analyte       Matrix   Unit      n     mean
-##   <chr>         <chr>    <chr> <int>    <dbl>
-## 1 cyfluthrin    sediment ppb     522 0.799   
-## 2 cyfluthrin    water    ppb     915 0.000178
-## 3 esfenvalerate sediment ppb     523 0.912   
-## 4 esfenvalerate water    ppb     892 0.000121
+## # A tibble: 11 x 5
+## # Groups:   Analyte, Matrix [6]
+##    Analyte       Matrix   Unit         n         mean
+##    <chr>         <chr>    <chr>    <int>        <dbl>
+##  1 bifenthrin    sediment ng/g dw    111    17.0     
+##  2 bifenthrin    sediment ppb        390     3.87    
+##  3 bifenthrin    sediment ug/Kg dw    21     0.118   
+##  4 bifenthrin    water    ng/L       275     0.662   
+##  5 bifenthrin    water    pg/L         8 77162.      
+##  6 bifenthrin    water    ppb        662     0.00133 
+##  7 bifenthrin    water    ug/L        73     0.000347
+##  8 cyfluthrin    sediment ppb        522     0.799   
+##  9 cyfluthrin    water    ppb        915     0.000178
+## 10 esfenvalerate sediment ppb        523     0.912   
+## 11 esfenvalerate water    ppb        892     0.000121
 ```
 
 
@@ -1132,6 +1131,11 @@ write.csv(x = Wide.GABA.Waterdf , file = "Data/Output/WideSubsets/GABA.Wide.wate
 Other <- CEDENSURF %>% filter(SelectList == c("Glyphosate", "Atrazine", "Neon"))
 ```
 
+```
+## Warning in SelectList == c("Glyphosate", "Atrazine", "Neon"): longer object
+## length is not a multiple of shorter object length
+```
+
 #### Neonicotinoids 
 
 All measures are in water. 
@@ -1246,10 +1250,10 @@ Other %>%
 ## # Groups:   Analyte, Matrix [4]
 ##   Analyte      Matrix   Unit      n    mean
 ##   <chr>        <chr>    <chr> <int>   <dbl>
-## 1 atrazine     sediment ppb      86 0      
-## 2 atrazine     water    ppb     480 0.00800
-## 3 glyphosate   water    ppb     229 0.551  
-## 4 imidacloprid water    ppb     265 0.00221
+## 1 atrazine     sediment ppb      98 0      
+## 2 atrazine     water    ppb     472 0.00472
+## 3 glyphosate   water    ppb     232 0.829  
+## 4 imidacloprid water    ppb     224 0.00233
 ```
 
 
