@@ -98,10 +98,10 @@ CEDENSURF$SelectList[CEDENSURF$Analyte %in% Neon_SelectList] <- "Neon"
 
 ## Pyrethroids
 
-Pyre_SelectList <- c("binfenthrin", "cyfluthrin", 
+Pyre_SelectList <- c("bifenthrin", "cyfluthrin", 
                      "esfenvalerate", "esfenvalerate/fenvalerate",
                      "esfenvalerate/fenvalerate-1",
-                     "esfenvalerate/fenvalerate-2") # did not find any binfenthrin
+                     "esfenvalerate/fenvalerate-2")
 
 CEDENSURF$SelectList[CEDENSURF$Analyte %in% Pyre_SelectList] <- "Pyrethroids"
 
@@ -144,7 +144,7 @@ write.csv(x = AnalyteTable,
 CEDENSURF<- CEDENSURF %>% filter(!is.na(SelectList))
 ```
 
-The result is 34251 records, all appended with appropriate selection categories according to the conceptual model
+The result is 35791 records, all appended with appropriate selection categories according to the conceptual model
 
 
 ```r
@@ -243,7 +243,7 @@ head(CEDENSURF2 %>% select(Date, Analyte, Result, StationName, SelectList))
 ## 6:   Atrazine
 ```
 
-The result is 34251 records, all appended with appropriate selection categories according to the conceptual model
+The result is 35791 records, all appended with appropriate selection categories according to the conceptual model
 
 <br>
 

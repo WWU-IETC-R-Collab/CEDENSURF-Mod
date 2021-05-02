@@ -97,10 +97,10 @@ CEDENSURF$SelectList[CEDENSURF$Analyte %in% Neon_SelectList] <- "Neon"
 
 ## Pyrethroids
 
-Pyre_SelectList <- c("binfenthrin", "cyfluthrin", 
+Pyre_SelectList <- c("bifenthrin", "cyfluthrin", 
                      "esfenvalerate", "esfenvalerate/fenvalerate",
                      "esfenvalerate/fenvalerate-1",
-                     "esfenvalerate/fenvalerate-2") # did not find any binfenthrin
+                     "esfenvalerate/fenvalerate-2")
 
 CEDENSURF$SelectList[CEDENSURF$Analyte %in% Pyre_SelectList] <- "Pyrethroids"
 

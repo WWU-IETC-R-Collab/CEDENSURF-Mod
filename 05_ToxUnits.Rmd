@@ -1,0 +1,91 @@
+---
+title: "Chemical Stressors - Toxicological Units"
+author: "Erika W"
+date: "5/1/2021"
+output:
+  html_document:
+    code_download: true
+    keep_md: true
+    toc: true
+    toc_float:
+      toc_collapsed: true
+    toc_depth: 3
+    theme: lumen
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, warning=F, message=F}
+rm(list = ls())
+library(data.table)
+library(lubridate)
+library(sf)
+library(tidyverse)
+```
+
+## Intro
+
+This rmd defines the toxicological unit (Molar Mass) for chemicals that may need to be combined later. 
+
+## Load Data
+
+```{r}
+# Load CEDENSURF Limited Data
+AnalyteList <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURF_Limited_FixedUnits.csv") %>% 
+  distinct(Analyte, Unit, Matrix, SelectList)
+```
+
+## Molar Mass
+
+We also may need to append toxicological units onto the data, in order to combine multiple analytes falling under the same category. 
+
+If we're going to ADD toxicological units, I don't believe we should use analytes that were only measured in one region (ie, would falsly inflate that regions relative risk just by having more information), unless we were to estimate them for other regions by proxy (ie: land use)
+
+diazinon MM = 304.34 g/mol
+diazoxon MM = 288.28 g/mol
+
+esfenvalerate MM = 419.91
+
+fipronil = 437.1 g/mol
+
+fipronil amide = 455.2 g/mol
+fipronil desulfinyl MM = 389.08 g/Mol
+fipronil desulfinyl amide MM =  ???
+
+fipronil sulfone MM = 453.1 g/mol
+fipronil sulfide MM = 421.1 g/mol
+
+```{r}
+AnalyteList$MolarMass <- NA
+
+# Organophosphates
+
+AnalyteList$MolarMass[AnalyteList$Analyte == "diazinon"] = 304.34
+
+AnalyteList$MolarMass[AnalyteList$Analyte == "diazoxon"] = 288.28
+
+# Pyrethroids
+
+AnalyteList$MolarMass[AnalyteList$Analyte == "esfenvalerate"] = 419.91
+
+# GABA Inhibitors
+
+AnalyteList$MolarMass[AnalyteList$Analyte == "fipronil"] = 437.1
+
+AnalyteList$MolarMass[AnalyteList$Analyte == "fipronil_amide"] = 455.2
+
+AnalyteList$MolarMass[AnalyteList$Analyte == "fipronil_desulfinyl"] = 389.08
+
+AnalyteList$MolarMass[AnalyteList$Analyte == "fipronil_sulfone"] = 453.1
+
+AnalyteList$MolarMass[AnalyteList$Analyte == "fipronil_sulfide"] = 421.1
+
+AnalyteList$MolarMass[AnalyteList$Analyte == ""] = 
+  
+AnalyteList$MolarMass[AnalyteList$Analyte == ""] = 
+  
+AnalyteList$MolarMass[AnalyteList$Analyte == ""] = 
+```
+
