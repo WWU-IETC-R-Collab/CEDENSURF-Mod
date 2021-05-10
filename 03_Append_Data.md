@@ -75,7 +75,7 @@ CEDENSURF$SelectList[CEDENSURF$Analyte %in% WQP_SelectList] <- "WQP"
 
 # Metals
 
-Metal_SelectList <- c("mercury", "selenium") # # Only one record of mercury (ii)r; chose to omit. # did not find methylmercury in list. 
+Metal_SelectList <- c("mercury", "selenium", "copper", "cadmium") # # Only one record of mercury (ii)r; chose to omit. # did not find methylmercury in list. 
 # Others may want? "silver", 
 
 
@@ -121,6 +121,40 @@ Atraz_SelectList <-  c("atrazine", "atrazine degradate")
 # Chose to omit single records: "desethyl-atrazine""desisopropyl-atrazine", "hydroxyatrazine","hydroxyatrazine, 2-" )
 
 CEDENSURF$SelectList[CEDENSURF$Analyte %in% Atraz_SelectList] <- "Atrazine"
+
+
+## Late Additions bc available tox data
+
+      # Tox available for DDT / Dichlorodiphenyltrichloroethane
+
+        ## Find names:
+        # AnalyteList[(grepl("ddt", AnalyteList))]
+        ## make names consistent
+        CEDENSURF$Analyte[CEDENSURF$Analyte == "ddt(o,p')" |
+                        CEDENSURF$Analyte == "ddt(p,p')"] <- "ddt"
+
+      # Tox available for dinoseb aka dinitrophenol
+        ## Find names:
+        AnalyteList[(grepl("dinitroph", AnalyteList))]
+```
+
+```
+## [1] "dinitrophenol"
+```
+
+```r
+        ## make names consistent
+        CEDENSURF$Analyte[CEDENSURF$Analyte == "dinoseb" |
+                        CEDENSURF$Analyte == "dinitrophenol"] <- "dinoseb"
+        
+      # Tox available for triclopyr / garlon (only one name)
+      # Tox available for thiobencarb (only one name)
+      # Tox available for molinate (only one name). 
+          # Too few records of degradate (4-hydroxy molinate) to include
+      
+Late_SelectList <- c("ddt","thiobencarb", "dinoseb", "triclopyr", "molinate")
+
+CEDENSURF$SelectList[CEDENSURF$Analyte %in% Late_SelectList] <- "Late"
 ```
 
 #### Save categories assigned to analytes
@@ -144,7 +178,7 @@ write.csv(x = AnalyteTable,
 CEDENSURF<- CEDENSURF %>% filter(!is.na(SelectList))
 ```
 
-The result is 35791 records, all appended with appropriate selection categories according to the conceptual model
+The result is 39831 records, all appended with appropriate selection categories according to the conceptual model
 
 
 ```r
@@ -243,7 +277,7 @@ head(CEDENSURF2 %>% select(Date, Analyte, Result, StationName, SelectList))
 ## 6:   Atrazine
 ```
 
-The result is 35791 records, all appended with appropriate selection categories according to the conceptual model
+The result is 39831 records, all appended with appropriate selection categories according to the conceptual model
 
 <br>
 

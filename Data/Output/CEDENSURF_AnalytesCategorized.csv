@@ -186,9 +186,9 @@
 "pcb 045",
 "total solids",
 "beryllium",
-"cadmium",
+"cadmium","Metal"
 "chromium",
-"copper",
+"copper","Metal"
 "magnesium",
 "strontium",
 "zinc",
@@ -203,7 +203,7 @@
 "pbde 209",
 "pcb 093",
 "ddd(o,p')",
-"ddt(o,p')",
+"ddt","Late"
 "hch",
 "heptachlor epoxide",
 "heptachlor",
@@ -243,7 +243,6 @@
 "pcb 011",
 "pcb 083",
 "pcb 102",
-"ddt(p,p')",
 "fipronil sulfide","GABA"
 "fipronil sulfone","GABA"
 "benzo(a)pyrene",
@@ -351,11 +350,11 @@
 "oxyfluorfen",
 "trifluralin",
 "dichlorophenoxyacetic acid",
-"triclopyr",
+"triclopyr","Late"
 "dacthal",
 "mcpa",
 "paraquat",
-"thiobencarb",
+"thiobencarb","Late"
 "hexazinone",
 "metolachlor",
 "tetraconazole",
@@ -394,7 +393,7 @@
 "trichlorophenoxyacetic acid",
 "alachlor",
 "thiamethoxam",
-"dinoseb",
+"dinoseb","Late"
 "fluridone",
 "dichloropropionic acid",
 "carbofuran",
@@ -602,7 +601,6 @@
 "dichlorobenzidine",
 "dichlorophenol",
 "di-n-butyl phthalate",
-"dinitrophenol",
 "hexachloroethane",
 "trichlorophenol",
 "tph as diesel c12-c24",
@@ -775,7 +773,7 @@
 "ametryn",
 "desethyl-atrazine",
 "pyrethrin-2",
-"molinate",
+"molinate","Late"
 "simetryn",
 "jasmolin-1",
 "atraton",

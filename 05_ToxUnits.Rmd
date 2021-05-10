@@ -1,5 +1,5 @@
 ---
-title: "Chemical Stressors - Toxicological Units"
+title: "Toxicological Units Approach"
 author: "Erika W"
 date: "5/1/2021"
 output:
@@ -27,65 +27,104 @@ library(tidyverse)
 
 ## Intro
 
-This rmd defines the toxicological unit (Molar Mass) for chemicals that may need to be combined later. 
+If we are to simplify the Netica model, we will need to summarize analytes by their functional category. 
+
+Toxic units (TU) are used in the field of toxicology to quantify the interactions of toxicants in binary mixtures of chemicals.A toxic unit for a given compound is based on the concentration at which there is a 50% effect (ex. EC50) for a certain biological endpoint. One toxic unit is equal to the EC50 for a given endpoint for a specific biological effect over a given amount of time. Toxic units allow for the comparison of the individual toxicities of a binary mixture to the combined toxicity. This allows researchers to categorize mixtures as additive, synergistic or antagonistic. Synergism and antagonism are defined by mixtures that are more or less toxic than predicted by the sum of their toxic units.
+
+For the purposes of simplicity, we will start by assuming that the chemicals are additive.
+
+The process will be:
+
+1. Load data. 
+
+2. Convert to moles per volume
+
+3. Convert concentrations to moles per volume
+
+4. Convert to toxic units, using EC50 values? (If available/From Allie)
+
+5. Summarize by RR/date for each analyte
+
+6. Sum toxic units within each category
+
+*THOUGHTS: I don't believe we should use analytes that were only measured in one region, because adding additional TU's for that region would falsly inflate that regions relative risk just by having more information. The alternative to omitting that data would be to estimate missing TU's for other regions by proxy (ie: land use)*
 
 ## Load Data
 
-```{r}
-# Load CEDENSURF Limited Data
-AnalyteList <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURF_Limited_FixedUnits.csv") %>% 
-  distinct(Analyte, Unit, Matrix, SelectList)
-```
-
-## Molar Mass
-
-We also may need to append toxicological units onto the data, in order to combine multiple analytes falling under the same category. 
-
-If we're going to ADD toxicological units, I don't believe we should use analytes that were only measured in one region (ie, would falsly inflate that regions relative risk just by having more information), unless we were to estimate them for other regions by proxy (ie: land use)
-
-diazinon MM = 304.34 g/mol
-diazoxon MM = 288.28 g/mol
-
-esfenvalerate MM = 419.91
-
-fipronil = 437.1 g/mol
-
-fipronil amide = 455.2 g/mol
-fipronil desulfinyl MM = 389.08 g/Mol
-fipronil desulfinyl amide MM =  ???
-
-fipronil sulfone MM = 453.1 g/mol
-fipronil sulfide MM = 421.1 g/mol
+Start with the midpoint of 04_QAQC_Convert2Wide (long-format) because it is easiest to make these conversions *before* the conversion to wide-format.
 
 ```{r}
-AnalyteList$MolarMass <- NA
-
-# Organophosphates
-
-AnalyteList$MolarMass[AnalyteList$Analyte == "diazinon"] = 304.34
-
-AnalyteList$MolarMass[AnalyteList$Analyte == "diazoxon"] = 288.28
-
-# Pyrethroids
-
-AnalyteList$MolarMass[AnalyteList$Analyte == "esfenvalerate"] = 419.91
-
-# GABA Inhibitors
-
-AnalyteList$MolarMass[AnalyteList$Analyte == "fipronil"] = 437.1
-
-AnalyteList$MolarMass[AnalyteList$Analyte == "fipronil_amide"] = 455.2
-
-AnalyteList$MolarMass[AnalyteList$Analyte == "fipronil_desulfinyl"] = 389.08
-
-AnalyteList$MolarMass[AnalyteList$Analyte == "fipronil_sulfone"] = 453.1
-
-AnalyteList$MolarMass[AnalyteList$Analyte == "fipronil_sulfide"] = 421.1
-
-AnalyteList$MolarMass[AnalyteList$Analyte == ""] = 
-  
-AnalyteList$MolarMass[AnalyteList$Analyte == ""] = 
-  
-AnalyteList$MolarMass[AnalyteList$Analyte == ""] = 
+# Load CEDENSURF Limited Data (long format)
+Limited <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURF_Limited_FixedUnits.csv")
 ```
+Table containing Molar mass (Moles/g) of each analyte
+
+```{r}
+# Load CEDENSURF Limited Data (long format)
+MM <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/MolarMass.csv")
+```
+
+## 2. Convert to Moles/Concentration
+
+Those molar masses will be used to convert units of every chemical analyte (not water quality parameters) to micromoles per liter (water) or micromoles per kg of sediment. Aim is to have μM/ug
+
+  1. Merge table with MM and CEDENSURF Limited data
+  
+  2. Divide by molar weight to obtain micro-Moles per volume
+
+Each analyte is currently in micrograms per volume. That means that I can simply multiply each result by molar weight to obtain micro-Moles per volume
+
+(μg/L) * (μM/ug) = μM/L
+
+**Starting Units**
+- ppb
+- μg/L
+- μg/Kg dw
+
+1 ppb = 1 μg/L = 1 μg/Kg
+
+**Divide by MM then multiply by 1000 to convert to nM**
+- g/Mole (μg/μM) * 1000nM/μM
+
+**Ending Units = nanomoles per liter (nM)**
+Water:    nM/L
+Sediment: nM/Kg dw
+
+```{r}
+# Left bind to merge MolarMass column into long data, then remove WQP parameters that won't undergo this process
+
+# Merge
+ToxUnits <- merge(Limited, MM, by = "Analyte") %>% filter(!SelectList == "WQP")
+
+# Convert
+ToxUnits<- ToxUnits %>% 
+  
+  # Convert to uM
+  mutate(Result_M = Result/MolarMass*1000) %>% 
+  select(!Result) %>% mutate(Result = Result_M) %>%
+  
+  # Define units
+  mutate(Unit = ifelse(Matrix == "water", 
+                         "nM/L", Unit)) %>% 
+  mutate(Unit = ifelse(Matrix == "sediment", 
+                         "nM/Kg dw", Unit)) %>% 
+  # Organize
+  select(Analyte, Result, Unit, Matrix, Date, 
+         Subregion, StationName, Latitude, Longitude,
+         CollectionMethod, SelectList)
+```
+
+
+```{r}
+# Add back on WQP Units
+WQP <- Limited %>% filter(SelectList == "WQP")
+
+ToxUnits <- rbind(ToxUnits, WQP)
+
+# Save?
+write.csv(x = ToxUnits, 
+          file = "Data/Output/CEDENSURFLimited_ToxUnits.csv", 
+          na = "", row.names = F)
+```
+
 
