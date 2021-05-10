@@ -1,5 +1,5 @@
 ---
-title: "Convert to Wide"
+title: "Conversions"
 author: "Erika W"
 date: "4/5/2021"
 output:
@@ -69,7 +69,7 @@ CEDENSURF %>% group_by(Analyte, Matrix) %>%
 ## 3 atrazine degradate water         1
 ## 4 bifenthrin         sediment      3
 ## 5 bifenthrin         water         4
-## 6 chlorpyrifos       sediment      2
+## 6 cadmium            sediment      1
 ```
 
 ### WQP  {.tabset}
@@ -335,13 +335,24 @@ Metal <- CEDENSURF %>% filter(SelectList == "Metal")
 
 # Selenium
 
-    # Water - 208 records, mg/L
+    # Water - 208 records, ug/L
     Metal %>% filter(grepl("selenium", Analyte))  %>% 
               filter(Matrix == 'water') %>% distinct(Unit)
 
     # Sediment - 38 records, mg/Kg dw
     Metal %>% filter(grepl("selenium", Analyte))  %>% 
                filter(Matrix == 'sediment') %>% distinct(Unit)
+    
+     # Convert mg to ug
+          Metal$Result[
+            Metal$Analyte == "selenium" & 
+              Metal$Unit == "mg/Kg dw"] <- Metal$Result[
+              Metal$Analyte == "selenium" & Metal$Unit == "mg/Kg dw"]*1000
+          
+        # Correct units
+          Metal$Unit[Metal$Analyte == "selenium" & 
+                       Metal$Matrix == "sediment"] <- "ug/Kg dw"
+          
 
 # Mercury
 
@@ -352,11 +363,13 @@ Metal <- CEDENSURF %>% filter(SelectList == "Metal")
     
         # Convert ng to ug
           Metal$Result[
-            Metal$Analyte == "mercury" & Metal$Unit == "ng/L"] <- Metal$Result[
+            Metal$Analyte == "mercury" & 
+              Metal$Unit == "ng/L"] <- Metal$Result[
               Metal$Analyte == "mercury" & Metal$Unit == "ng/L"]/1000
           
         # Correct units
-          Metal$Unit[Metal$Analyte == "mercury" & Metal$Matrix == "water"] <- "ug/L"
+          Metal$Unit[Metal$Analyte == "mercury" & 
+                       Metal$Matrix == "water"] <- "ug/L"
     
           
     # Sediment - (19) ug/Kg dw	& (57) mg/Kg dw
@@ -366,7 +379,8 @@ Metal <- CEDENSURF %>% filter(SelectList == "Metal")
 
             # Convert ug to mg
               Metal$Result[
-                Metal$Analyte == "mercury" & Metal$Unit == "ug/Kg dw"] <- Metal$Result[
+                Metal$Analyte == "mercury" & 
+                  Metal$Unit == "ug/Kg dw"] <- Metal$Result[
                   Metal$Analyte == "mercury" & Metal$Unit == "ug/Kg dw"]/1000
               
             # Correct units
@@ -390,14 +404,18 @@ Metal %>%
 ```
 
 ```
-## # A tibble: 4 x 5
-## # Groups:   Analyte, Matrix [4]
-##   Analyte  Matrix   Unit         n    mean
-##   <chr>    <chr>    <chr>    <int>   <dbl>
-## 1 mercury  sediment mg/Kg dw    76 0.111  
-## 2 mercury  water    ug/L       215 0.00545
-## 3 selenium sediment mg/Kg dw    38 0.251  
-## 4 selenium water    ug/L       208 0.302
+## # A tibble: 8 x 5
+## # Groups:   Analyte, Matrix [8]
+##   Analyte  Matrix   Unit         n      mean
+##   <chr>    <chr>    <chr>    <int>     <dbl>
+## 1 cadmium  sediment mg/Kg dw    78   0.275  
+## 2 cadmium  water    ug/L       314   0.0135 
+## 3 copper   sediment mg/Kg dw    92  37.7    
+## 4 copper   water    ug/L       586   4.33   
+## 5 mercury  sediment mg/Kg dw    76   0.111  
+## 6 mercury  water    ug/L       215   0.00545
+## 7 selenium sediment ug/Kg dw    38 251.     
+## 8 selenium water    ug/L       208   0.302
 ```
 
 
@@ -1153,16 +1171,210 @@ write.csv(x = Wide.GABA.Waterdf , file = "Data/Output/WideSubsets/GABA.Wide.wate
 
 <br>
 
+### Late: ddt, thiobencarb, dinoseb, triclopyr, molinate
+
+Chemicals that we have tox data for, but which were not in the original conceptual model. I need to talk with Allie about how to categorize them too; from what I can tell...
+
+DDT = organochlorine (have category for organophosphates...)
+Thiobencarb = monochlorobenzene 
+Dinoseb = dinitrophenol (banned in US)
+Triclopyr = Pyridine
+Molinate = azepane (banned in US)
+
+
+```r
+Late <- CEDENSURF %>% filter(SelectList == "Late")
+
+Late %>%
+  group_by(Analyte, Matrix, Unit) %>%
+  summarise(n = n(),
+            mean = mean(Result))
+```
+
+```
+## `summarise()` has grouped output by 'Analyte', 'Matrix'. You can override using the `.groups` argument.
+```
+
+```r
+# ddt
+
+  # Sediment:	ppb	and ng/g dw, and ug/kg	(equivalent units)
+    Late %>% filter(Analyte == "ddt") %>% 
+          filter(Matrix == "sediment") %>% distinct(Unit)
+    Late$Unit[Late$Analyte == "ddt" &
+                           Late$Matrix == "sediment"] <- "ppb"
+
+  # Water: ng/L, ug/L, ppb
+    Late %>% filter(Analyte == "ddt") %>% 
+      filter(Matrix == "water") %>% distinct(Unit)
+      
+      # ppb = pg/L / (1000*1000)
+      # ppb = ng/L / 1000
+      # ppb = ug/L
+        
+      # Convert pg/L to ppb
+        Late$Result[Late$Analyte == "ddt" &
+              Late$Unit == "pg/L"] <- Late$Result[
+                Late$Analyte == "ddt" &
+                Late$Unit == "pg/L"] /(1000*1000)
+        
+      # Convert ng/L to ppb
+        Late$Result[Late$Analyte == "ddt" &
+                  Late$Unit == "ng/L"] <- Late$Result[
+                    Late$Analyte == "ddt" &
+                    Late$Unit == "ng/L"] /1000
+      
+      # Correct units
+         Late$Unit[Late$Analyte == "ddt" &
+                      Late$Matrix == "water"] <- "ppb"
+```
+
+```r
+# dinoseb
+
+Late %>% filter(Analyte == "dinoseb") %>% 
+      filter(Matrix == "water") %>% distinct(Unit)
+
+  # Water: ng/L, ug/L
+      # ppb = pg/L / (1000*1000)
+      # ppb = ng/L / 1000
+      # ppb = ug/L
+        
+      # Convert ng/L to ppb
+        Late$Result[Late$Analyte == "dinoseb" &
+                  Late$Unit == "ng/L"] <- Late$Result[
+                    Late$Analyte == "dinoseb" &
+                    Late$Unit == "ng/L"] /1000
+      
+      # Correct units
+        Late$Unit[Late$Analyte == "dinoseb" &
+                      Late$Matrix == "water"] <- "ppb"
+```
+
+
+```r
+# molinate
+Late %>% filter(Analyte == "molinate") %>% 
+            filter(Matrix == "sediment") %>% 
+            distinct(Unit)
+
+Late %>% filter(Analyte == "molinate") %>% 
+            filter(Matrix == "water") %>% 
+            distinct(Unit)
+
+  # Water: ng/L, ug/L, ppb
+      # ppb = pg/L / (1000*1000)
+      # ppb = ng/L / 1000
+      # ppb = ug/L
+        
+      # Convert ng/L to ppb
+        Late$Result[Late$Analyte == "molinate" &
+                  Late$Unit == "ng/L"] <- Late$Result[
+                    Late$Analyte == "molinate" &
+                    Late$Unit == "ng/L"] /1000
+      
+      # Correct units
+         Late$Unit[Late$Analyte == "molinate" &
+                      Late$Matrix == "water"] <- "ppb"
+```
+
+
+```r
+# thiobencarb
+Late %>% filter(Analyte == "thiobencarb") %>% 
+          filter(Matrix == "sediment") %>% distinct(Unit)
+
+Late %>% filter(Analyte == "thiobencarb") %>% 
+      filter(Matrix == "water") %>% distinct(Unit)
+
+  # Water: ng/L, ug/L, ppb
+      
+      # ppb = pg/L / (1000*1000)
+      # ppb = ng/L / 1000
+      # ppb = ug/L
+        
+      # Convert pg/L to ppb
+        Late$Result[Late$Analyte == "thiobencarb" &
+              Late$Unit == "pg/L"] <- Late$Result[
+                Late$Analyte == "thiobencarb" &
+                Late$Unit == "pg/L"] /(1000*1000)
+        
+      # Convert ng/L to ppb
+        Late$Result[Late$Analyte == "thiobencarb" &
+                  Late$Unit == "ng/L"] <- Late$Result[
+                    Late$Analyte == "thiobencarb" &
+                    Late$Unit == "ng/L"] /1000
+      
+      # Correct units
+         Late$Unit[Late$Analyte == "thiobencarb" &
+                      Late$Matrix == "water"] <- "ppb"
+```
+
+
+```r
+# triclopyr
+Late %>% filter(Analyte == "triclopyr") %>% 
+      filter(Matrix == "water") %>% distinct(Unit)
+
+  # Water: ng/L, ug/L, ppb
+      
+      # ppb = pg/L / (1000*1000)
+      # ppb = ng/L / 1000
+      # ppb = ug/L
+        
+      # Convert pg/L to ppb
+        Late$Result[Late$Analyte == "triclopyr" &
+              Late$Unit == "pg/L"] <- Late$Result[
+                Late$Analyte == "triclopyr" &
+                Late$Unit == "pg/L"] /(1000*1000)
+        
+      # Convert ng/L to ppb
+        Late$Result[Late$Analyte == "triclopyr" &
+                  Late$Unit == "ng/L"] <- Late$Result[
+                    Late$Analyte == "triclopyr" &
+                    Late$Unit == "ng/L"] /1000
+      
+      # Correct units
+         Late$Unit[Late$Analyte == "triclopyr" &
+                      Late$Matrix == "water"] <- "ppb"
+```
+
+#### **Late Result**
+
+```r
+Late %>%
+  group_by(Analyte, Matrix, Unit) %>%
+  summarise(n = n(),
+            mean = mean(Result))
+```
+
+```
+## `summarise()` has grouped output by 'Analyte', 'Matrix'. You can override using the `.groups` argument.
+```
+
+```
+## # A tibble: 8 x 5
+## # Groups:   Analyte, Matrix [8]
+##   Analyte     Matrix   Unit      n        mean
+##   <chr>       <chr>    <chr> <int>       <dbl>
+## 1 ddt         sediment ppb     115 -0.0655    
+## 2 ddt         water    ppb     306  0.000196  
+## 3 dinoseb     water    ppb      97  0.0714    
+## 4 molinate    sediment ppb     218  0         
+## 5 molinate    water    ppb     555  0.00000955
+## 6 thiobencarb sediment ppb     264  0         
+## 7 thiobencarb water    ppb    1036  0.0166    
+## 8 triclopyr   water    ppb     379  0.00417
+```
+
+
+<br>
+
 ### Others: Glyphosate, Atrazine, Neonicitinoids  {.tabset}
 
 
 ```r
 Other <- CEDENSURF %>% filter(SelectList == c("Glyphosate", "Atrazine", "Neon"))
-```
-
-```
-## Warning in SelectList == c("Glyphosate", "Atrazine", "Neon"): longer object
-## length is not a multiple of shorter object length
 ```
 
 #### Neonicotinoids 
@@ -1279,10 +1491,10 @@ Other %>%
 ## # Groups:   Analyte, Matrix [4]
 ##   Analyte      Matrix   Unit      n    mean
 ##   <chr>        <chr>    <chr> <int>   <dbl>
-## 1 atrazine     sediment ppb      98 0      
-## 2 atrazine     water    ppb     472 0.00472
-## 3 glyphosate   water    ppb     232 0.829  
-## 4 imidacloprid water    ppb     224 0.00233
+## 1 atrazine     sediment ppb      88 0      
+## 2 atrazine     water    ppb     481 0.00199
+## 3 glyphosate   water    ppb     225 1.03   
+## 4 imidacloprid water    ppb     236 0.00199
 ```
 
 
@@ -1309,7 +1521,7 @@ write.csv(x = Wide.Other.Waterdf , file = "Data/Output/WideSubsets/Other.Wide.wa
 <br>
 
 
-### Save
+## Save Intermediate
 
 Compile and Save Modified Dataset (Long)
 
@@ -1317,14 +1529,22 @@ The file Data/Output/CEDENSURF_Limited_FixedUnits.csv contains all corrected uni
 
 
 ```r
-Limited <- rbind(WQP, GABA, Metal, OrganoP, Pyre, Other)
+Limited <- rbind(WQP, GABA, Metal, OrganoP, Pyre, Other, Late)
 
 write.csv(x = Limited, 
           file = "Data/Output/CEDENSURF_Limited_FixedUnits.csv", 
           na = "", row.names = F)
+
+# Save abbreviated template to use in 05_ToxUnits
+
+ToxUnits <- Limited %>% distinct(Analyte, Matrix, Unit, SelectList)
+write.csv(x = ToxUnits, 
+          file = "Data/Output/ToxUnitsTemplate.csv", 
+          na = "", row.names = F)
 ```
 
-## 3. Summarize into wide format
+
+# 3. Summarize into wide format
 
 I used pivot_wider to summarize analyte results by date and subregion within each matrix. 
 

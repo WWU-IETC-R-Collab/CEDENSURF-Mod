@@ -56,6 +56,11 @@ Start with the midpoint of 04_QAQC_Convert2Wide (long-format) because it is easi
 ```{r}
 # Load CEDENSURF Limited Data (long format)
 Limited <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURF_Limited_FixedUnits.csv")
+
+Limited %>%
+  group_by(Analyte, Subregion) %>%
+  summarise(n = n(),
+            mean = mean(Result))
 ```
 Table containing Molar mass (Moles/g) of each analyte
 
