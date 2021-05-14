@@ -1,5 +1,5 @@
 ---
-title: "Toxicological Units Approach"
+title: "Toxic Units Approach"
 author: "Erika W"
 date: "5/1/2021"
 output:
@@ -51,7 +51,7 @@ The process will be:
 
 ## Load Data
 
-Start with the midpoint of 04_QAQC_Convert2Wide (long-format) because it is easiest to make these conversions *before* the conversion to wide-format.
+Start with the midpoint of 04_QAQC_Convert2Wide (long-format) because it is easiest to make these conversions *before* the conversion to wide-format:
 
 ```{r}
 # Load CEDENSURF Limited Data (long format)
@@ -62,7 +62,8 @@ Limited %>%
   summarise(n = n(),
             mean = mean(Result))
 ```
-Table containing Molar mass (Moles/g) of each analyte
+
+And a table containing Molar mass (Moles/g) of each analyte
 
 ```{r}
 # Load CEDENSURF Limited Data (long format)
@@ -120,6 +121,12 @@ ToxUnits<- ToxUnits %>%
 ```
 
 
+# 3. Convert to relative tox units
+
+Mikayla is compiling EC50 values for each analyte in the model. Once those are obtained, we can merge with the existing data and divide by X to obtain relative toxic units within each category.
+
+# 4. Compile and Save
+
 ```{r}
 # Add back on WQP Units
 WQP <- Limited %>% filter(SelectList == "WQP")
@@ -128,7 +135,7 @@ ToxUnits <- rbind(ToxUnits, WQP)
 
 # Save?
 write.csv(x = ToxUnits, 
-          file = "Data/Output/CEDENSURFLimited_ToxUnits.csv", 
+          file = "Data/Output/CEDENSURFLimited_ToxUnits.csv",
           na = "", row.names = F)
 ```
 
