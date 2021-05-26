@@ -43,6 +43,31 @@ Because NETICA requires the nodes to be columns, this data needs to be transform
 # Load data
 CEDENSURF <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURF_Limited.csv") %>% select(Analyte, Result, Unit,CollectionMethod, Matrix, Date, Subregion, StationName, Latitude, Longitude,SelectList)
 ```
+We realized there are 213 records with negative concentrations. This could be an error of the researchers calibration equations, or otherwise, but at this point the safest assumption would be to assign those 0-results. 
+
+```{r}
+# How many records have <0 results?
+
+CEDENSURF %>% filter(Result < 0) %>% nrow(.) # 213 records out of 44,000 with negative values
+
+# Create subset of just those negative results
+
+Negative <- CEDENSURF %>% filter(Result < 0)
+
+# summary(Negative$Result) # preview range and average
+
+# Set all negative results to 0
+
+Negative$Result <- 0
+
+# Remove negative results from original dataframe
+
+CEDENSURF <- CEDENSURF %>% filter(!Result < 0) 
+
+# Bind back on records with negatives converted to 0
+
+CEDENSURF<- rbind(CEDENSURF, Negative)
+```
 
 <br/>
 
