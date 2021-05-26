@@ -56,6 +56,7 @@ AnalyteList <- sort(unique(CEDENSURF$Analyte)) #1053 records
 
 #### Append from Selection Lists
 
+Defined analyte categories based on the conceptual model provided
 
 ```r
 ## Used grepl() to help find all Analytes that matched the conceptual model, ie: AnalyteList[(grepl("nitr", AnalyteList))
@@ -111,27 +112,76 @@ GABA_SelectList <- AnalyteList[grepl('fipronil', AnalyteList)] # THIS IS THE SAM
 
 CEDENSURF$SelectList[CEDENSURF$Analyte %in% GABA_SelectList] <- "GABA"
 
-## Glyphosate (it's only one!)
+## Glyphosate: In conceptual model alone, though it's a herbicide (organophosphorous compound)
 
 CEDENSURF$SelectList[CEDENSURF$Analyte == "glyphosate"] <- "Glyphosate"
 
-## Atrazine
+## Atrazine: In conceptual model alone, though it's a herbicide
 
 Atraz_SelectList <-  c("atrazine", "atrazine degradate")
 # Chose to omit single records: "desethyl-atrazine""desisopropyl-atrazine", "hydroxyatrazine","hydroxyatrazine, 2-" )
 
 CEDENSURF$SelectList[CEDENSURF$Analyte %in% Atraz_SelectList] <- "Atrazine"
+```
 
 
-## Late Additions bc available tox data
+We later added additional categories to account for chemicals that were identified in the Year 1 Report as problematic and / or exceeding USEPA Aquatic Life Benchmarks:
 
-      # Tox available for DDT / Dichlorodiphenyltrichloroethane
+
+
+```r
+## Late Additions bc in YEAR 1 REPORT
+
+    # DDT / Dichlorodiphenyltrichloroethane (and Tox available)
 
         ## Find names:
-        # AnalyteList[(grepl("ddt", AnalyteList))]
+        AnalyteList[(grepl("dd", AnalyteList))]
+```
+
+```
+##  [1] "ddd(o,p')"                   "ddd(p,p')"                  
+##  [3] "dde(o,p')"                   "dde(p,p')"                  
+##  [5] "ddmu(p,p')"                  "ddt(o,p')"                  
+##  [7] "ddt(p,p')"                   "ddvp"                       
+##  [9] "dechlorane plus mono adduct" "hpcdd"                      
+## [11] "hxcdd"                       "ocdd"                       
+## [13] "pecdd"                       "tcdd"
+```
+
+```r
         ## make names consistent
         CEDENSURF$Analyte[CEDENSURF$Analyte == "ddt(o,p')" |
-                        CEDENSURF$Analyte == "ddt(p,p')"] <- "ddt"
+                        CEDENSURF$Analyte == "ddt(p,p')"] <- "ddt" # 421
+
+        CEDENSURF$Analyte[CEDENSURF$Analyte == "ddd(o,p')" |
+                        CEDENSURF$Analyte == "ddd(p,p')"] <- "ddd" # 444
+        
+        CEDENSURF$Analyte[CEDENSURF$Analyte == "dde(o,p')" |
+                        CEDENSURF$Analyte == "dde(p,p')"] <- "dde"  # 444      
+    # Endosulfan has two isomers (endo and exosulfan, or endosulfan i and  endosulfan ii). It is acutely toxic with a high potential to bioaccumulate, and therefore is being phased out of agriculture.
+    AnalyteList[(grepl("duran", AnalyteList))]
+```
+
+```
+## character(0)
+```
+
+```r
+    CEDENSURF$Analyte[CEDENSURF$Analyte == "alpha-endosulfan" |
+                        CEDENSURF$Analyte == "exosulfan"|
+                        CEDENSURF$Analyte == "endosulfan ii"|
+                        CEDENSURF$Analyte == "endosulfan i"] <- "endosulfan"
+    
+    # Herbicides tested > USEPA Aquatic Life Benchmarks: Diuron, thiobencarb, propanil, 2,4-d, thiobencarb, glyphosate, atrazine
+      
+      #AnalyteList[(grepl("propanil", AnalyteList))]
+      # nrow(CEDENSURF[CEDENSURF$Analyte == "diuron"]) #1729
+      # nrow(CEDENSURF[CEDENSURF$Analyte == "thiobencarb"]) # 1300
+      # nrow(CEDENSURF[CEDENSURF$Analyte == "propanil"]) # 1057
+      # nrow(CEDENSURF[CEDENSURF$Analyte == "2,4-d"]) #96 - insufficient coverage
+     
+     
+## Late Additions bc available tox data
 
       # Tox available for dinoseb aka dinitrophenol
         ## Find names:
@@ -148,13 +198,21 @@ CEDENSURF$SelectList[CEDENSURF$Analyte %in% Atraz_SelectList] <- "Atrazine"
                         CEDENSURF$Analyte == "dinitrophenol"] <- "dinoseb"
         
       # Tox available for triclopyr / garlon (only one name)
-      # Tox available for thiobencarb (only one name)
-      # Tox available for molinate (only one name). 
-          # Too few records of degradate (4-hydroxy molinate) to include
-      
-Late_SelectList <- c("ddt","thiobencarb", "dinoseb", "triclopyr", "molinate")
 
-CEDENSURF$SelectList[CEDENSURF$Analyte %in% Late_SelectList] <- "Late"
+      # Tox available for molinate (only one name). 
+          # nrow(CEDENSURF[CEDENSURF$Analyte == "molinate"]) # 773
+          # Too few records of degradate (4-hydroxy molinate) to include
+        
+     
+Herb_SelectList <- c("thiobencarb", "dinoseb", "triclopyr", 
+                     "molinate", "diuron", "propanil")
+
+CEDENSURF$SelectList[CEDENSURF$Analyte %in% Herb_SelectList] <- "Herbicide"
+
+OrganoCh_SelectList <- c("ddt","ddd","dde", 
+                         "endosulfan", "endosulfan sulfate")
+
+CEDENSURF$SelectList[CEDENSURF$Analyte %in% OrganoCh_SelectList] <- "OrganoCh"
 ```
 
 #### Save categories assigned to analytes
@@ -178,7 +236,7 @@ write.csv(x = AnalyteTable,
 CEDENSURF<- CEDENSURF %>% filter(!is.na(SelectList))
 ```
 
-The result is 39831 records, all appended with appropriate selection categories according to the conceptual model
+The result is 44086 records, all appended with appropriate selection categories according to the conceptual model
 
 
 ```r
@@ -277,7 +335,7 @@ head(CEDENSURF2 %>% select(Date, Analyte, Result, StationName, SelectList))
 ## 6:   Atrazine
 ```
 
-The result is 39831 records, all appended with appropriate selection categories according to the conceptual model
+The result is 44086 records, all appended with appropriate selection categories according to the conceptual model
 
 <br>
 

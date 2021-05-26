@@ -202,8 +202,8 @@
 "pbde 207",
 "pbde 209",
 "pcb 093",
-"ddd(o,p')",
-"ddt","Late"
+"ddd","OrganoCh"
+"ddt","OrganoCh"
 "hch",
 "heptachlor epoxide",
 "heptachlor",
@@ -312,18 +312,16 @@
 "aldrin",
 "pbde 075",
 "pbde 079",
-"dde(p,p')",
+"dde","OrganoCh"
 "pbde 035",
 "pbde 085",
 "acenaphthylene",
 "fluoranthene",
 "total organic carbon",
 "pbde 119",
-"dde(o,p')",
 "cyfluthrin","Pyrethroids"
 "silver",
 "pbde 205",
-"ddd(p,p')",
 "endrin",
 "fipronil desulfinyl","GABA"
 "selenium","Metal"
@@ -343,18 +341,18 @@
 "nonylphenol",
 "linuron",
 "dicamba",
-"diuron",
+"diuron","Herbicide"
 "oryzalin",
 "atrazine","Atrazine"
 "simazine",
 "oxyfluorfen",
 "trifluralin",
 "dichlorophenoxyacetic acid",
-"triclopyr","Late"
+"triclopyr","Herbicide"
 "dacthal",
 "mcpa",
 "paraquat",
-"thiobencarb","Late"
+"thiobencarb","Herbicide"
 "hexazinone",
 "metolachlor",
 "tetraconazole",
@@ -374,13 +372,12 @@
 "pcb 107",
 "fipronil","GABA"
 "chlorpyrifos","OrganoP"
-"endosulfan ii",
+"endosulfan","OrganoCh"
 "benz(a)anthracenes/chrysenes",
 "cyanide",
 "hardness as caco3",
 "diazinon","OrganoP"
-"endosulfan i",
-"endosulfan sulfate",
+"endosulfan sulfate","OrganoCh"
 "bentazon",
 "picloram",
 "dichlorophenoxybutyric acid",
@@ -389,11 +386,11 @@
 "clothianidin",
 "ethalfluralin",
 "imidacloprid","Neon"
-"propanil",
+"propanil","Herbicide"
 "trichlorophenoxyacetic acid",
 "alachlor",
 "thiamethoxam",
-"dinoseb","Late"
+"dinoseb","Herbicide"
 "fluridone",
 "dichloropropionic acid",
 "carbofuran",
@@ -773,7 +770,7 @@
 "ametryn",
 "desethyl-atrazine",
 "pyrethrin-2",
-"molinate","Late"
+"molinate","Herbicide"
 "simetryn",
 "jasmolin-1",
 "atraton",
@@ -998,7 +995,6 @@
 "chlorthal-dimethyl",
 "profenofos",
 "phorate sulfoxide",
-"endosulfan",
 "4-hydroxy molinate",
 "metolachlor oxa (oxanilic acid)",
 "benefin",
@@ -1048,5 +1044,4 @@
 "isoxaben",
 "s-metolachlor",
 "bensulide",
-"alpha-endosulfan",
 "vinclozolin",
