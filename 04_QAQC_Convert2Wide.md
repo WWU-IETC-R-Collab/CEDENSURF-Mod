@@ -1721,6 +1721,10 @@ OrganoCh %>%
       # Correct units
          OrganoCh$Unit[OrganoCh$Analyte == "endosulfan sulfate" &
                       OrganoCh$Matrix == "water"] <- "ppb"
+         
+      # Name fix
+        OrganoCh$Analyte[OrganoCh$Analyte == 
+                       "endosulfan sulfate"] <- "endosulfan_sulfate"
 ```
 
 #### **OrganoChloride Result**
@@ -1749,8 +1753,8 @@ OrganoCh %>%
 ##  6 ddt                water    ppb     306  0.000196
 ##  7 endosulfan         sediment ppb     106 -0.0279  
 ##  8 endosulfan         water    ppb     333  0.00168 
-##  9 endosulfan sulfate sediment ppb      45  0       
-## 10 endosulfan sulfate water    ppb      97  0.000633
+##  9 endosulfan_sulfate sediment ppb      45  0       
+## 10 endosulfan_sulfate water    ppb      97  0.000633
 ```
 
 <br>

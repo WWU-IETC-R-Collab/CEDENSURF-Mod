@@ -69,6 +69,6 @@
 "endosulfan","ppb","water","OrganoCh"
 "dde","ppb","water","OrganoCh"
 "ddt","ppb","water","OrganoCh"
-"endosulfan sulfate","ppb","water","OrganoCh"
-"endosulfan sulfate","ppb","sediment","OrganoCh"
+"endosulfan_sulfate","ppb","water","OrganoCh"
+"endosulfan_sulfate","ppb","sediment","OrganoCh"
 "endosulfan","ppb","sediment","OrganoCh"

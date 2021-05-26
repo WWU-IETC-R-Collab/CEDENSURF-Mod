@@ -1427,6 +1427,10 @@ OrganoCh %>%
       # Correct units
          OrganoCh$Unit[OrganoCh$Analyte == "endosulfan sulfate" &
                       OrganoCh$Matrix == "water"] <- "ppb"
+         
+      # Name fix
+        OrganoCh$Analyte[OrganoCh$Analyte == 
+                       "endosulfan sulfate"] <- "endosulfan_sulfate"
 ```
 
 #### **OrganoChloride Result**
