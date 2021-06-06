@@ -127,14 +127,59 @@ SURF.Sed.sf <- st_join(SURF.Sed.sf, USFE.RiskRegions[1], left = T) %>%
 SURF.WQ.sf <- st_join(SURF.WQ.sf, USFE.RiskRegions[1], left = T) %>%
   filter(!is.na(Subregion))
 ```
+
 After temporal and spatial query, there are 35,346 records in SURF.sediment, and 91,021 records in SURF.water
+
+#### Transform to NAD83
+
+Transform the sf to NAD83, and store the new coordinates in another column. The difference between WGS83 and NAD83 does not appear to have changed any coordinates
+```{r}
+#### Transform to match CEDEN coordinate system
+
+# Transform data to NAD83 (same coordinate system as CEDENSURF)
+SURF.Sed.sf <- SURF.Sed.sf %>% 
+  st_transform(., "NAD83") %>% 
+  mutate(Datum = "NAD83")
+
+SURF.WQ.sf <- SURF.WQ.sf %>% 
+  st_transform(., "NAD83")%>% 
+  mutate(Datum = "NAD83")
+```
+
+We thought about redefining the coordinates (latitude and longitude) so that they would reflect the transformed coordinate system. Using the code below, I found that none of the coordinates changed.
+
+```{r, eval = F}
+st_crs(SURF.Sed.sf)
+
+# Store coordinates for that projection in new columns
+Sed.check <- SURF.Sed.sf %>% 
+  dplyr::mutate(long_NAD83 = sf::st_coordinates(.)[,1],
+                lat_NAD83 = sf::st_coordinates(.)[,2])
+
+WQ.check <- SURF.WQ.sf %>% 
+  dplyr::mutate(long_NAD83 = sf::st_coordinates(.)[,1],
+                lat_NAD83 = sf::st_coordinates(.)[,2])
+
+Check <- Sed.check %>% st_set_geometry(NULL) %>%
+  distinct(StationName, .keep_all= TRUE) %>% 
+  select(Latitude, Longitude, lat_NAD83,long_NAD83, StationName)
+
+subset(Check, Longitude != long_NAD83) # no results where latitudes (or long) don't match
+
+Check <- WQ.check %>% st_set_geometry(NULL) %>%
+  distinct(StationName, .keep_all= TRUE) %>% 
+  select(Latitude, Longitude, lat_NAD83,long_NAD83, StationName)
+
+subset(Check, Latitude != lat_NAD83) # no results where latitudes (or long) don't match
+```
+
 
 #### Save modified data
 
 ```{r}
 # Export SURF Tables
-write_csv(SURF.WQ.sf, "Data/Output/SURFMod_water.csv") # Note: coerces empty data fields to NA
+write.csv(SURF.WQ.sf, "Data/Output/SURFMod_water.csv") # Note: coerces empty data fields to NA
 
-write_csv(SURF.Sed.sf, "Data/Output/SURFMod_SED.csv") # Note: coerces empty data fields to NA
+write.csv(SURF.Sed.sf, "Data/Output/SURFMod_SED.csv") # Note: coerces empty data fields to NA
 ```
 
