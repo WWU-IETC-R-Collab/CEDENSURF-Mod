@@ -118,7 +118,19 @@ unzip_shape <- function(InputShapeZip){
 }
 
 USFE.RiskRegions <- unzip_shape(USFE.RiskRegions.z) # CRS is WGS 84
+```
 
+```
+## Reading layer `RiskRegions_DWSC_Update_9292020' from data source `C:\Users\Erika\AppData\Local\Temp\Rtmp0Gj1Pv\file21e075bd7f58\RiskRegions_DWSC_Update_9292020.shp' using driver `ESRI Shapefile'
+## Simple feature collection with 6 features and 6 fields
+## geometry type:  POLYGON
+## dimension:      XYZ
+## bbox:           xmin: -122.1431 ymin: 37.62499 xmax: -121.1967 ymax: 38.58916
+## z_range:        zmin: 0 zmax: 0
+## geographic CRS: WGS 84
+```
+
+```r
 #### Spatially query data within the project boundaries
 
 # SURF Sed
@@ -182,9 +194,11 @@ subset(Check, Latitude != lat_NAD83) # no results where latitudes (or long) don'
 
 
 ```r
-# Export SURF Tables
-write.csv(SURF.WQ.sf, "Data/Output/SURFMod_water.csv") # Note: coerces empty data fields to NA
+# write.csv is confused by the comma in "geometry" and will separate them to two columns. write_csv is faster, and can handle commas in columns correctly
 
-write.csv(SURF.Sed.sf, "Data/Output/SURFMod_SED.csv") # Note: coerces empty data fields to NA
+# Export SURF Tables
+write_csv(SURF.WQ.sf, "Data/Output/SURFMod_water.csv") # Note: coerces empty data fields to NA
+
+write_csv(SURF.Sed.sf, "Data/Output/SURFMod_SED.csv") # Note: coerces empty data fields to NA
 ```
 

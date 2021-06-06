@@ -9,7 +9,8 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval = F)
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
 ```
 
 ```{r}
@@ -177,9 +178,11 @@ subset(Check, Latitude != lat_NAD83) # no results where latitudes (or long) don'
 #### Save modified data
 
 ```{r}
-# Export SURF Tables
-write.csv(SURF.WQ.sf, "Data/Output/SURFMod_water.csv") # Note: coerces empty data fields to NA
+# write.csv is confused by the comma in "geometry" and will separate them to two columns. write_csv is faster, and can handle commas in columns correctly
 
-write.csv(SURF.Sed.sf, "Data/Output/SURFMod_SED.csv") # Note: coerces empty data fields to NA
+# Export SURF Tables
+write_csv(SURF.WQ.sf, "Data/Output/SURFMod_water.csv") # Note: coerces empty data fields to NA
+
+write_csv(SURF.Sed.sf, "Data/Output/SURFMod_SED.csv") # Note: coerces empty data fields to NA
 ```
 
