@@ -460,7 +460,8 @@ It seems to only detect 11 duplicates, while there are 28100 labeled in SURF as 
 
 Because all values in SURF are in units PPB, while units of records in CEDEN vary, those results cannot be expected to be identical. 
 
-We must assume that records of the same analyte collected by the same method on the same date at the same station are duplicates. Through this, we find 30,608 duplicates - just over the number expected given those labeled as from CEDEN. 
+We must assume that records of the same analyte collected by the same method on the same date at the same station are duplicates. Through this, we find 30,608 duplicates - just over the number expected given those labeled as from CEDEN.
+
 
 ```r
 # Remove duplicate rows of the dataframe using multiple variables
@@ -494,7 +495,7 @@ C. Should review the projection method between these datasets, and the code to c
 
 D. We should go through and unify these as much as possible, or folks should simply be aware of this and convert within their subsets prior to analysis. May have to happen manually (ie: in original Mod documents for each dataset, subset these units, run conversion on result)
 
-Temperature in SURF will be labeled as ppb, because rather than a "unit" column, their results column was "concentration..ppb" - implying that all results were converted prior to storing in the database.
+In SURF, rather than a "unit" column, their results column was "concentration..ppb" - implying that all results were converted prior to storing in the database.
 
 
 ```r
