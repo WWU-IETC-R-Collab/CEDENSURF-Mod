@@ -56,31 +56,48 @@ Start with the midpoint of 04_QAQC_Convert2Wide (long-format) because it is easi
 ```{r}
 # Load CEDENSURF Limited Data (long format)
 Limited <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURF_Limited_FixedUnits.csv")
-
-Limited %>%
-  group_by(Analyte, Subregion) %>%
-  summarise(n = n(),
-            mean = mean(Result))
+            
 ```
 
-And a table containing Molar mass (Moles/g) of each analyte
+```{r, eval = F}
+# Check coverage for each analyte. 
+Limited2<- Limited %>%
+  group_by(Analyte,Matrix) %>%
+  summarise(coverage = (length(unique(Subregion))),
+            n = n(),
+            mean = mean(Result)) 
+
+Limited2
+
+# How many analytes*matrix combinations are measured in at least 5 subregions?
+Limited2 %>% filter(coverage >= 5) %>% nrow(.)
+
+# 51 Out of 86
+```
+
+And tables containing Molar mass (Moles/g) of each analyte, and EC50 values for each analyte
 
 ```{r}
 # Load CEDENSURF Limited Data (long format)
 MM <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/MolarMass.csv")
+
+# EC_Table <- fread("")
 ```
+<br/>
 
 ## 2. Convert to Moles/Concentration
 
-Those molar masses will be used to convert units of every chemical analyte (not water quality parameters) to micromoles per liter (water) or micromoles per kg of sediment. Aim is to have μM/ug
+Those molar masses will be used to convert units of every chemical analyte (not water quality parameters) to micromoles per liter (water) or micromoles per kg of sediment. Aim is to have nM/ug
 
   1. Merge table with MM and CEDENSURF Limited data
   
-  2. Divide by molar weight to obtain micro-Moles per volume
+  2. Divide by molar weight to obtain nano-Moles per volume
 
 Each analyte is currently in micrograms per volume. That means that I can simply multiply each result by molar weight to obtain micro-Moles per volume
 
 (μg/L) * (μM/ug) = μM/L
+
+(ug/L) * (1000 ng/ug) * (nM/ng) = nM/L
 
 **Starting Units**
 - ppb
@@ -90,23 +107,29 @@ Each analyte is currently in micrograms per volume. That means that I can simply
 1 ppb = 1 μg/L = 1 μg/Kg
 
 **Divide by MM then multiply by 1000 to convert to nM**
-- g/Mole (μg/μM) * 1000nM/μM
+- g/Mole (μg/μM) * 1000 nM/μM
 
-**Ending Units = nanomoles per liter (nM)**
+**Ending Units = nanomoles per liter (pM)**
 Water:    nM/L
 Sediment: nM/Kg dw
 
-```{r}
+```{r, result = 'hide'}
 # Left bind to merge MolarMass column into long data, then remove WQP parameters that won't undergo this process
 
 # Merge
 ToxUnits <- merge(Limited, MM, by = "Analyte") %>% filter(!SelectList == "WQP")
 
+# Check that each analyte recieved MW - GOOD.
+ToxUnits %>%
+  group_by(Analyte) %>%
+  summarise(n = n(),
+            MW = mean(MW))
+
 # Convert
 ToxUnits<- ToxUnits %>% 
   
-  # Convert to uM
-  mutate(Result_M = Result/MolarMass*1000) %>% 
+  # Convert to nM
+  mutate(Result_M = Result*1000/MW) %>% 
   select(!Result) %>% mutate(Result = Result_M) %>%
   
   # Define units
@@ -120,23 +143,101 @@ ToxUnits<- ToxUnits %>%
          CollectionMethod, SelectList)
 ```
 
+<br/>
 
 # 3. Convert to relative tox units
 
 Mikayla is compiling EC50 values for each analyte in the model. Once those are obtained, we can merge with the existing data and divide by X to obtain relative toxic units within each category.
 
-# 4. Compile and Save
+Because the EC50 is organism specific, we will have a separate table output for each organism?
+
+
+```{r, eval=F}
+
+### DONT HAVE EC50 YET, BUT WILL SOON
+
+# Merge
+ToxUnits <- merge(ToxUnits, EC50, by = "Analyte")
+
+# Convert
+ToxUnits<- ToxUnits %>% 
+  
+  # Divide by EC50 to convert to Tox Units. 
+ 
+  mutate(ToxUnit = Result/EC50) # Multiply by 1000 if too small of numbers to record? Be sure to update mortality equations accordingly. 
+```
+
+<br/>
+
+
+# 4. Compile and Save Intermediate
 
 ```{r}
-# Add back on WQP Units
+# Add back on WQP Units? Makes more sense to keep fully separate, because will not sum WQP by the same. Will save together for this intermediate step. 
+
 WQP <- Limited %>% filter(SelectList == "WQP")
 
-ToxUnits <- rbind(ToxUnits, WQP)
+Limited_ToxUnits <- rbind(ToxUnits, WQP)
 
 # Save?
-write.csv(x = ToxUnits, 
+write.csv(x = Limited_ToxUnits, 
           file = "Data/Output/CEDENSURFLimited_ToxUnits.csv",
           na = "", row.names = F)
 ```
 
 
+# 5. Sum by location and date, within category
+
+Each analyte must then be averaged by date*subregion combination, then toxic units summed within category. 
+
+This wide output will not include WQP, because those parameters were retained with separate units and will not be summed by category.
+
+```{r, eval = F}
+# Two analytes were not categorized in the conceptual model for some reason - ask why. If we want to group them with their chemical class, then remove eval = F in the header of this code block
+
+# Glyphosate, an organic phosphorous compoud (phosphonate) is a broad spectrum herbicide. 
+
+# Atrazine is also a broad spectrub herbicide
+
+ToxUnits$SelectList[ToxUnits$Analyte == "glyphosate" | ToxUnits$Analyte == "atrazine"] <- "Herbicide"
+
+unique(ToxUnits$SelectList)
+```
+
+
+```{r}
+# TEST TEST TEST how does this work
+# Method successful using raw data. Replace LIMITED with Tox df and re-test
+
+# START: ToxUnits (n = 48720)
+
+# Obtain average result for each analyte at a given location
+Tox.mean <- ToxUnits %>% 
+  group_by(Date, Analyte, Subregion, Latitude, Longitude, 
+           Matrix, SelectList, Unit) %>% 
+  summarise(Mean = mean(Result, na.rm = T)) %>%
+  ungroup()
+# AFTER AVERAGE, n = 40788
+
+# Sum those analytes at that location within each category
+Tox.mean <- Tox.mean %>% 
+  group_by(Date, Subregion, Latitude, Longitude, 
+           Matrix, SelectList, Unit) %>% 
+  summarise(SumResults = sum(Mean))%>%
+  ungroup()
+# AFTER SUM, n = 22238
+
+# Then, convert to WIDE
+Wide.df <- Tox.mean %>%
+  
+  group_by(Date, Subregion, SelectList, Matrix) %>%
+  
+  summarize(Subregion = first(Subregion),
+            SumToxUnit = mean(SumResults, na.rm = T)) %>%
+  
+  pivot_wider(names_from = SelectList,
+              names_repair = "check_unique",
+              values_from = SumToxUnit) # Values to fill columns
+
+head(Wide.df)
+```
