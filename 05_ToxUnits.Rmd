@@ -204,36 +204,42 @@ ToxUnits$SelectList[ToxUnits$Analyte == "glyphosate" | ToxUnits$Analyte == "atra
 unique(ToxUnits$SelectList)
 ```
 
+In Wayne's email 4/5/2021 8:28 pm, he provided a data format for BN derivation. It recommended each case should be a combination of date * location within the risk region. 
 
 ```{r}
 # TEST TEST TEST how does this work
 # Method successful using raw data. Replace LIMITED with Tox df and re-test
 
-# START: ToxUnits (n = 48720)
+# START: ToxUnits (n = 32237)
 
 # Obtain average result for each analyte at a given location
 Tox.mean <- ToxUnits %>% 
-  group_by(Date, Analyte, Subregion, Latitude, Longitude, 
-           Matrix, SelectList, Unit) %>% 
+  group_by(Date, Analyte, Subregion, 
+           Latitude, Longitude, Matrix, 
+           SelectList, Unit) %>% 
   summarise(Mean = mean(Result, na.rm = T)) %>%
   ungroup()
-# AFTER AVERAGE, n = 40788
+# AFTER AVERAGE, n = 24807
+
 
 # Sum those analytes at that location within each category
 Tox.mean <- Tox.mean %>% 
-  group_by(Date, Subregion, Latitude, Longitude, 
+  group_by(Date, Subregion, 
+           Latitude, Longitude, 
            Matrix, SelectList, Unit) %>% 
   summarise(SumResults = sum(Mean))%>%
   ungroup()
-# AFTER SUM, n = 22238
+# AFTER SUM, n = 8925
+# nrow(Tox.mean)
 
 # Then, convert to WIDE
 Wide.df <- Tox.mean %>%
-  
-  group_by(Date, Subregion, SelectList, Matrix) %>%
-  
+  group_by(Date, Subregion, 
+           Latitude, Longitude, 
+           SelectList, Matrix, Unit) %>%
   summarize(Subregion = first(Subregion),
-            SumToxUnit = mean(SumResults, na.rm = T)) %>%
+            Unit = first(Unit),
+            SumToxUnit = SumResults) %>%
   
   pivot_wider(names_from = SelectList,
               names_repair = "check_unique",

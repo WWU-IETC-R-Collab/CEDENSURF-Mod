@@ -227,18 +227,20 @@ ToxUnits$SelectList[ToxUnits$Analyte == "glyphosate" | ToxUnits$Analyte == "atra
 unique(ToxUnits$SelectList)
 ```
 
+In Wayne's email 4/5/2021 8:28 pm, he provided a data format for BN derivation. It recommended each case should be a combination of date * location within the risk region. 
 
 
 ```r
 # TEST TEST TEST how does this work
 # Method successful using raw data. Replace LIMITED with Tox df and re-test
 
-# START: ToxUnits (n = 48720)
+# START: ToxUnits (n = 32237)
 
 # Obtain average result for each analyte at a given location
 Tox.mean <- ToxUnits %>% 
-  group_by(Date, Analyte, Subregion, Latitude, Longitude, 
-           Matrix, SelectList, Unit) %>% 
+  group_by(Date, Analyte, Subregion, 
+           Latitude, Longitude, Matrix, 
+           SelectList, Unit) %>% 
   summarise(Mean = mean(Result, na.rm = T)) %>%
   ungroup()
 ```
@@ -248,11 +250,13 @@ Tox.mean <- ToxUnits %>%
 ```
 
 ```r
-# AFTER AVERAGE, n = 40788
+# AFTER AVERAGE, n = 24807
+
 
 # Sum those analytes at that location within each category
 Tox.mean <- Tox.mean %>% 
-  group_by(Date, Subregion, Latitude, Longitude, 
+  group_by(Date, Subregion, 
+           Latitude, Longitude, 
            Matrix, SelectList, Unit) %>% 
   summarise(SumResults = sum(Mean))%>%
   ungroup()
@@ -263,15 +267,17 @@ Tox.mean <- Tox.mean %>%
 ```
 
 ```r
-# AFTER SUM, n = 22238
+# AFTER SUM, n = 8925
+# nrow(Tox.mean)
 
 # Then, convert to WIDE
 Wide.df <- Tox.mean %>%
-  
-  group_by(Date, Subregion, SelectList, Matrix) %>%
-  
+  group_by(Date, Subregion, 
+           Latitude, Longitude, 
+           SelectList, Matrix, Unit) %>%
   summarize(Subregion = first(Subregion),
-            SumToxUnit = mean(SumResults, na.rm = T)) %>%
+            Unit = first(Unit),
+            SumToxUnit = SumResults) %>%
   
   pivot_wider(names_from = SelectList,
               names_repair = "check_unique",
@@ -279,7 +285,7 @@ Wide.df <- Tox.mean %>%
 ```
 
 ```
-## `summarise()` has grouped output by 'Date', 'Subregion', 'SelectList'. You can override using the `.groups` argument.
+## `summarise()` has grouped output by 'Date', 'Subregion', 'Latitude', 'Longitude', 'SelectList', 'Matrix'. You can override using the `.groups` argument.
 ```
 
 ```r
@@ -287,16 +293,16 @@ head(Wide.df)
 ```
 
 ```
-## # A tibble: 6 x 12
-## # Groups:   Date, Subregion [6]
-##   Date       Subregion Matrix Herbicide   Metal OrganoCh  OrganoP Pyrethroids
-##   <date>     <chr>     <chr>      <dbl>   <dbl>    <dbl>    <dbl>       <dbl>
-## 1 2009-10-06 Central ~ water      0     8.86e-1   0       0          NA      
-## 2 2009-10-06 Sacramen~ water      0.651 2.01e+1   0.0484  0.284       0.00176
-## 3 2009-10-06 South De~ water      0     1.26e+1   0       0          NA      
-## 4 2009-10-13 Sacramen~ water      1.25  1.74e+1   0.0484  0.00925     0.00176
-## 5 2009-10-16 Confluen~ water     NA     1.15e-3  NA      NA          NA      
-## 6 2009-11-10 Central ~ water      0     8.57e+0   0       0          NA      
-## # ... with 4 more variables: Atrazine <dbl>, Glyphosate <dbl>, GABA <dbl>,
-## #   Neon <dbl>
+## # A tibble: 6 x 15
+## # Groups:   Date, Subregion, Latitude, Longitude, Matrix [6]
+##   Date       Subregion Latitude Longitude Matrix Unit  OrganoCh Herbicide  Metal
+##   <date>     <chr>        <dbl>     <dbl> <chr>  <chr>    <dbl>     <dbl>  <dbl>
+## 1 2009-10-06 Central ~     38.0     -121. water  nM/L         0    NA     NA    
+## 2 2009-10-06 Central ~     38.1     -122. water  nM/L         0     0      0.886
+## 3 2009-10-06 Central ~     38.1     -121. water  nM/L         0    NA     NA    
+## 4 2009-10-06 Central ~     38.1     -121. water  nM/L         0    NA     NA    
+## 5 2009-10-06 Sacramen~     38.4     -122. water  nM/L        NA     0     NA    
+## 6 2009-10-06 Sacramen~     38.4     -122. water  nM/L        NA     0.610 15.6  
+## # ... with 6 more variables: OrganoP <dbl>, Pyrethroids <dbl>, Atrazine <dbl>,
+## #   Glyphosate <dbl>, GABA <dbl>, Neon <dbl>
 ```
