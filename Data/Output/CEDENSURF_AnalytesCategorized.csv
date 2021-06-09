@@ -339,13 +339,13 @@
 "mbas",
 "mcpp",
 "nonylphenol",
-"linuron",
+"linuron","Herbicide"
 "dicamba",
 "diuron","Herbicide"
 "oryzalin",
 "atrazine","Atrazine"
 "simazine",
-"oxyfluorfen",
+"oxyfluorfen","Herbicide"
 "trifluralin",
 "dichlorophenoxyacetic acid",
 "triclopyr","Herbicide"
@@ -383,7 +383,7 @@
 "dichlorophenoxybutyric acid",
 "dichloroprop",
 "trichlorophenoxy)propionic acid",
-"clothianidin",
+"clothianidin","Neon"
 "ethalfluralin",
 "imidacloprid","Neon"
 "propanil","Herbicide"
@@ -510,9 +510,9 @@
 "dicofol",
 "e. coli",
 "oxamyl",
-"dichlorvos",
+"dichlorvos","OrganoP"
 "methidathion",
-"phorate",
+"phorate","OrganoP"
 "cyanazine",
 "total dissolved solids",
 "aldicarb",
@@ -832,7 +832,7 @@
 "tebupirimfos oxon",
 "benfluralin",
 "prodiamine",
-"pyridaben",
+"pyridaben","OrganoCh"
 "thiabendazole",
 "fenarimol",
 "flumetralin",
@@ -991,7 +991,7 @@
 "glufosinate",
 "sulfentrazone",
 "sulfometuron methyl",
-"linuron degradate",
+"linuron degradate","Herbicide"
 "chlorthal-dimethyl",
 "profenofos",
 "phorate sulfoxide",
@@ -1030,7 +1030,7 @@
 "oxathiapiprolin",
 "sulfoxaflor",
 "isofetamid",
-"paraquat dichloride",
+"paraquat dichloride","Herbicide"
 "bentazon, sodium salt",
 "lindane (gamma-bhc)",
 "diquat dibromide",

@@ -65,8 +65,10 @@ Defined analyte categories based on the conceptual model provided
             
 WQP_SelectList <- c("temperature", "ph", "oxygen",
                     "electricalconductivity", 
-                    "nitrate as n", "nitrite as n", "nitrogen",
-                    "nitrate + nitrite as n", "phosphorus as p",
+                    "nitrate as n", "nitrite as n",
+                    "nitrogen",
+                    "nitrate + nitrite as n",
+                    "phosphorus as p",
                     "turbidity","settleable solids", 
                     "suspended sediment concentration", 
                     "salinity","sodium")
@@ -87,20 +89,25 @@ CEDENSURF$SelectList[CEDENSURF$Analyte %in% Metal_SelectList] <- "Metal"
 ORG_SelectList <- c("malathion", 
                     "diazinon", "diazinon degradate", 
                     "diazinon oxon", "diazoxon",
-                    "chlorpyrifos")
+                    "chlorpyrifos", "dichlorvos", 
+                    "phorate")
 
 CEDENSURF$SelectList[CEDENSURF$Analyte %in% ORG_SelectList] <- "OrganoP"
 
+
 ## Neonicotinoids
 
-Neon_SelectList <- c("hydroxy-imidacloprid", "imidacloprid")
+Neon_SelectList <- c("hydroxy-imidacloprid",
+                     "imidacloprid", 
+                     "clothianidin")
 
 CEDENSURF$SelectList[CEDENSURF$Analyte %in% Neon_SelectList] <- "Neon"
 
 ## Pyrethroids
 
 Pyre_SelectList <- c("bifenthrin", "cyfluthrin", 
-                     "esfenvalerate", "esfenvalerate/fenvalerate",
+                     "esfenvalerate", 
+                     "esfenvalerate/fenvalerate",
                      "esfenvalerate/fenvalerate-1",
                      "esfenvalerate/fenvalerate-2")
 
@@ -124,13 +131,19 @@ Atraz_SelectList <-  c("atrazine", "atrazine degradate")
 CEDENSURF$SelectList[CEDENSURF$Analyte %in% Atraz_SelectList] <- "Atrazine"
 ```
 
-
 We later added additional categories to account for chemicals that were identified in the Year 1 Report as problematic and / or exceeding USEPA Aquatic Life Benchmarks:
 
 
 
 ```r
-## Late Additions bc in YEAR 1 REPORT
+## Late Addition bc in YEAR 1 REPORT
+
+    # Neonicotinoid: clothianidin (n = 600), organophoshphate dichlorvos (n= 460), and phorate (n = 1000)
+
+    # Linuron (n = 10226) and Linuron degradate (n = 436)
+    # oxyfluorfen (n = 1358)
+    # paraquat dichloride (n=227)
+    # pyridaben (n = 744)
 
     # DDT / Dichlorodiphenyltrichloroethane (and Tox available)
 
@@ -172,7 +185,8 @@ We later added additional categories to account for chemicals that were identifi
                         CEDENSURF$Analyte == "endosulfan ii"|
                         CEDENSURF$Analyte == "endosulfan i"] <- "endosulfan"
     
-    # Herbicides tested > USEPA Aquatic Life Benchmarks: Diuron, thiobencarb, propanil, 2,4-d, thiobencarb, glyphosate, atrazine
+
+# Herbicides tested > USEPA Aquatic Life Benchmarks: Diuron, thiobencarb, propanil, 2,4-d, thiobencarb, glyphosate, atrazine
       
       #AnalyteList[(grepl("propanil", AnalyteList))]
       # nrow(CEDENSURF[CEDENSURF$Analyte == "diuron"]) #1729
@@ -203,14 +217,19 @@ We later added additional categories to account for chemicals that were identifi
           # nrow(CEDENSURF[CEDENSURF$Analyte == "molinate"]) # 773
           # Too few records of degradate (4-hydroxy molinate) to include
         
-     
-Herb_SelectList <- c("thiobencarb", "dinoseb", "triclopyr", 
-                     "molinate", "diuron", "propanil")
+## Create new subsections for these Herbicides and Organochlorines     
+Herb_SelectList <- c("thiobencarb", "dinoseb",
+                     "triclopyr", "molinate", 
+                     "diuron", "propanil", 
+                     "linuron","linuron degradate",
+                     "oxyfluorfen", 
+                     "paraquat dichloride")
 
 CEDENSURF$SelectList[CEDENSURF$Analyte %in% Herb_SelectList] <- "Herbicide"
 
 OrganoCh_SelectList <- c("ddt","ddd","dde", 
-                         "endosulfan", "endosulfan sulfate")
+                         "endosulfan","endosulfan sulfate",
+                         "pyridaben")
 
 CEDENSURF$SelectList[CEDENSURF$Analyte %in% OrganoCh_SelectList] <- "OrganoCh"
 ```
@@ -236,7 +255,7 @@ write.csv(x = AnalyteTable,
 CEDENSURF<- CEDENSURF %>% filter(!is.na(SelectList))
 ```
 
-The result is 44086 records, all appended with appropriate selection categories according to the conceptual model
+The result is 50193 records, all appended with appropriate selection categories according to the conceptual model
 
 
 ```r
@@ -335,7 +354,7 @@ head(CEDENSURF2 %>% select(Date, Analyte, Result, StationName, SelectList))
 ## 6:   Atrazine
 ```
 
-The result is 44086 records, all appended with appropriate selection categories according to the conceptual model
+The result is 50193 records, all appended with appropriate selection categories according to the conceptual model
 
 <br>
 
