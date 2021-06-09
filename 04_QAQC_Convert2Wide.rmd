@@ -39,10 +39,21 @@ Because NETICA requires the nodes to be columns, this data needs to be transform
 # Unit Conversions
 
 ## 1. Load Data
+
 ```{r}
 # Load data
 CEDENSURF <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURF_Limited.csv") %>% select(Analyte, Result, Unit,CollectionMethod, Matrix, Date, Subregion, StationName, Latitude, Longitude,SelectList)
 ```
+
+Preview number of subregions each analyte was measured in:
+```{r}
+# Check coverage for each analyte. 
+CEDENSURF %>%
+  group_by(Analyte,Matrix) %>%
+  summarise(coverage = (length(unique(Subregion))),
+            n = n()) 
+```
+
 We realized there are 213 records with negative concentrations. This could be an error of the researchers calibration equations, or otherwise, but at this point the safest assumption would be to assign those 0-results. 
 
 ```{r}
@@ -532,6 +543,64 @@ All three analytes (diazinon oxon, diazoxon, and diazinon degradate) refer to th
 OrganoP %>% filter(Analyte== "malathion") %>% distinct(Unit)
 ```
 
+```{r, results = 'hide'}
+# dichlorvos
+
+  # Sediment:	ng/g = ppb(equivalent units) - 24
+    OrganoP$Unit[OrganoP$Analyte == "dichlorvos" &
+                           OrganoP$Matrix == "sediment"] <- "ppb"
+
+  # Water:	ug/L, ng/L	
+      # ppb = pg / (1000*1000)
+      # ppb = ng/L / 1000
+    
+      # Convert ng/L to ppb
+        OrganoP$Result[OrganoP$Analyte == "dichlorvos" &
+                  OrganoP$Unit == "ng/L"] <- OrganoP$Result[
+                    OrganoP$Analyte == "dichlorvos" &
+                    OrganoP$Unit == "ng/L"] /1000
+        
+      # Correct units
+       OrganoP$Unit[OrganoP$Analyte == "dichlorvos" &
+                    OrganoP$Matrix == "water"] <- "ppb"
+       
+OrganoP %>% filter(Analyte== "dichlorvos") %>% distinct(Unit)
+```
+
+```{r, results = 'hide'}
+# phorate
+
+  # Sediment:	ppb & ng/g dw	(equivalent units)
+    OrganoP$Unit[OrganoP$Analyte == "phorate" &
+                           OrganoP$Matrix == "sediment"] <- "ppb"
+
+  # Water:	ng/L	220, pg/L	5, ppb	1275	
+      # ppb = pg / (1000*1000)
+      # ppb = ng/L / 1000
+    
+      # Convert ng/L to ppb
+        OrganoP$Result[OrganoP$Analyte == "phorate" &
+                  OrganoP$Unit == "ng/L"] <- OrganoP$Result[
+                    OrganoP$Analyte == "phorate" &
+                    OrganoP$Unit == "ng/L"] /1000
+      # Convert pg/L to ppb
+            OrganoP$Result[OrganoP$Analyte == "phorate" &
+                  OrganoP$Unit == "pg/L"] <- OrganoP$Result[
+                    OrganoP$Analyte == "phorate" &
+                    OrganoP$Unit == "pg/L"] /(1000*1000)
+      # Correct units
+       OrganoP$Unit[OrganoP$Analyte == "phorate" &
+                    OrganoP$Matrix == "water"] <- "ppb"
+       
+OrganoP %>% filter(Analyte== "phorate") %>% distinct(Unit)
+
+OrganoP %>% filter(Analyte == "phorate") %>%
+  group_by(Subregion, Matrix, Unit) %>%
+  summarise(n = n(),
+            mean = mean(Result))
+```
+
+
 
 #### **OrganoP Result**
 ```{r}
@@ -1002,6 +1071,8 @@ All measures are in water.
 
 hydroxy-imidacloprid (2 records total)
 imidacloprid (228 records)
+clothianidin (225 records)
+
 
 ```{r, results = 'hide'}
 Other %>% filter(SelectList == "Neon") %>%
@@ -1104,10 +1175,23 @@ write.csv(x = Wide.Other.Waterdf , file = "Data/Output/WideSubsets/Other.Wide.wa
 
 Chemicals that we have tox data for, but which were not in the original conceptual model. I need to talk with Allie about how to categorize them too; from what I can tell...
 
-Thiobencarb = monochlorobenzene 
-Dinoseb = dinitrophenol (banned in US)
+**records in water**
 Triclopyr = Pyridine
+Diuron
+Linuron
+Paraquat dichloride
+
+**records in water and sediment**
 Molinate = azepane (banned in US)
+Propanil (very common herbicide)
+Thiobencarb = monochlorobenzene 
+Oxyfluorfen
+
+**Records omitting**
+Dinoseb = dinitrophenol (banned in US).
+   Only 94 records. Omitted.
+   
+
 
 ```{r, results = 'hide'}
 Herbicide <- CEDENSURF %>% filter(SelectList == "Herbicide")
@@ -1118,21 +1202,8 @@ Herbicide %>%
             mean = mean(Result))
 ```
 
-#### dinoseb, diuron, triclopyr
-
-only records in water, and only ng, ug, or ppb
-
-Dinoseb has only 97 records across 3/6 subregions. Insufficient coverage to include.
-
 ```{r, results = 'hide'}
-# dinoseb - only 97 records across 3/6 subregions. Insufficient coverage to include.
-
-Herbicide <- Herbicide %>% filter(!Analyte == "dinoseb")
-        
-# diuron
-
-Herbicide %>% filter(Analyte == "diuron") %>% 
-      filter(Matrix == "water") %>% distinct(Unit)
+# Running conversions for all herbicides at once. Leaving in extra specification (SelectList == herbicide), in case I want to adapt this to run on the entire dataset. Don't see why not...
 
   # Water: ng/L, ug/L
       # ppb = pg/L / (1000*1000)
@@ -1140,112 +1211,26 @@ Herbicide %>% filter(Analyte == "diuron") %>%
       # ppb = ug/L
         
       # Convert ng/L to ppb
-        Herbicide$Result[Herbicide$Analyte == "diuron" &
+        Herbicide$Result[Herbicide$SelectList == "Herbicide" &
                   Herbicide$Unit == "ng/L"] <- Herbicide$Result[
-                    Herbicide$Analyte == "diuron" &
+                    Herbicide$SelectList == "Herbicide" &
                     Herbicide$Unit == "ng/L"] /1000
+
+       # Convert pg/L to ppb
+        Herbicide$Result[Herbicide$SelectList == "Herbicide" &
+                  Herbicide$Unit == "pg/L"] <- Herbicide$Result[
+                    Herbicide$SelectList == "Herbicide" &
+                    Herbicide$Unit == "pg/L"] /(1000*1000)
       
       # Correct units
-        Herbicide$Unit[Herbicide$Analyte == "diuron" &
-                      Herbicide$Matrix == "water"] <- "ppb"
-        
-# triclopyr
-
-Herbicide %>% filter(Analyte == "triclopyr") %>% 
-      filter(Matrix == "water") %>% distinct(Unit)
-
-  # Water: ug/L = ppb
-      # Correct units
-        Herbicide$Unit[Herbicide$Analyte == "triclopyr" &
-                      Herbicide$Matrix == "water"] <- "ppb"
-```
-#### molinate, propanil, thiobencarb
-
-Sediment only in ppb
-Water samples in ng, ug, or ppb -> convert to ppb
-```{r, results = 'hide'}
-# molinate
-Herbicide %>% filter(Analyte == "molinate") %>% 
-            filter(Matrix == "sediment") %>% 
-            distinct(Unit)
-
-Herbicide %>% filter(Analyte == "molinate") %>% 
-            filter(Matrix == "water") %>% 
-            distinct(Unit)
-
-  # Water: ng/L, ug/L, ppb
-      # ppb = pg/L / (1000*1000)
-      # ppb = ng/L / 1000
-      # ppb = ug/L
-        
-      # Convert ng/L to ppb
-        Herbicide$Result[Herbicide$Analyte == "molinate" &
-                  Herbicide$Unit == "ng/L"] <- Herbicide$Result[
-                    Herbicide$Analyte == "molinate" &
-                    Herbicide$Unit == "ng/L"] /1000
-      
-      # Correct units
-         Herbicide$Unit[Herbicide$Analyte == "molinate" &
+        Herbicide$Unit[Herbicide$SelectList == "Herbicide" &
                       Herbicide$Matrix == "water"] <- "ppb"
 ```
 
-
-```{r, results = 'hide'}
-# propanil
-Herbicide %>% filter(Analyte == "propanil") %>% 
-            filter(Matrix == "sediment") %>% 
-            distinct(Unit)
-
-Herbicide %>% filter(Analyte == "propanil") %>% 
-            filter(Matrix == "water") %>% 
-            distinct(Unit)
-
-  # Water: ng/L, ug/L, ppb
-      # ppb = pg/L / (1000*1000)
-      # ppb = ng/L / 1000
-      # ppb = ug/L
-        
-      # Convert ng/L to ppb
-        Herbicide$Result[Herbicide$Analyte == "propanil" &
-                  Herbicide$Unit == "ng/L"] <- Herbicide$Result[
-                    Herbicide$Analyte == "propanil" &
-                    Herbicide$Unit == "ng/L"] /1000
-      
-      # Correct units
-         Herbicide$Unit[Herbicide$Analyte == "propanil" &
-                      Herbicide$Matrix == "water"] <- "ppb"
-```
-
-
-```{r, results = 'hide'}
-# thiobencarb
-Herbicide %>% filter(Analyte == "thiobencarb") %>% 
-          filter(Matrix == "sediment") %>% distinct(Unit)
-
-Herbicide %>% filter(Analyte == "thiobencarb") %>% 
-      filter(Matrix == "water") %>% distinct(Unit)
-
-  # Water: ng/L, ug/L, ppb
-      
-      # ppb = pg/L / (1000*1000)
-      # ppb = ng/L / 1000
-      # ppb = ug/L
-        
-      # Convert pg/L to ppb
-        Herbicide$Result[Herbicide$Analyte == "thiobencarb" &
-              Herbicide$Unit == "pg/L"] <- Herbicide$Result[
-                Herbicide$Analyte == "thiobencarb" &
-                Herbicide$Unit == "pg/L"] /(1000*1000)
-        
-      # Convert ng/L to ppb
-        Herbicide$Result[Herbicide$Analyte == "thiobencarb" &
-                  Herbicide$Unit == "ng/L"] <- Herbicide$Result[
-                    Herbicide$Analyte == "thiobencarb" &
-                    Herbicide$Unit == "ng/L"] /1000
-      
-      # Correct units
-         Herbicide$Unit[Herbicide$Analyte == "thiobencarb" &
-                      Herbicide$Matrix == "water"] <- "ppb"
+```{r}
+# Name fix
+Herbicide$Analyte[Herbicide$Analyte == 
+        "paraquat dichloride"] <- "paraquat_dichloride"
 ```
 
 #### **Herbicide Result**
@@ -1255,7 +1240,6 @@ Herbicide %>%
   summarise(n = n(),
             mean = mean(Result))
 ```
-
 
 ### Late addition: OrganoChlorines
 
@@ -1277,185 +1261,43 @@ OrganoCh %>%
             mean = mean(Result))
 ```
 
-#### DDT and degradates
-
 ```{r, results = 'hide'}
-# ddt
-
-  # Sediment:	ppb	and ng/g dw, and ug/kg	(equivalent units)
-    OrganoCh %>% filter(Analyte == "ddt") %>% 
-          filter(Matrix == "sediment") %>% distinct(Unit)
-    OrganoCh$Unit[OrganoCh$Analyte == "ddt" &
-                           OrganoCh$Matrix == "sediment"] <- "ppb"
+# Sediment:	ppb	and ng/g dw, and ug/kg	(equivalent units)
+    OrganoCh %>% filter(Matrix == "sediment") %>% 
+              distinct(Unit)
     
+    OrganoCh$Unit[OrganoCh$Matrix == "sediment" & 
+                    OrganoCh$Unit == "ng/g dw"] <- "ppb"
     
-  # Water: ng/L, ug/L, ppb
-    OrganoCh %>% filter(Analyte == "ddt") %>% 
-      filter(Matrix == "water") %>% distinct(Unit)
-      
+    OrganoCh$Unit[OrganoCh$Matrix == "sediment" & 
+                    OrganoCh$Unit == "ug/Kg dw"] <- "ppb"
+    
+  # Water: ng/L, ug/L
       # ppb = pg/L / (1000*1000)
       # ppb = ng/L / 1000
       # ppb = ug/L
         
-      # Convert pg/L to ppb
-        OrganoCh$Result[OrganoCh$Analyte == "ddt" &
-              OrganoCh$Unit == "pg/L"] <- OrganoCh$Result[
-                OrganoCh$Analyte == "ddt" &
-                OrganoCh$Unit == "pg/L"] /(1000*1000)
-        
       # Convert ng/L to ppb
-        OrganoCh$Result[OrganoCh$Analyte == "ddt" &
+        OrganoCh$Result[OrganoCh$SelectList == "OrganoCh" &
                   OrganoCh$Unit == "ng/L"] <- OrganoCh$Result[
-                    OrganoCh$Analyte == "ddt" &
+                    OrganoCh$SelectList == "OrganoCh" &
                     OrganoCh$Unit == "ng/L"] /1000
+
+       # Convert pg/L to ppb
+        OrganoCh$Result[OrganoCh$SelectList == "OrganoCh" &
+                  OrganoCh$Unit == "pg/L"] <- OrganoCh$Result[
+                    OrganoCh$SelectList == "OrganoCh" &
+                    OrganoCh$Unit == "pg/L"] /(1000*1000)
       
       # Correct units
-         OrganoCh$Unit[OrganoCh$Analyte == "ddt" &
+        OrganoCh$Unit[OrganoCh$SelectList == "OrganoCh" &
                       OrganoCh$Matrix == "water"] <- "ppb"
 ```
 
-
-```{r, results = 'hide'}
-# ddd
-
-  # Sediment:	ppb	= ng/g dw = ug/kg	(equivalent units)
-    OrganoCh %>% filter(Analyte == "ddd") %>% 
-          filter(Matrix == "sediment") %>% distinct(Unit)
-    
-    OrganoCh$Unit[OrganoCh$Analyte == "ddd" &
-                  OrganoCh$Matrix == "sediment"] <- "ppb"
-    
-  # Water: ng/L, ug/L,pg/L ppb
-    OrganoCh %>% filter(Analyte == "ddd") %>% 
-      filter(Matrix == "water") %>% distinct(Unit)
-      
-      # ppb = pg/L / (1000*1000)
-      # ppb = ng/L / 1000
-      # ppb = ug/L
-        
-      # Convert pg/L to ppb
-        OrganoCh$Result[OrganoCh$Analyte == "ddd" &
-              OrganoCh$Unit == "pg/L"] <- OrganoCh$Result[
-                OrganoCh$Analyte == "ddd" &
-                OrganoCh$Unit == "pg/L"] /(1000*1000)
-        
-      # Convert ng/L to ppb
-        OrganoCh$Result[OrganoCh$Analyte == "ddd" &
-                  OrganoCh$Unit == "ng/L"] <- OrganoCh$Result[
-                    OrganoCh$Analyte == "ddd" &
-                    OrganoCh$Unit == "ng/L"] /1000
-      
-      # Correct units
-         OrganoCh$Unit[OrganoCh$Analyte == "ddd" &
-                      OrganoCh$Matrix == "water"] <- "ppb"
-         
-# dde
-
-  # Sediment:	ppb	= ng/g dw = ug/kg	(equivalent units)
-    OrganoCh %>% filter(Analyte == "dde") %>% 
-          filter(Matrix == "sediment") %>% distinct(Unit)
-    
-    OrganoCh$Unit[OrganoCh$Analyte == "dde" &
-                  OrganoCh$Matrix == "sediment"] <- "ppb"
-    
-  # Water: ng/L, ug/L,pg/L ppb
-    OrganoCh %>% filter(Analyte == "dde") %>% 
-      filter(Matrix == "water") %>% distinct(Unit)
-      
-      # ppb = pg/L / (1000*1000)
-      # ppb = ng/L / 1000
-      # ppb = ug/L
-        
-      # Convert pg/L to ppb
-        OrganoCh$Result[OrganoCh$Analyte == "dde" &
-              OrganoCh$Unit == "pg/L"] <- OrganoCh$Result[
-                OrganoCh$Analyte == "dde" &
-                OrganoCh$Unit == "pg/L"] /(1000*1000)
-        
-      # Convert ng/L to ppb
-        OrganoCh$Result[OrganoCh$Analyte == "dde" &
-                  OrganoCh$Unit == "ng/L"] <- OrganoCh$Result[
-                    OrganoCh$Analyte == "dde" &
-                    OrganoCh$Unit == "ng/L"] /1000
-      
-      # Correct units
-         OrganoCh$Unit[OrganoCh$Analyte == "dde" &
-                      OrganoCh$Matrix == "water"] <- "ppb"
-```
-
-#### Endosulfan and Degradates
-
-```{r, results = 'hide'}
-# endosulfan
-
-  # Sediment:	ppb	and ng/g dw, and ug/kg	(equivalent units)
-    OrganoCh %>% filter(Analyte == "endosulfan") %>% 
-          filter(Matrix == "sediment") %>% distinct(Unit)
-    OrganoCh$Unit[OrganoCh$Analyte == "endosulfan" &
-                           OrganoCh$Matrix == "sediment"] <- "ppb"
-    
-    
-  # Water: ng/L, ug/L, ppb
-    OrganoCh %>% filter(Analyte == "endosulfan") %>% 
-      filter(Matrix == "water") %>% distinct(Unit)
-      
-      # ppb = pg/L / (1000*1000)
-      # ppb = ng/L / 1000
-      # ppb = ug/L
-        
-      # Convert pg/L to ppb
-        OrganoCh$Result[OrganoCh$Analyte == "endosulfan" &
-              OrganoCh$Unit == "pg/L"] <- OrganoCh$Result[
-                OrganoCh$Analyte == "endosulfan" &
-                OrganoCh$Unit == "pg/L"] /(1000*1000)
-        
-      # Convert ng/L to ppb
-        OrganoCh$Result[OrganoCh$Analyte == "endosulfan" &
-                  OrganoCh$Unit == "ng/L"] <- OrganoCh$Result[
-                    OrganoCh$Analyte == "endosulfan" &
-                    OrganoCh$Unit == "ng/L"] /1000
-      
-      # Correct units
-         OrganoCh$Unit[OrganoCh$Analyte == "endosulfan" &
-                      OrganoCh$Matrix == "water"] <- "ppb"
-         
-         
-# endosulfan sulfate
-
-  # Sediment:	ppb	and ng/g dw, and ug/kg	(equivalent units)
-    OrganoCh %>% filter(Analyte == "endosulfan sulfate") %>% 
-          filter(Matrix == "sediment") %>% distinct(Unit)
-    OrganoCh$Unit[OrganoCh$Analyte == "endosulfan sulfate" &
-                           OrganoCh$Matrix == "sediment"] <- "ppb"
-    
-    
-  # Water: ng/L, ug/L, ppb
-    OrganoCh %>% filter(Analyte == "endosulfan sulfate") %>% 
-      filter(Matrix == "water") %>% distinct(Unit)
-      
-      # ppb = pg/L / (1000*1000)
-      # ppb = ng/L / 1000
-      # ppb = ug/L
-        
-      # Convert pg/L to ppb
-        OrganoCh$Result[OrganoCh$Analyte == "endosulfan sulfate" &
-              OrganoCh$Unit == "pg/L"] <- OrganoCh$Result[
-                OrganoCh$Analyte == "endosulfan sulfate" &
-                OrganoCh$Unit == "pg/L"] /(1000*1000)
-        
-      # Convert ng/L to ppb
-        OrganoCh$Result[OrganoCh$Analyte == "endosulfan sulfate" &
-                  OrganoCh$Unit == "ng/L"] <- OrganoCh$Result[
-                    OrganoCh$Analyte == "endosulfan sulfate" &
-                    OrganoCh$Unit == "ng/L"] /1000
-      
-      # Correct units
-         OrganoCh$Unit[OrganoCh$Analyte == "endosulfan sulfate" &
-                      OrganoCh$Matrix == "water"] <- "ppb"
-         
-      # Name fix
-        OrganoCh$Analyte[OrganoCh$Analyte == 
-                       "endosulfan sulfate"] <- "endosulfan_sulfate"
+```{r}
+# Name fix
+OrganoCh$Analyte[OrganoCh$Analyte == 
+        "endosulfan sulfate"] <- "endosulfan_sulfate"
 ```
 
 #### **OrganoChloride Result**
@@ -1476,6 +1318,8 @@ The file Data/Output/CEDENSURF_Limited_FixedUnits.csv contains all corrected uni
 
 ```{r}
 Limited <- rbind(WQP, GABA, Metal, OrganoP, Pyre, Other, Herbicide, OrganoCh)
+
+length(unique(Limited$Analyte))
 
 write.csv(x = Limited, 
           file = "Data/Output/CEDENSURF_Limited_FixedUnits.csv", 

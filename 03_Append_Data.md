@@ -138,9 +138,9 @@ We later added additional categories to account for chemicals that were identifi
 ```r
 ## Late Addition bc in YEAR 1 REPORT
 
-    # Neonicotinoid: clothianidin (n = 600), organophoshphate dichlorvos (n= 460), and phorate (n = 1000)
+    # Neonicotinoid: clothianidin (n = 600), organophoshphate dichlorvos (n= 460), and phorate (n = 1000) - see above
 
-    # Linuron (n = 10226) and Linuron degradate (n = 436)
+    # Linuron (n = 10226)
     # oxyfluorfen (n = 1358)
     # paraquat dichloride (n=227)
     # pyridaben (n = 744)
@@ -221,7 +221,7 @@ We later added additional categories to account for chemicals that were identifi
 Herb_SelectList <- c("thiobencarb", "dinoseb",
                      "triclopyr", "molinate", 
                      "diuron", "propanil", 
-                     "linuron","linuron degradate",
+                     "linuron",
                      "oxyfluorfen", 
                      "paraquat dichloride")
 
@@ -255,7 +255,7 @@ write.csv(x = AnalyteTable,
 CEDENSURF<- CEDENSURF %>% filter(!is.na(SelectList))
 ```
 
-The result is 50193 records, all appended with appropriate selection categories according to the conceptual model
+The result is 49757 records, all appended with appropriate selection categories according to the conceptual model
 
 
 ```r
@@ -354,7 +354,7 @@ head(CEDENSURF2 %>% select(Date, Analyte, Result, StationName, SelectList))
 ## 6:   Atrazine
 ```
 
-The result is 50193 records, all appended with appropriate selection categories according to the conceptual model
+The result is 49757 records, all appended with appropriate selection categories according to the conceptual model
 
 <br>
 
