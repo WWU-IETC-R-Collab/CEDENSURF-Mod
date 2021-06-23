@@ -47,20 +47,16 @@ Limited <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Da
 All data utilized in these markdowns has been tranformed to NAD83 and is projected in [State Plane California III FIPS 0403](https://www.spatialreference.org/ref/esri/102643/).
 
 ### Source Information
+
 Data sources are primarily intermediate output from within this repository. External data sources were used in [01_SURF_Mod](https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/blob/main/01_SURF_mod.md), where you can find the code used to access each.
 
-**SURF Data**
-SURF Data was acquired at the DPR SURF database web page as CSVs via FTP download on 2/17/2021:
-ftp://transfer.cdpr.ca.gov/pub/outgoing/EM/Surface/SURF_water.csv (309.8 MB)
-ftp://transfer.cdpr.ca.gov/pub/outgoing/EM/Surface/SURF_SED.csv (52.2 MB)
-According to email correspondence with Dr. Xuyang Zhang at CDPR on 2/17/2021, latitude and longitude data are in WGS84.
+- **SURF Data**: SURF Data was acquired at the DPR SURF database web page. Details in [01_SURF_Mod](https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/blob/main/01_SURF_mod.md)
 
-**CEDEN-mod Data**
-Two modified tables from the [CEDEN-mod Repository](https://github.com/WWU-IETC-R-Collab/CEDEN-mod/tree/main)
-- [CEDENMod_Toxicity](https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_Toxicity.csv)
-- [CEDENMod_WQ](https://github.com/WWU-IETC-R-Collab/CEDEN-mod/blob/main/Data/Output/CEDENMod_WQ.csv)
+- **CEDEN-mod Data**: Two modified tables from the [CEDEN-mod Repository](https://github.com/WWU-IETC-R-Collab/CEDEN-mod/tree/main)
+  - [CEDENMod_Toxicity](https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_Toxicity.csv)
+  - [CEDENMod_WQ](https://github.com/WWU-IETC-R-Collab/CEDEN-mod/blob/main/Data/Output/CEDENMod_WQ.csv)
 
-The [USFE Risk Regions shapefile](https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/USFE_RiskRegions_9292020.zip)
+- **Risk Region**: The same [USFE Risk Regions shapefile](https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/USFE_RiskRegions_9292020.zip) used in CEDEN-mod was used here as well. Its coordinate system is WGS84, and it was transformed to NAD83 prior to use.
 
 ### Required Environment
 
