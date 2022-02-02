@@ -24,6 +24,17 @@ library(sf)
 library(tidyverse)
 ```
 
+
+```r
+# packages b/c accessing private repo
+
+library(httr)
+library(tidyverse)
+library(gh)
+library(gitcreds)
+```
+
+
 ## Intro
 
 If we are to simplify the Netica model, we will need to summarize analytes by their functional category. 
@@ -55,7 +66,32 @@ Start with the midpoint of 04_QAQC_Convert2Wide (long-format) because it is easi
 
 ```r
 # Load CEDENSURF Limited Data (long format)
-Limited <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURF_Limited_FixedUnits.csv")
+
+tmp <- tempfile()
+
+CS_Limited <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURF_Limited_FixedUnits.csv",
+                   .token = gh_token(), 
+                   .destfile = tmp)
+
+Limited <- read_csv(tmp) # works for me!
+```
+
+```
+## 
+## -- Column specification --------------------------------------------------------
+## cols(
+##   Analyte = col_character(),
+##   Result = col_double(),
+##   Unit = col_character(),
+##   CollectionMethod = col_character(),
+##   Matrix = col_character(),
+##   Date = col_date(format = ""),
+##   Subregion = col_character(),
+##   StationName = col_character(),
+##   Latitude = col_double(),
+##   Longitude = col_double(),
+##   SelectList = col_character()
+## )
 ```
 
 
@@ -80,8 +116,25 @@ And tables containing Molar mass (Moles/g) of each analyte, and EC50 values for 
 
 ```r
 # Load CEDENSURF Limited Data (long format)
-MM <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/MolarMass.csv")
 
+tmp <- tempfile()
+MM <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/MolarMass.csv",
+                   .token = gh_token(), 
+                   .destfile = tmp)
+
+MM <- read_csv(tmp) # works for me!
+```
+
+```
+## 
+## -- Column specification --------------------------------------------------------
+## cols(
+##   Analyte = col_character(),
+##   MW = col_double()
+## )
+```
+
+```r
 # EC_Table <- fread("")
 ```
 <br/>
@@ -306,3 +359,48 @@ head(Wide.df)
 ## # ... with 6 more variables: OrganoP <dbl>, Pyrethroids <dbl>, Atrazine <dbl>,
 ## #   Glyphosate <dbl>, GABA <dbl>, Neon <dbl>
 ```
+
+```r
+sessionInfo()
+```
+
+```
+## R version 4.0.3 (2020-10-10)
+## Platform: x86_64-w64-mingw32/x64 (64-bit)
+## Running under: Windows 10 x64 (build 19043)
+## 
+## Matrix products: default
+## 
+## locale:
+## [1] LC_COLLATE=English_United States.1252 
+## [2] LC_CTYPE=English_United States.1252   
+## [3] LC_MONETARY=English_United States.1252
+## [4] LC_NUMERIC=C                          
+## [5] LC_TIME=English_United States.1252    
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] gitcreds_0.1.1    gh_1.2.1          httr_1.4.2        forcats_0.5.0    
+##  [5] stringr_1.4.0     dplyr_1.0.3       purrr_0.3.4       readr_1.4.0      
+##  [9] tidyr_1.1.2       tibble_3.0.5      ggplot2_3.3.3     tidyverse_1.3.0  
+## [13] sf_0.9-7          lubridate_1.7.9.2 data.table_1.13.6
+## 
+## loaded via a namespace (and not attached):
+##  [1] tidyselect_1.1.0   xfun_0.20          haven_2.3.1        colorspace_2.0-0  
+##  [5] vctrs_0.3.6        generics_0.1.0     htmltools_0.5.0    yaml_2.2.1        
+##  [9] utf8_1.1.4         rlang_0.4.10       e1071_1.7-4        pillar_1.4.7      
+## [13] withr_2.4.1        glue_1.4.2         DBI_1.1.1          dbplyr_2.0.0      
+## [17] modelr_0.1.8       readxl_1.3.1       lifecycle_1.0.0    munsell_0.5.0     
+## [21] gtable_0.3.0       cellranger_1.1.0   rvest_0.3.6        evaluate_0.14     
+## [25] knitr_1.30         curl_4.3           class_7.3-17       fansi_0.4.2       
+## [29] broom_0.7.3        Rcpp_1.0.5         KernSmooth_2.23-17 backports_1.2.0   
+## [33] scales_1.1.1       classInt_0.4-3     jsonlite_1.7.2     fs_1.5.0          
+## [37] hms_1.0.0          digest_0.6.27      stringi_1.5.3      grid_4.0.3        
+## [41] cli_2.4.0          tools_4.0.3        magrittr_2.0.1     crayon_1.3.4      
+## [45] pkgconfig_2.0.3    ellipsis_0.3.1     xml2_1.3.2         reprex_0.3.0      
+## [49] rstudioapi_0.13    assertthat_0.2.1   rmarkdown_2.6      R6_2.5.0          
+## [53] units_0.6-7        compiler_4.0.3
+```
+

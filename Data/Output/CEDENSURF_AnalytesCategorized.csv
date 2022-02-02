@@ -717,7 +717,7 @@
 "difenoconazole",
 "pyraclostrobin",
 "famoxadone",
-"myclobutanil",
+"myclobutanil","Fungicide"
 "potassium",
 "acid neutralizing capacity",
 "sulfate",
@@ -825,7 +825,7 @@
 "metalaxyl",
 "methoprene",
 "paclobutrazol",
-"triadimefon",
+"triadimefon","Fungicide"
 "fenamidone",
 "fenbuconazole",
 "flutolanil",
@@ -890,7 +890,7 @@
 "ziram",
 "pbde 200",
 "bromide",
-"dichloran",
+"dichloran","Fungicide"
 "azithromycin",
 "diethyl-3-methyl-benzamide",
 "methadone",

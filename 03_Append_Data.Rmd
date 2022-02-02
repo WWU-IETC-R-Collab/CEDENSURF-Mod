@@ -25,6 +25,16 @@ library(sf)
 library(tidyverse)
 ```
 
+```{r, warning=F, message=F}
+# packages b/c accessing private repo
+
+library(httr)
+library(tidyverse)
+library(gh)
+library(gitcreds)
+
+```
+
 ## Intro
 
 This rmd produces a limited combined dataset, retaining only those analytes identified within our conceptual model, and including a new column "SelectionList" by which analytes can be subsetted according to their role in the conceptual model.
@@ -41,10 +51,28 @@ If it's most simple to have a transparent list of analytes included in each cate
 
 Start with merged CEDEN and SURF data, with duplicates found and removed per the QA/QC protocol outlined at: https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/blob/main/CEDENSURF_Merge.md
 
-```{r}
+```{r, eval = F}
+# Previous way to load data - does not work for private repo
+
 # Load CEDEN Data
 CEDENSURF <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURFMod.csv")
+```
 
+
+```{r}
+# Load Data - Compatible with private repository
+
+tmp <- tempfile()
+
+CEDENSURF <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURFMod.csv",
+                   .token = gh_token(), 
+                   .destfile = tmp)
+
+CEDENSURF <- read_csv(tmp) # works for me!
+```
+
+
+```{r}
 # Create empty column to fill with values
 
 CEDENSURF$SelectList <- NA
@@ -55,6 +83,7 @@ AnalyteList <- sort(unique(CEDENSURF$Analyte)) #1053 records
 ```
 
 #### Append from Selection Lists
+
 
 Defined analyte categories based on the conceptual model provided
 ```{r}
@@ -206,6 +235,36 @@ OrganoCh_SelectList <- c("ddt","ddd","dde",
 CEDENSURF$SelectList[CEDENSURF$Analyte %in% OrganoCh_SelectList] <- "OrganoCh"
 ```
 
+We also added 3 chemicals which were included in a paper assessing how salinity alters toxicity to a model fish species. The fourth was not present in this dataset. (https://www.mdpi.com/2305-6304/9/5/114)
+
+```{r, eval = F}
+TEMPORARY EXPLORATIONS FOR ADDING NEW COMPOUNDS - EMMA REQUEST
+
+AnalyteList[grepl("penz", AnalyteList)]
+
+# 1. DICLORAN - fungicide. Use "dichloran". Only 5 records.
+
+length(CEDENSURF$Result[CEDENSURF$Analyte == "dichloran"])
+
+# 2. Myclobutanil = in list and a fungicide as well. 868 Records
+
+length(CEDENSURF$Result[CEDENSURF$Analyte == "myclobutanil"])
+
+# 3. Penconazole - not in list. nor pseudonyms
+
+# 4. Triadimefon - in list as "triadimefon". 743 Records
+
+length(CEDENSURF$Result[CEDENSURF$Analyte == "triadimefon"])
+
+```
+
+```{r}
+Fungicide_SelectList <- c("myclobutanil", "triadimefon","dichloran")
+
+CEDENSURF$SelectList[CEDENSURF$Analyte %in% Fungicide_SelectList] <- "Fungicide"
+```
+
+
 #### Save categories assigned to analytes
 
 ```{r}
@@ -256,7 +315,17 @@ AnalyteTable <- CEDENSURF %>% select(Analyte, SelectList) %>% distinct(Analyte, 
 head(AnalyteTable)
 
 # Load CEDEN Data
-CEDENSURF2 <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURFMod.csv")
+
+tmp <- tempfile()
+
+CEDENSURF <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURFMod.csv",
+                   .token = gh_token(), 
+                   .destfile = tmp)
+
+CEDENSURF2 <- read_csv(tmp)
+
+# Following code is the old way to load data / pre private repository
+# CEDENSURF2 <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURFMod.csv")
 ```
 
 With this, we could append the category to the original data using a merge

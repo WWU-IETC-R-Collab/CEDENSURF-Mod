@@ -25,6 +25,17 @@ library(sf)
 library(tidyverse)
 ```
 
+```{r, warning=F, message=F}
+# packages b/c accessing private repo
+
+library(httr)
+library(tidyverse)
+library(gh)
+library(gitcreds)
+
+```
+
+
 ## Intro
 
 If we are to simplify the Netica model, we will need to summarize analytes by their functional category. 
@@ -55,8 +66,14 @@ Start with the midpoint of 04_QAQC_Convert2Wide (long-format) because it is easi
 
 ```{r}
 # Load CEDENSURF Limited Data (long format)
-Limited <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURF_Limited_FixedUnits.csv")
-            
+
+tmp <- tempfile()
+
+CS_Limited <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURF_Limited_FixedUnits.csv",
+                   .token = gh_token(), 
+                   .destfile = tmp)
+
+Limited <- read_csv(tmp) # works for me!
 ```
 
 ```{r, eval = F}
@@ -79,7 +96,13 @@ And tables containing Molar mass (Moles/g) of each analyte, and EC50 values for 
 
 ```{r}
 # Load CEDENSURF Limited Data (long format)
-MM <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/MolarMass.csv")
+
+tmp <- tempfile()
+MM <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/MolarMass.csv",
+                   .token = gh_token(), 
+                   .destfile = tmp)
+
+MM <- read_csv(tmp) # works for me!
 
 # EC_Table <- fread("")
 ```
@@ -247,3 +270,8 @@ Wide.df <- Tox.mean %>%
 
 head(Wide.df)
 ```
+```{r}
+
+sessionInfo()
+```
+
