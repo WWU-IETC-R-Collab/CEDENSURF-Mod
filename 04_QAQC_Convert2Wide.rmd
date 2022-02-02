@@ -26,6 +26,16 @@ library(sf)
 library(tidyverse)
 ```
 
+```{r, warning=F, message=F}
+# packages b/c accessing private repo
+
+library(httr)
+library(tidyverse)
+library(gh)
+library(gitcreds)
+
+```
+
 # Introduction
 
 Because NETICA requires the nodes to be columns, this data needs to be transformed to wide format.
@@ -40,9 +50,23 @@ Because NETICA requires the nodes to be columns, this data needs to be transform
 
 ## 1. Load Data
 
-```{r}
+```{r, eval = F}
+# OLD WAY TO LOAD DATA / PUBLIC REPO
+
 # Load data
 CEDENSURF <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURF_Limited.csv") %>% select(Analyte, Result, Unit,CollectionMethod, Matrix, Date, Subregion, StationName, Latitude, Longitude,SelectList)
+```
+
+```{r}
+# Load CEDEN Data
+
+tmp <- tempfile()
+
+CEDENSURF <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURF_Limited.csv",
+                   .token = gh_token(), 
+                   .destfile = tmp)
+
+CEDENSURF <- read_csv(tmp)
 ```
 
 Preview number of subregions each analyte was measured in:
@@ -311,6 +335,27 @@ selenium (38 records) mg/Kg dw
 
 Metal <- CEDENSURF %>% filter(SelectList == "Metal")
 
+# Cadmium
+        # Convert mg to ug
+          Metal$Result[
+            Metal$Analyte == "cadmium" & 
+              Metal$Unit == "mg/Kg dw"] <- Metal$Result[
+              Metal$Analyte == "cadmium" & Metal$Unit == "mg/Kg dw"]*1000
+          
+        # Correct units
+          Metal$Unit[Metal$Analyte == "cadmium" & 
+                       Metal$Matrix == "sediment"] <- "ug/Kg dw"
+
+# Copper
+        # Convert mg to ug
+          Metal$Result[
+            Metal$Analyte == "copper" & 
+              Metal$Unit == "mg/Kg dw"] <- Metal$Result[
+              Metal$Analyte == "copper" & Metal$Unit == "mg/Kg dw"]*1000
+          
+        # Correct units
+          Metal$Unit[Metal$Analyte == "copper" & 
+                       Metal$Matrix == "sediment"] <- "ug/Kg dw"
 # Selenium
 
     # Water - 208 records, ug/L
@@ -355,15 +400,15 @@ Metal <- CEDENSURF %>% filter(SelectList == "Metal")
     Metal %>% filter(grepl("mercury", Analyte))%>% 
               filter(Matrix == 'sediment') %>% distinct(Unit)
 
-            # Convert ug to mg
+            # Convert mg to ug
               Metal$Result[
                 Metal$Analyte == "mercury" & 
-                  Metal$Unit == "ug/Kg dw"] <- Metal$Result[
-                  Metal$Analyte == "mercury" & Metal$Unit == "ug/Kg dw"]/1000
+                  Metal$Unit == "mg/Kg dw"] <- Metal$Result[
+                  Metal$Analyte == "mercury" & Metal$Unit == "mg/Kg dw"]*1000
               
             # Correct units
               Metal$Unit[Metal$Analyte == "mercury" &
-                           Metal$Matrix == "sediment"] <- "mg/Kg dw"
+                           Metal$Matrix == "sediment"] <- "ug/Kg dw"
 ```
 
 
@@ -373,7 +418,7 @@ Metal <- CEDENSURF %>% filter(SelectList == "Metal")
 Metal %>%
   group_by(Analyte, Matrix, Unit) %>%
   summarise(n = n(),
-            mean = mean(Result))
+            mean = round(mean(Result),3))
 ```
 
 
@@ -1308,6 +1353,116 @@ OrganoCh %>%
             mean = mean(Result))
 ```
 
+
+<br>
+
+### Late Additions: Fungicides  {.tabset}
+
+Fungicides added due to presence in another tox paper
+
+Dichloran
+Myclobutanil
+Triadimefon
+
+```{r, results = 'hide'}
+
+Fungi <- CEDENSURF %>% filter(SelectList == "Fungicide")
+
+Fungi %>%
+  group_by(Analyte, Matrix, Unit) %>%
+  summarise(n = n(),
+            mean = round(mean(Result),2))
+```
+
+#### Dichloran - ppb
+
+```{r, results = 'hide'}
+# dichloran (ppb, ng/L)
+
+  # Water:	ng/L	5
+      # ppb = ng/L / 1000
+      # Convert ng/L to ppb
+        Fungi$Result[Fungi$Analyte == "dichloran" &
+                  Fungi$Unit == "ng/L"] <- Fungi$Result[
+                    Fungi$Analyte == "dichloran" &
+                    Fungi$Unit == "ng/L"] /1000
+      # Correct units
+       Fungi$Unit[Fungi$Analyte == "dichloran" &
+                    Fungi$Matrix == "water"] <- "ppb"
+       
+Fungi %>% filter(Analyte== "dichloran") %>% distinct(Unit)
+```
+
+#### Myclobutanil - ppb
+
+```{r, results = 'hide'}
+# Myclobutanil (ppb, ng/L)
+
+  # Sediment:	ppb	252
+
+  # Water:	ng/L	144, ppb	472	
+      # ppb = pg / (1000*1000)
+      # ppb = ng/L / 1000
+    
+      # Convert ng/L to ppb
+        Fungi$Result[Fungi$Analyte == "myclobutanil" &
+                  Fungi$Unit == "ng/L"] <- Fungi$Result[
+                    Fungi$Analyte == "myclobutanil" &
+                    Fungi$Unit == "ng/L"] /1000
+
+      # Correct units
+       Fungi$Unit[Fungi$Analyte == "myclobutanil" &
+                    Fungi$Matrix == "water"] <- "ppb"
+       
+Fungi %>% filter(Analyte== "myclobutanil") %>% distinct(Unit)
+```
+
+#### Triadimefon
+
+```{r, results = 'hide'}
+# Myclobutanil (ppb, ng/L)
+
+  # Sediment:	ppb	264
+
+  # Water:	ng/L	110, ppb	369	
+      # ppb = pg / (1000*1000)
+      # ppb = ng/L / 1000
+    
+      # Convert ng/L to ppb
+        Fungi$Result[Fungi$Analyte == "triadimefon" &
+                  Fungi$Unit == "ng/L"] <- Fungi$Result[
+                    Fungi$Analyte == "triadimefon" &
+                    Fungi$Unit == "ng/L"] /1000
+
+      # Correct units
+       Fungi$Unit[Fungi$Analyte == "triadimefon" &
+                    Fungi$Matrix == "water"] <- "ppb"
+       
+Fungi %>% filter(Analyte== "triadimefon") %>% distinct(Unit)
+```
+
+#### **Fungi Result**
+```{r}
+Fungi %>%
+  group_by(Analyte, Matrix, Unit) %>%
+  summarise(n = n(),
+            mean = mean(Result))
+```
+
+```{r}
+Wide.Fungi.Waterdf <- Fungi %>% filter(!Matrix == "sediment") %>%
+  group_by(Date, Latitude, Longitude, Analyte, Matrix) %>%
+  summarize(Subregion = first(Subregion),
+            Mean = mean(Result, na.rm = T)) %>%
+  pivot_wider(names_from = Analyte,
+              names_repair = "check_unique",
+              values_from = Mean) # Values to fill columns
+
+write.csv(x = Wide.Fungi.Waterdf , file = "Data/Output/WideSubsets/Fungi.Wide.water.csv", 
+          row.names = F)
+```
+
+
 <br>
 
 ## Save Intermediate
@@ -1317,7 +1472,7 @@ Compile and Save Modified Dataset (Long)
 The file Data/Output/CEDENSURF_Limited_FixedUnits.csv contains all corrected units and analytes chosen for our model in long format. 
 
 ```{r}
-Limited <- rbind(WQP, GABA, Metal, OrganoP, Pyre, Other, Herbicide, OrganoCh)
+Limited <- rbind(WQP, GABA, Metal, OrganoP, Pyre, Other, Herbicide, OrganoCh, Fungi)
 
 length(unique(Limited$Analyte))
 
@@ -1331,6 +1486,12 @@ ToxUnits <- Limited %>% distinct(Analyte, Matrix, Unit, SelectList)
 write.csv(x = ToxUnits, 
           file = "Data/Output/ToxUnitsTemplate.csv", 
           na = "", row.names = F)
+```
+```{r}
+Limited %>%
+  group_by(SelectList, Unit) %>%
+  summarise(n = n(),
+            mean = mean(Result))
 ```
 
 

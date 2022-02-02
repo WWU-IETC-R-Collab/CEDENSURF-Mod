@@ -25,6 +25,16 @@ library(sf)
 library(tidyverse)
 ```
 
+
+```r
+# packages b/c accessing private repo
+
+library(httr)
+library(tidyverse)
+library(gh)
+library(gitcreds)
+```
+
 # Introduction
 
 Because NETICA requires the nodes to be columns, this data needs to be transformed to wide format.
@@ -41,8 +51,41 @@ Because NETICA requires the nodes to be columns, this data needs to be transform
 
 
 ```r
+# OLD WAY TO LOAD DATA / PUBLIC REPO
+
 # Load data
 CEDENSURF <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURF_Limited.csv") %>% select(Analyte, Result, Unit,CollectionMethod, Matrix, Date, Subregion, StationName, Latitude, Longitude,SelectList)
+```
+
+
+```r
+# Load CEDEN Data
+
+tmp <- tempfile()
+
+CEDENSURF <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURF_Limited.csv",
+                   .token = gh_token(), 
+                   .destfile = tmp)
+
+CEDENSURF <- read_csv(tmp)
+```
+
+```
+## Rows: 51373 Columns: 34
+```
+
+```
+## -- Column specification --------------------------------------------------------
+## Delimiter: ","
+## chr  (23): Agency, Analyte, CollectionMethod, County, Data.source, Datum, ge...
+## dbl  (10): Latitude, Longitude, LOQ, MDL, rb_number, Record_id, Result, RL, ...
+## date  (1): Date
+```
+
+```
+## 
+## i Use `spec()` to retrieve the full column specification for this data.
+## i Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
 Preview number of subregions each analyte was measured in:
@@ -60,8 +103,8 @@ CEDENSURF %>%
 ```
 
 ```
-## # A tibble: 104 x 4
-## # Groups:   Analyte [63]
+## # A tibble: 108 x 4
+## # Groups:   Analyte [65]
 ##    Analyte            Matrix   coverage     n
 ##    <chr>              <chr>       <int> <int>
 ##  1 atrazine           sediment        3   264
@@ -74,7 +117,7 @@ CEDENSURF %>%
 ##  8 chlorpyrifos       sediment        5   402
 ##  9 chlorpyrifos       water           6  2229
 ## 10 clothianidin       water           6   652
-## # ... with 94 more rows
+## # ... with 98 more rows
 ```
 
 We realized there are 213 records with negative concentrations. This could be an error of the researchers calibration equations, or otherwise, but at this point the safest assumption would be to assign those 0-results. 
@@ -402,6 +445,27 @@ selenium (38 records) mg/Kg dw
 ```r
 Metal <- CEDENSURF %>% filter(SelectList == "Metal")
 
+# Cadmium
+        # Convert mg to ug
+          Metal$Result[
+            Metal$Analyte == "cadmium" & 
+              Metal$Unit == "mg/Kg dw"] <- Metal$Result[
+              Metal$Analyte == "cadmium" & Metal$Unit == "mg/Kg dw"]*1000
+          
+        # Correct units
+          Metal$Unit[Metal$Analyte == "cadmium" & 
+                       Metal$Matrix == "sediment"] <- "ug/Kg dw"
+
+# Copper
+        # Convert mg to ug
+          Metal$Result[
+            Metal$Analyte == "copper" & 
+              Metal$Unit == "mg/Kg dw"] <- Metal$Result[
+              Metal$Analyte == "copper" & Metal$Unit == "mg/Kg dw"]*1000
+          
+        # Correct units
+          Metal$Unit[Metal$Analyte == "copper" & 
+                       Metal$Matrix == "sediment"] <- "ug/Kg dw"
 # Selenium
 
     # Water - 208 records, ug/L
@@ -446,15 +510,15 @@ Metal <- CEDENSURF %>% filter(SelectList == "Metal")
     Metal %>% filter(grepl("mercury", Analyte))%>% 
               filter(Matrix == 'sediment') %>% distinct(Unit)
 
-            # Convert ug to mg
+            # Convert mg to ug
               Metal$Result[
                 Metal$Analyte == "mercury" & 
-                  Metal$Unit == "ug/Kg dw"] <- Metal$Result[
-                  Metal$Analyte == "mercury" & Metal$Unit == "ug/Kg dw"]/1000
+                  Metal$Unit == "mg/Kg dw"] <- Metal$Result[
+                  Metal$Analyte == "mercury" & Metal$Unit == "mg/Kg dw"]*1000
               
             # Correct units
               Metal$Unit[Metal$Analyte == "mercury" &
-                           Metal$Matrix == "sediment"] <- "mg/Kg dw"
+                           Metal$Matrix == "sediment"] <- "ug/Kg dw"
 ```
 
 
@@ -465,7 +529,7 @@ Metal <- CEDENSURF %>% filter(SelectList == "Metal")
 Metal %>%
   group_by(Analyte, Matrix, Unit) %>%
   summarise(n = n(),
-            mean = mean(Result))
+            mean = round(mean(Result),3))
 ```
 
 ```
@@ -477,14 +541,14 @@ Metal %>%
 ## # Groups:   Analyte, Matrix [8]
 ##   Analyte  Matrix   Unit         n      mean
 ##   <chr>    <chr>    <chr>    <int>     <dbl>
-## 1 cadmium  sediment mg/Kg dw    78   0.275  
-## 2 cadmium  water    ug/L       314   0.0135 
-## 3 copper   sediment mg/Kg dw    92  37.7    
-## 4 copper   water    ug/L       586   4.33   
-## 5 mercury  sediment mg/Kg dw    76   0.111  
-## 6 mercury  water    ug/L       215   0.00545
-## 7 selenium sediment ug/Kg dw    38 251.     
-## 8 selenium water    ug/L       208   0.302
+## 1 cadmium  sediment ug/Kg dw    78   275.   
+## 2 cadmium  water    ug/L       314     0.013
+## 3 copper   sediment ug/Kg dw    92 37744.   
+## 4 copper   water    ug/L       586     4.34 
+## 5 mercury  sediment ug/Kg dw    76   111.   
+## 6 mercury  water    ug/L       215     0.005
+## 7 selenium sediment ug/Kg dw    38   251.   
+## 8 selenium water    ug/L       208     0.302
 ```
 
 
@@ -664,8 +728,10 @@ OrganoP %>% filter(Analyte== "malathion") %>% distinct(Unit)
 ```
 
 ```
-##    Unit
-## 1:  ppb
+## # A tibble: 1 x 1
+##   Unit 
+##   <chr>
+## 1 ppb
 ```
 
 
@@ -1316,6 +1382,11 @@ write.csv(x = Wide.GABA.Waterdf , file = "Data/Output/WideSubsets/GABA.Wide.wate
 Other <- CEDENSURF %>% filter(SelectList == c("Glyphosate", "Atrazine", "Neon"))
 ```
 
+```
+## Warning in SelectList == c("Glyphosate", "Atrazine", "Neon"): longer object
+## length is not a multiple of shorter object length
+```
+
 #### Neonicotinoids 
 
 All measures are in water. 
@@ -1430,13 +1501,13 @@ Other %>%
 ```
 ## # A tibble: 5 x 5
 ## # Groups:   Analyte, Matrix [5]
-##   Analyte      Matrix   Unit      n      mean
-##   <chr>        <chr>    <chr> <int>     <dbl>
-## 1 atrazine     sediment ppb     103 0        
-## 2 atrazine     water    ppb     491 0.00658  
-## 3 clothianidin water    ppb     223 0.0000404
-## 4 glyphosate   water    ppb     217 0.959    
-## 5 imidacloprid water    ppb     250 0.00237
+##   Analyte      Matrix   Unit      n     mean
+##   <chr>        <chr>    <chr> <int>    <dbl>
+## 1 atrazine     sediment ppb      88 0       
+## 2 atrazine     water    ppb     462 0.00525 
+## 3 clothianidin water    ppb     204 0.000162
+## 4 glyphosate   water    ppb     216 0.857   
+## 5 imidacloprid water    ppb     266 0.00255
 ```
 
 
@@ -1547,24 +1618,23 @@ Herbicide %>%
 ```
 
 ```
-## # A tibble: 14 x 5
-## # Groups:   Analyte, Matrix [14]
+## # A tibble: 13 x 5
+## # Groups:   Analyte, Matrix [13]
 ##    Analyte             Matrix   Unit      n       mean
 ##    <chr>               <chr>    <chr> <int>      <dbl>
 ##  1 dinoseb             water    ppb      97 0.0714    
 ##  2 diuron              water    ppb    1729 0.0963    
 ##  3 linuron             water    ppb    1226 0.00492   
-##  4 linuron degradate   water    ppb     436 0.00194   
-##  5 molinate            sediment ppb     218 0         
-##  6 molinate            water    ppb     555 0.00000955
-##  7 oxyfluorfen         sediment ppb     249 0.00134   
-##  8 oxyfluorfen         water    ppb    1109 0.00248   
-##  9 paraquat_dichloride water    ppb     227 0.00542   
-## 10 propanil            sediment ppb     264 0         
-## 11 propanil            water    ppb     793 0.00395   
-## 12 thiobencarb         sediment ppb     264 0         
-## 13 thiobencarb         water    ppb    1036 0.0166    
-## 14 triclopyr           water    ppb     379 0.00417
+##  4 molinate            sediment ppb     218 0         
+##  5 molinate            water    ppb     555 0.00000955
+##  6 oxyfluorfen         sediment ppb     249 0.00134   
+##  7 oxyfluorfen         water    ppb    1109 0.00248   
+##  8 paraquat_dichloride water    ppb     227 0.00542   
+##  9 propanil            sediment ppb     264 0         
+## 10 propanil            water    ppb     793 0.00395   
+## 11 thiobencarb         sediment ppb     264 0         
+## 12 thiobencarb         water    ppb    1036 0.0166    
+## 13 triclopyr           water    ppb     379 0.00417
 ```
 
 ### Late addition: OrganoChlorines
@@ -1665,6 +1735,147 @@ OrganoCh %>%
 ## 12 pyridaben          water    ppb     480 0
 ```
 
+
+<br>
+
+### Late Additions: Fungicides  {.tabset}
+
+Fungicides added due to presence in another tox paper
+
+Dichloran
+Myclobutanil
+Triadimefon
+
+
+```r
+Fungi <- CEDENSURF %>% filter(SelectList == "Fungicide")
+
+Fungi %>%
+  group_by(Analyte, Matrix, Unit) %>%
+  summarise(n = n(),
+            mean = round(mean(Result),2))
+```
+
+```
+## `summarise()` has grouped output by 'Analyte', 'Matrix'. You can override using the `.groups` argument.
+```
+
+#### Dichloran - ppb
+
+
+```r
+# dichloran (ppb, ng/L)
+
+  # Water:	ng/L	5
+      # ppb = ng/L / 1000
+      # Convert ng/L to ppb
+        Fungi$Result[Fungi$Analyte == "dichloran" &
+                  Fungi$Unit == "ng/L"] <- Fungi$Result[
+                    Fungi$Analyte == "dichloran" &
+                    Fungi$Unit == "ng/L"] /1000
+      # Correct units
+       Fungi$Unit[Fungi$Analyte == "dichloran" &
+                    Fungi$Matrix == "water"] <- "ppb"
+       
+Fungi %>% filter(Analyte== "dichloran") %>% distinct(Unit)
+```
+
+#### Myclobutanil - ppb
+
+
+```r
+# Myclobutanil (ppb, ng/L)
+
+  # Sediment:	ppb	252
+
+  # Water:	ng/L	144, ppb	472	
+      # ppb = pg / (1000*1000)
+      # ppb = ng/L / 1000
+    
+      # Convert ng/L to ppb
+        Fungi$Result[Fungi$Analyte == "myclobutanil" &
+                  Fungi$Unit == "ng/L"] <- Fungi$Result[
+                    Fungi$Analyte == "myclobutanil" &
+                    Fungi$Unit == "ng/L"] /1000
+
+      # Correct units
+       Fungi$Unit[Fungi$Analyte == "myclobutanil" &
+                    Fungi$Matrix == "water"] <- "ppb"
+       
+Fungi %>% filter(Analyte== "myclobutanil") %>% distinct(Unit)
+```
+
+#### Triadimefon
+
+
+```r
+# Myclobutanil (ppb, ng/L)
+
+  # Sediment:	ppb	264
+
+  # Water:	ng/L	110, ppb	369	
+      # ppb = pg / (1000*1000)
+      # ppb = ng/L / 1000
+    
+      # Convert ng/L to ppb
+        Fungi$Result[Fungi$Analyte == "triadimefon" &
+                  Fungi$Unit == "ng/L"] <- Fungi$Result[
+                    Fungi$Analyte == "triadimefon" &
+                    Fungi$Unit == "ng/L"] /1000
+
+      # Correct units
+       Fungi$Unit[Fungi$Analyte == "triadimefon" &
+                    Fungi$Matrix == "water"] <- "ppb"
+       
+Fungi %>% filter(Analyte== "triadimefon") %>% distinct(Unit)
+```
+
+#### **Fungi Result**
+
+```r
+Fungi %>%
+  group_by(Analyte, Matrix, Unit) %>%
+  summarise(n = n(),
+            mean = mean(Result))
+```
+
+```
+## `summarise()` has grouped output by 'Analyte', 'Matrix'. You can override using the `.groups` argument.
+```
+
+```
+## # A tibble: 5 x 5
+## # Groups:   Analyte, Matrix [5]
+##   Analyte      Matrix   Unit      n     mean
+##   <chr>        <chr>    <chr> <int>    <dbl>
+## 1 dichloran    water    ppb       5 0       
+## 2 myclobutanil sediment ppb     252 0       
+## 3 myclobutanil water    ppb     616 0.000114
+## 4 triadimefon  sediment ppb     264 0       
+## 5 triadimefon  water    ppb     479 0
+```
+
+
+```r
+Wide.Fungi.Waterdf <- Fungi %>% filter(!Matrix == "sediment") %>%
+  group_by(Date, Latitude, Longitude, Analyte, Matrix) %>%
+  summarize(Subregion = first(Subregion),
+            Mean = mean(Result, na.rm = T)) %>%
+  pivot_wider(names_from = Analyte,
+              names_repair = "check_unique",
+              values_from = Mean) # Values to fill columns
+```
+
+```
+## `summarise()` has grouped output by 'Date', 'Latitude', 'Longitude', 'Analyte'. You can override using the `.groups` argument.
+```
+
+```r
+write.csv(x = Wide.Fungi.Waterdf , file = "Data/Output/WideSubsets/Fungi.Wide.water.csv", 
+          row.names = F)
+```
+
+
 <br>
 
 ## Save Intermediate
@@ -1675,8 +1886,16 @@ The file Data/Output/CEDENSURF_Limited_FixedUnits.csv contains all corrected uni
 
 
 ```r
-Limited <- rbind(WQP, GABA, Metal, OrganoP, Pyre, Other, Herbicide, OrganoCh)
+Limited <- rbind(WQP, GABA, Metal, OrganoP, Pyre, Other, Herbicide, OrganoCh, Fungi)
 
+length(unique(Limited$Analyte))
+```
+
+```
+## [1] 51
+```
+
+```r
 write.csv(x = Limited, 
           file = "Data/Output/CEDENSURF_Limited_FixedUnits.csv", 
           na = "", row.names = F)
@@ -1687,6 +1906,43 @@ ToxUnits <- Limited %>% distinct(Analyte, Matrix, Unit, SelectList)
 write.csv(x = ToxUnits, 
           file = "Data/Output/ToxUnitsTemplate.csv", 
           na = "", row.names = F)
+```
+
+```r
+Limited %>%
+  group_by(SelectList, Unit) %>%
+  summarise(n = n(),
+            mean = mean(Result))
+```
+
+```
+## `summarise()` has grouped output by 'SelectList'. You can override using the `.groups` argument.
+```
+
+```
+## # A tibble: 19 x 4
+## # Groups:   SelectList [11]
+##    SelectList  Unit         n          mean
+##    <chr>       <chr>    <int>         <dbl>
+##  1 Atrazine    ppb        550     0.00441  
+##  2 Fungicide   ppb       1616     0.0000433
+##  3 GABA        ppb       3823     0.0440   
+##  4 Glyphosate  ppb        216     0.857    
+##  5 Herbicide   ppb       8146     0.0252   
+##  6 Metal       ug/Kg dw   284 12365.       
+##  7 Metal       ug/L      1323     1.97     
+##  8 Neon        ppb        470     0.00151  
+##  9 OrganoCh    ppb       2634     0.238    
+## 10 OrganoP     ppb       8622     0.0103   
+## 11 Pyrethroids ppb       4392     0.978    
+## 12 WQP         % dw        39     0.102    
+## 13 WQP         Deg C     3694    19.7      
+## 14 WQP         mg/Kg dw    34   770.       
+## 15 WQP         mg/L      6990     4.59     
+## 16 WQP         none      3637     7.75     
+## 17 WQP         NTU       1628    30.3      
+## 18 WQP         ppt        370     4.37     
+## 19 WQP         uS/cm       91   355.
 ```
 
 
