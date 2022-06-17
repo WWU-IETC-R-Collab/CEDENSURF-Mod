@@ -1,7 +1,7 @@
 ---
 title: "SURF Data Prep"
 author: "Erika Whitney"
-date: "2/20/2021"
+date: "6/2/2022"
 output:
   html_document:
     code_download: true
@@ -44,13 +44,16 @@ According to email correspondence with Dr. Xuyang Zhang at CDPR on 2/17/2021, la
 ```{r}
 ### Read SURF Tables and restrict to project time frame
 
-SURF.Sed <- fread("Data/SURF_SED.csv") %>% 
-  filter(between(Sample_date, 
-        as_date("2009-10-01"),as_date("2019-09-30"))) # filter dates before transform to sf, otherwise errors arise. 
+SURF.Sed <- fread("Data/SURF_SED.csv") # 1970 - 2020, n = 150,516
+#summary(SURF.Sed)
 
-SURF.WQ <- fread("Data/SURF_water.csv") %>% 
-  filter(between(Sample_date, 
-        as_date("2009-10-01"),as_date("2019-09-30"))) # filter dates before transform to sf, otherwise errors arise.
+SURF.WQ <- fread("Data/SURF_water.csv") # 1925 - 2020, n = 829,527
+#summary(SURF.WQ)
+
+# REMOVED CODE TO FILTER TO 10YR SUBSET
+#%>% 
+#  filter(between(Sample_date, 
+#        as_date("2009-10-01"),as_date("2019-09-30"))) # filter dates before transform to sf, otherwise errors arise. 
 ```
 
 <br>
@@ -103,6 +106,41 @@ SURF.Sed.sf <- st_as_sf(SURF.Sed, coords = c("Longitude", "Latitude"), remove = 
 
 SURF.WQ.sf <- st_as_sf(SURF.WQ, coords = c( "Longitude", "Latitude"), remove = F, crs = "WGS84")
 
+```
+
+
+```{r}
+## Load new risk regions from shp file
+USFE.RiskRegions.NAD <- st_read("Data/subregions/subregions.shp")
+st_crs(USFE.RiskRegions)
+
+  ## Convert from NAD83 to WGS
+  USFE.RiskRegions <- st_transform(USFE.RiskRegions.NAD, "WGS84")
+  st_crs(USFE.RiskRegions)
+
+## Preview Risk Regions
+
+ggplot() +
+  geom_sf(data = USFE.RiskRegions, fill = NA) +
+  ggtitle("Updated Risk Regions")
+
+## Spatially query data within the project boundaries
+
+  # SURF Sed
+  SURF.Sed.sf <- st_join(SURF.Sed.sf, USFE.RiskRegions[8], left = T) %>%
+    filter(!is.na(SUBREGION))
+  
+  #SURF Water
+  SURF.WQ.sf <- st_join(SURF.WQ.sf, USFE.RiskRegions[8], left = T) %>%
+    filter(!is.na(SUBREGION))
+  
+## Check output count (increased from previous risk regions)
+  length(SURF.Sed.sf$SUBREGION)
+  length(SURF.WQ.sf$SUBREGION)
+```
+
+
+```{r, eval=F}
 ### Load Risk Regions from GitHub CEDEN repository (change if moved)
 
 USFE.RiskRegions.z <- "https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/USFE_RiskRegions_9292020.zip"
@@ -129,7 +167,7 @@ SURF.WQ.sf <- st_join(SURF.WQ.sf, USFE.RiskRegions[1], left = T) %>%
   filter(!is.na(Subregion))
 ```
 
-After temporal and spatial query, there are 35,346 records in SURF.sediment, and 91,021 records in SURF.water
+After temporal and spatial query, there are 35,005 records in SURF.sediment, and 183,497 records in SURF.water
 
 #### Transform to NAD83
 
