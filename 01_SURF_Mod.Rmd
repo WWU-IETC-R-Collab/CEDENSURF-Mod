@@ -22,6 +22,8 @@ library(tidyverse)
 
 # Intro
 
+THIS BRANCH USES DIFFERENT RISK REGIONS THAN ORIGINAL
+
 This markdown covers the process to restrict downloaded SURF data to the study region and time period of our project, and initial quality control required prior to integration with the CEDEN data.
 
 **Output/Result:** SURF_sed.csv and SURF_water.csv -
@@ -50,10 +52,16 @@ SURF.Sed <- fread("Data/SURF_SED.csv") # 1970 - 2020, n = 150,516
 SURF.WQ <- fread("Data/SURF_water.csv") # 1925 - 2020, n = 829,527
 #summary(SURF.WQ)
 
-# REMOVED CODE TO FILTER TO 10YR SUBSET
-#%>% 
-#  filter(between(Sample_date, 
-#        as_date("2009-10-01"),as_date("2019-09-30"))) # filter dates before transform to sf, otherwise errors arise. 
+# Filter to ~30 YR subset
+
+SURF.Sed <-SURF.Sed %>% 
+  filter(between(Sample_date, 
+        as_date("1989-10-01"),as_date("2019-09-30"))) # filter dates before transform to sf, otherwise errors arise. 
+
+SURF.WQ <- SURF.WQ %>% 
+  filter(between(Sample_date, 
+        as_date("1989-10-01"),as_date("2019-09-30")))
+
 ```
 
 <br>
@@ -112,7 +120,7 @@ SURF.WQ.sf <- st_as_sf(SURF.WQ, coords = c( "Longitude", "Latitude"), remove = F
 ```{r}
 ## Load new risk regions from shp file
 USFE.RiskRegions.NAD <- st_read("Data/subregions/subregions.shp")
-st_crs(USFE.RiskRegions)
+st_crs(USFE.RiskRegions.NAD)
 
   ## Convert from NAD83 to WGS
   USFE.RiskRegions <- st_transform(USFE.RiskRegions.NAD, "WGS84")
@@ -140,34 +148,9 @@ ggplot() +
 ```
 
 
-```{r, eval=F}
-### Load Risk Regions from GitHub CEDEN repository (change if moved)
-
-USFE.RiskRegions.z <- "https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/USFE_RiskRegions_9292020.zip"
-
-unzip_shape <- function(InputShapeZip){
-  dl.temp <- tempfile() # Create local temp file for zipped shapefile
-  dl.temp2 <- tempfile() # Create a second local temp file to store unzipped shapefile
-  download.file(InputShapeZip, dl.temp, quiet=T) # Downloads zip file from InputShape
-  unzip(zip = dl.temp, exdir = dl.temp2) # Unzips zip file
-  shapefile.out <-list.files(dl.temp2, pattern = ".shp$",full.names=TRUE) # stores file path of files with .shp ext in dl.temp2
-  sf::st_read(shapefile.out) # Reads shapefile as sf object
-}
-
-USFE.RiskRegions <- unzip_shape(USFE.RiskRegions.z) # CRS is WGS 84
-
-#### Spatially query data within the project boundaries
-
-# SURF Sed
-SURF.Sed.sf <- st_join(SURF.Sed.sf, USFE.RiskRegions[1], left = T) %>%
-  filter(!is.na(Subregion))
-
-#SURF Water
-SURF.WQ.sf <- st_join(SURF.WQ.sf, USFE.RiskRegions[1], left = T) %>%
-  filter(!is.na(Subregion))
-```
-
-After temporal and spatial query, there are 35,005 records in SURF.sediment, and 183,497 records in SURF.water
+After temporal and spatial query, 
+- there WERE (old risk regions): 35,005 records in SURF.sediment, and 183,497 records in SURF.water. 
+- there ARE (new risk regions): 34,941 records in surf sediment, and 182,849 records in SURF.water.  
 
 #### Transform to NAD83
 
