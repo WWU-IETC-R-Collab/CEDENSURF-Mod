@@ -1,7 +1,7 @@
 ---
 title: "SURF Data Prep"
 author: "Erika Whitney"
-date: "2/20/2021"
+date: "6/2/2022"
 output:
   html_document:
     code_download: true
@@ -19,6 +19,8 @@ library(tidyverse)
 ```
 
 # Intro
+
+THIS BRANCH USES DIFFERENT RISK REGIONS THAN ORIGINAL
 
 This markdown covers the process to restrict downloaded SURF data to the study region and time period of our project, and initial quality control required prior to integration with the CEDEN data.
 
@@ -43,13 +45,21 @@ According to email correspondence with Dr. Xuyang Zhang at CDPR on 2/17/2021, la
 ```r
 ### Read SURF Tables and restrict to project time frame
 
-SURF.Sed <- fread("Data/SURF_SED.csv") %>% 
-  filter(between(Sample_date, 
-        as_date("2009-10-01"),as_date("2019-09-30"))) # filter dates before transform to sf, otherwise errors arise. 
+SURF.Sed <- fread("Data/SURF_SED.csv") # 1970 - 2020, n = 150,516
+#summary(SURF.Sed)
 
-SURF.WQ <- fread("Data/SURF_water.csv") %>% 
+SURF.WQ <- fread("Data/SURF_water.csv") # 1925 - 2020, n = 829,527
+#summary(SURF.WQ)
+
+# Filter to ~30 YR subset
+
+SURF.Sed <-SURF.Sed %>% 
   filter(between(Sample_date, 
-        as_date("2009-10-01"),as_date("2019-09-30"))) # filter dates before transform to sf, otherwise errors arise.
+        as_date("1989-10-01"),as_date("2019-09-30"))) # filter dates before transform to sf, otherwise errors arise. 
+
+SURF.WQ <- SURF.WQ %>% 
+  filter(between(Sample_date, 
+        as_date("1989-10-01"),as_date("2019-09-30")))
 ```
 
 <br>
@@ -103,46 +113,117 @@ Retain only data within our project boundaries.
 SURF.Sed.sf <- st_as_sf(SURF.Sed, coords = c("Longitude", "Latitude"), remove = F, crs = "WGS84")
 
 SURF.WQ.sf <- st_as_sf(SURF.WQ, coords = c( "Longitude", "Latitude"), remove = F, crs = "WGS84")
+```
 
-### Load Risk Regions from GitHub CEDEN repository (change if moved)
 
-USFE.RiskRegions.z <- "https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/USFE_RiskRegions_9292020.zip"
 
-unzip_shape <- function(InputShapeZip){
-  dl.temp <- tempfile() # Create local temp file for zipped shapefile
-  dl.temp2 <- tempfile() # Create a second local temp file to store unzipped shapefile
-  download.file(InputShapeZip, dl.temp, quiet=T) # Downloads zip file from InputShape
-  unzip(zip = dl.temp, exdir = dl.temp2) # Unzips zip file
-  shapefile.out <-list.files(dl.temp2, pattern = ".shp$",full.names=TRUE) # stores file path of files with .shp ext in dl.temp2
-  sf::st_read(shapefile.out) # Reads shapefile as sf object
-}
-
-USFE.RiskRegions <- unzip_shape(USFE.RiskRegions.z) # CRS is WGS 84
+```r
+## Load new risk regions from shp file
+USFE.RiskRegions.NAD <- st_read("Data/subregions/subregions.shp") %>% rename(Subregion = SUBREGION)
 ```
 
 ```
-## Reading layer `RiskRegions_DWSC_Update_9292020' from data source `C:\Users\Erika\AppData\Local\Temp\Rtmp0Gj1Pv\file21e075bd7f58\RiskRegions_DWSC_Update_9292020.shp' using driver `ESRI Shapefile'
-## Simple feature collection with 6 features and 6 fields
-## geometry type:  POLYGON
-## dimension:      XYZ
-## bbox:           xmin: -122.1431 ymin: 37.62499 xmax: -121.1967 ymax: 38.58916
-## z_range:        zmin: 0 zmax: 0
-## geographic CRS: WGS 84
+## Reading layer `subregions' from data source 
+##   `C:\Users\Erika\Documents\GitHub\CEDENSURF-mod\Data\subregions\subregions.shp' 
+##   using driver `ESRI Shapefile'
+## Simple feature collection with 12 features and 17 fields
+## Geometry type: POLYGON
+## Dimension:     XY
+## Bounding box:  xmin: -122.1485 ymin: 37.53355 xmax: -120.9861 ymax: 38.60452
+## Geodetic CRS:  NAD83
 ```
 
 ```r
-#### Spatially query data within the project boundaries
-
-# SURF Sed
-SURF.Sed.sf <- st_join(SURF.Sed.sf, USFE.RiskRegions[1], left = T) %>%
-  filter(!is.na(Subregion))
-
-#SURF Water
-SURF.WQ.sf <- st_join(SURF.WQ.sf, USFE.RiskRegions[1], left = T) %>%
-  filter(!is.na(Subregion))
+st_crs(USFE.RiskRegions.NAD)
 ```
 
-After temporal and spatial query, there are 35,346 records in SURF.sediment, and 91,021 records in SURF.water
+```
+## Coordinate Reference System:
+##   User input: NAD83 
+##   wkt:
+## GEOGCRS["NAD83",
+##     DATUM["North American Datum 1983",
+##         ELLIPSOID["GRS 1980",6378137,298.257222101,
+##             LENGTHUNIT["metre",1]]],
+##     PRIMEM["Greenwich",0,
+##         ANGLEUNIT["degree",0.0174532925199433]],
+##     CS[ellipsoidal,2],
+##         AXIS["latitude",north,
+##             ORDER[1],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##         AXIS["longitude",east,
+##             ORDER[2],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##     ID["EPSG",4269]]
+```
+
+```r
+  ## Convert from NAD83 to WGS
+  USFE.RiskRegions <- st_transform(USFE.RiskRegions.NAD, "WGS84")
+  st_crs(USFE.RiskRegions)
+```
+
+```
+## Coordinate Reference System:
+##   User input: WGS84 
+##   wkt:
+## GEOGCRS["WGS 84",
+##     DATUM["World Geodetic System 1984",
+##         ELLIPSOID["WGS 84",6378137,298.257223563,
+##             LENGTHUNIT["metre",1]]],
+##     PRIMEM["Greenwich",0,
+##         ANGLEUNIT["degree",0.0174532925199433]],
+##     CS[ellipsoidal,2],
+##         AXIS["geodetic latitude (Lat)",north,
+##             ORDER[1],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##         AXIS["geodetic longitude (Lon)",east,
+##             ORDER[2],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##     ID["EPSG",4326]]
+```
+
+```r
+## Preview Risk Regions
+
+ggplot() +
+  geom_sf(data = USFE.RiskRegions, fill = NA) +
+  ggtitle("Updated Risk Regions")
+```
+
+![](01_SURF_Mod_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+```r
+## Spatially query data within the project boundaries
+
+  # SURF Sed
+  SURF.Sed.sf <- st_join(SURF.Sed.sf, USFE.RiskRegions[8], left = T) %>%
+    filter(!is.na(Subregion))
+  
+  #SURF Water
+  SURF.WQ.sf <- st_join(SURF.WQ.sf, USFE.RiskRegions[8], left = T) %>%
+    filter(!is.na(Subregion))
+  
+## Check output count (increased from previous risk regions)
+  length(SURF.Sed.sf$Subregion)
+```
+
+```
+## [1] 34941
+```
+
+```r
+  length(SURF.WQ.sf$Subregion)
+```
+
+```
+## [1] 182849
+```
+
+
+After temporal and spatial query, 
+- there WERE (old risk regions): 35,005 records in SURF.sediment, and 183,497 records in SURF.water. 
+- there ARE (new risk regions): 34,941 records in surf sediment, and 182,849 records in SURF.water.  
 
 #### Transform to NAD83
 

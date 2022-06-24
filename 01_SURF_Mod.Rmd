@@ -119,7 +119,7 @@ SURF.WQ.sf <- st_as_sf(SURF.WQ, coords = c( "Longitude", "Latitude"), remove = F
 
 ```{r}
 ## Load new risk regions from shp file
-USFE.RiskRegions.NAD <- st_read("Data/subregions/subregions.shp")
+USFE.RiskRegions.NAD <- st_read("Data/subregions/subregions.shp") %>% rename(Subregion = SUBREGION)
 st_crs(USFE.RiskRegions.NAD)
 
   ## Convert from NAD83 to WGS
@@ -136,15 +136,15 @@ ggplot() +
 
   # SURF Sed
   SURF.Sed.sf <- st_join(SURF.Sed.sf, USFE.RiskRegions[8], left = T) %>%
-    filter(!is.na(SUBREGION))
+    filter(!is.na(Subregion))
   
   #SURF Water
   SURF.WQ.sf <- st_join(SURF.WQ.sf, USFE.RiskRegions[8], left = T) %>%
-    filter(!is.na(SUBREGION))
+    filter(!is.na(Subregion))
   
 ## Check output count (increased from previous risk regions)
-  length(SURF.Sed.sf$SUBREGION)
-  length(SURF.WQ.sf$SUBREGION)
+  length(SURF.Sed.sf$Subregion)
+  length(SURF.WQ.sf$Subregion)
 ```
 
 
