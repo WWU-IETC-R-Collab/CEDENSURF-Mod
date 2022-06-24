@@ -25,7 +25,13 @@ library(data.table)
 library(lubridate)
 library(sf)
 library(tidyverse)
+
+library(gh)
+library(httr)
+library(gitcreds)
+gh::gh_whoami()
 ```
+
 
 # Intro
 
@@ -43,18 +49,46 @@ This original data set can be found within the IETC Tox Box at: Upper San Franci
 
 ```{r}
 # Load Data
-# Append with source
-# Identify sample matrix
 
-CEDENMod_Tox <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_Toxicity.csv") %>% 
+tmp <- tempfile()
+
+CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS/Data/Output/CEDENMod_Toxicity.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+CEDENMod_Tox <- read_csv(tmp) 
+
+rm(tmp, CEDENMod) #Clean up to avoid overwrite issues
+
+tmp <- tempfile()
+
+CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS/Data/Output/CEDENMod_WQ.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+CEDENMod_WQ <- read_csv(tmp)
+
+rm(tmp, CEDENMod)
+
+## Append with source
+## Limit to 30 year range
+## Identify sample matrix
+
+CEDENMod_Tox <- CEDENMod_Tox %>% 
       mutate(Source = "CEDEN")%>%
-      mutate(Matrix = "water") # 3 of 4 values in MatrixName reference water, so starting with that and then editing those that are sediment values to read sediment
+      mutate(Matrix = "water") %>% 
+  filter(between(Date, 
+        as_date("1989-10-01"),as_date("2019-09-30"))) # filter dates before transform to sf, otherwise errors arise. 
+
+# 3 of 4 values in MatrixName reference water, so starting with that and then editing those that are sediment values to read sediment
 
 CEDENMod_Tox$Matrix[CEDENMod_Tox$MatrixName == "sediment"] <- "sediment"
 
-CEDENMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDEN-mod/raw/main/Data/Output/CEDENMod_WQ.csv") %>% 
+CEDENMod_WQ <- CEDENMod_WQ %>% 
       mutate(Source = "CEDEN")%>% 
-      mutate(Matrix = "water")
+      mutate(Matrix = "water")%>% 
+  filter(between(Date, 
+        as_date("1989-10-01"),as_date("2019-09-30"))) # filter dates before transform to sf, otherwise errors arise. 
 
 # SedimentGrab should have Matrix == "sediment".
 CEDENMod_WQ$Matrix[CEDENMod_WQ$CollectionMethod == "Sediment_Grab"]<- "sediment"
@@ -76,14 +110,35 @@ This original data set can be found within the IETC Tox Box at: Upper San Franci
 ```{r}
 
 # Load Data
+tmp <- tempfile()
+
+SURFMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/SURFMod_SED.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+
+SURFMod_SED <- read_csv(tmp)
+
+rm(tmp, SURFMod) #Clean up to avoid overwrite issues
+
+tmp <- tempfile()
+
+SURFMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/SURFMod_water.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+
+SURFMod_WQ <- read_csv(tmp)
+
+rm(tmp, SURFMod) #Clean up to avoid overwrite issues
+
+
 # Append with source
 # Identify sample matrix
 
-SURFMod_SED <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/SURFMod_SED.csv") %>% 
+SURFMod_SED <-SURFMod_SED %>% 
       mutate(Source = "SURF")%>% 
       mutate(Matrix = "sediment")
 
-SURFMod_WQ <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/SURFMod_water.csv") %>% 
+SURFMod_WQ <- SURFMod_WQ %>% 
       mutate(Source = "CEDEN")%>% 
       mutate(Matrix = "water")
 ```
@@ -121,7 +176,7 @@ NoDup_Tox<- distinct(CEDENMod_Tox, Date, StationName, Analyte, CollectionMethod,
 
 # How many duplicate entries were identified and removed?
 
-nrow(CEDENMod_Tox) - nrow(NoDup_Tox) # 23,518
+nrow(CEDENMod_Tox) - nrow(NoDup_Tox) # 23,779
 ```
 
 ```{r, results = 'hide'}
@@ -129,7 +184,7 @@ nrow(CEDENMod_Tox) - nrow(NoDup_Tox) # 23,518
 
 NoDup_WQ <- distinct(CEDENMod_WQ, Date, Analyte, StationName, CollectionMethod, Matrix, Result, .keep_all= TRUE)
 
-nrow(CEDENMod_WQ) - nrow(NoDup_WQ) # 1661
+nrow(CEDENMod_WQ) - nrow(NoDup_WQ) # 1338
 ```
 <br>
 
@@ -360,7 +415,7 @@ There are `r nrow(SURF_ALL_DupChecked)` unique records available through SURF.
 SURF_ALL_NC <- filter(SURF_ALL_DupChecked, Data.source != "CEDEN")
 ```
 
-That said, `r nrow(SURF_ALL_DupChecked[SURF_ALL_DupChecked$Data.source == "CEDEN"])` of these records are listed as having been sourced from CEDEN.
+That said, `r length(SURF_ALL_DupChecked$Data.source == "CEDEN")` of these records are listed as having been sourced from CEDEN.
 
 In theory only `r nrow(SURF_ALL_NC)` unique records will be contributed through the SURF dataset. Rather than filter these out ahead of the merge, I am retaining them and then using the identification of those records as a test to see whether there are other differentiating factors (such as persisting differences in naming) between the merged dataset that will inhibit our analyses
 
