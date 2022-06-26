@@ -78,7 +78,7 @@ CEDENMod_Tox <- CEDENMod_Tox %>%
       mutate(Source = "CEDEN")%>%
       mutate(Matrix = "water") %>% 
   filter(between(Date, 
-        as_date("1989-10-01"),as_date("2019-09-30"))) # filter dates before transform to sf, otherwise errors arise. 
+        as_date("1989-01-01"),as_date("2019-12-31"))) # filter dates before transform to sf, otherwise errors arise. 
 
 # 3 of 4 values in MatrixName reference water, so starting with that and then editing those that are sediment values to read sediment
 
@@ -88,7 +88,7 @@ CEDENMod_WQ <- CEDENMod_WQ %>%
       mutate(Source = "CEDEN")%>% 
       mutate(Matrix = "water")%>% 
   filter(between(Date, 
-        as_date("1989-10-01"),as_date("2019-09-30"))) # filter dates before transform to sf, otherwise errors arise. 
+        as_date("1989-01-01"),as_date("2019-12-31"))) # filter dates before transform to sf, otherwise errors arise. 
 
 # SedimentGrab should have Matrix == "sediment".
 CEDENMod_WQ$Matrix[CEDENMod_WQ$CollectionMethod == "Sediment_Grab"]<- "sediment"
