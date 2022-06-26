@@ -55,11 +55,11 @@ SURF.WQ <- fread("Data/SURF_water.csv") # 1925 - 2020, n = 829,527
 
 SURF.Sed <-SURF.Sed %>% 
   filter(between(Sample_date, 
-        as_date("1989-10-01"),as_date("2019-09-30"))) # filter dates before transform to sf, otherwise errors arise. 
+        as_date("1989-01-01"),as_date("2019-12-31"))) # filter dates before transform to sf, otherwise errors arise. 
 
 SURF.WQ <- SURF.WQ %>% 
   filter(between(Sample_date, 
-        as_date("1989-10-01"),as_date("2019-09-30")))
+        as_date("1989-01-01"),as_date("2019-12-31")))
 ```
 
 <br>
@@ -209,7 +209,7 @@ ggplot() +
 ```
 
 ```
-## [1] 34941
+## [1] 34968
 ```
 
 ```r
@@ -217,7 +217,7 @@ ggplot() +
 ```
 
 ```
-## [1] 182849
+## [1] 183290
 ```
 
 

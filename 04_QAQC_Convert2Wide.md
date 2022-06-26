@@ -1,7 +1,7 @@
 ---
 title: "Conversions"
 author: "Erika W"
-date: "4/5/2021"
+date: "6/25/2021"
 output:
   html_document:
     code_download: true
@@ -51,19 +51,11 @@ Because NETICA requires the nodes to be columns, this data needs to be transform
 
 
 ```r
-# OLD WAY TO LOAD DATA / PUBLIC REPO
-
-# Load data
-CEDENSURF <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURF_Limited.csv") %>% select(Analyte, Result, Unit,CollectionMethod, Matrix, Date, Subregion, StationName, Latitude, Longitude,SelectList)
-```
-
-
-```r
 # Load CEDEN Data
 
 tmp <- tempfile()
 
-CEDENSURF <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURF_Limited.csv",
+CEDENSURF <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/CEDENSURF_Limited.csv",
                    .token = gh_token(), 
                    .destfile = tmp)
 
@@ -71,7 +63,7 @@ CEDENSURF <- read_csv(tmp)
 ```
 
 ```
-## Rows: 51373 Columns: 34
+## Rows: 64066 Columns: 34
 ```
 
 ```
@@ -103,21 +95,21 @@ CEDENSURF %>%
 ```
 
 ```
-## # A tibble: 108 x 4
-## # Groups:   Analyte [65]
+## # A tibble: 103 x 4
+## # Groups:   Analyte [62]
 ##    Analyte            Matrix   coverage     n
 ##    <chr>              <chr>       <int> <int>
-##  1 atrazine           sediment        3   264
-##  2 atrazine           water           6  1443
-##  3 atrazine degradate water           1    93
-##  4 bifenthrin         sediment        6   522
-##  5 bifenthrin         water           6  1018
-##  6 cadmium            sediment        4    78
-##  7 cadmium            water           5   314
-##  8 chlorpyrifos       sediment        5   402
-##  9 chlorpyrifos       water           6  2229
-## 10 clothianidin       water           6   652
-## # ... with 98 more rows
+##  1 atrazine           sediment        5   248
+##  2 atrazine           water           9  3366
+##  3 atrazine degradate water           2   211
+##  4 bifenthrin         sediment       10   438
+##  5 bifenthrin         water           8  1269
+##  6 cadmium            sediment        7    50
+##  7 cadmium            water           9   314
+##  8 chlorpyrifos       sediment        8   363
+##  9 chlorpyrifos       water          10  4374
+## 10 clothianidin       water           8   552
+## # ... with 93 more rows
 ```
 
 We realized there are 213 records with negative concentrations. This could be an error of the researchers calibration equations, or otherwise, but at this point the safest assumption would be to assign those 0-results. 
@@ -130,7 +122,7 @@ CEDENSURF %>% filter(Result < 0) %>% nrow(.) # 213 records out of 44,000 with ne
 ```
 
 ```
-## [1] 243
+## [1] 2
 ```
 
 ```r
@@ -180,7 +172,7 @@ CEDENSURF %>% group_by(Analyte, Matrix) %>%
 ## 2 atrazine           water         3
 ## 3 atrazine degradate water         1
 ## 4 bifenthrin         sediment      3
-## 5 bifenthrin         water         4
+## 5 bifenthrin         water         3
 ## 6 cadmium            sediment      1
 ```
 
@@ -383,25 +375,25 @@ WQP %>%
 ## # Groups:   Analyte, Matrix [19]
 ##    Analyte                Matrix   Unit         n      mean
 ##    <chr>                  <chr>    <chr>    <int>     <dbl>
-##  1 electricalconductivity sediment uS/cm        3  469.    
-##  2 electricalconductivity water    uS/cm       88  351.    
-##  3 nitrate                water    mg/L       379    0.619 
-##  4 nitrite                water    mg/L       444    0.0234
-##  5 nitrogen               sediment % dw        39    0.102 
-##  6 nitrogen               water    mg/L      1553    1.44  
-##  7 oxygen                 sediment mg/L       281    7.43  
-##  8 oxygen                 water    mg/L      3497    7.69  
-##  9 ph                     sediment none       281    7.99  
-## 10 ph                     water    none      3356    7.73  
-## 11 phosphorus             sediment mg/Kg dw    27  535.    
-## 12 phosphorus             water    mg/L       819    0.321 
+##  1 electricalconductivity sediment uS/cm        2  462.    
+##  2 electricalconductivity water    uS/cm       76  294.    
+##  3 nitrate                water    mg/L       305    0.366 
+##  4 nitrite                water    mg/L       391    0.0111
+##  5 nitrogen               sediment % dw        37    0.107 
+##  6 nitrogen               water    mg/L      1172    1.18  
+##  7 oxygen                 sediment mg/L       230    7.55  
+##  8 oxygen                 water    mg/L      2519    7.97  
+##  9 ph                     sediment none       230    8.03  
+## 10 ph                     water    none      2602    7.75  
+## 11 phosphorus             sediment mg/Kg dw    16  416.    
+## 12 phosphorus             water    mg/L       692    0.206 
 ## 13 salinity               sediment ppt         17   20.7   
-## 14 salinity               water    ppt        353    3.58  
+## 14 salinity               water    ppt        266    4.68  
 ## 15 sodium                 sediment mg/Kg dw     7 1676.    
-## 16 sodium                 water    mg/L        17   19.9   
-## 17 temperature            sediment Deg C      244   22.2   
-## 18 temperature            water    Deg C     3450   19.5   
-## 19 turbidity              water    NTU       1628   30.3
+## 16 sodium                 water    mg/L        18   18.9   
+## 17 temperature            sediment Deg C      201   22.3   
+## 18 temperature            water    Deg C     2482   19.7   
+## 19 turbidity              water    NTU        854   23.0
 ```
 
 
@@ -541,14 +533,14 @@ Metal %>%
 ## # Groups:   Analyte, Matrix [8]
 ##   Analyte  Matrix   Unit         n      mean
 ##   <chr>    <chr>    <chr>    <int>     <dbl>
-## 1 cadmium  sediment ug/Kg dw    78   275.   
+## 1 cadmium  sediment ug/Kg dw    50   276.   
 ## 2 cadmium  water    ug/L       314     0.013
-## 3 copper   sediment ug/Kg dw    92 37744.   
-## 4 copper   water    ug/L       586     4.34 
-## 5 mercury  sediment ug/Kg dw    76   111.   
-## 6 mercury  water    ug/L       215     0.005
-## 7 selenium sediment ug/Kg dw    38   251.   
-## 8 selenium water    ug/L       208     0.302
+## 3 copper   sediment ug/Kg dw    50 39922.   
+## 4 copper   water    ug/L       449     3.82 
+## 5 mercury  sediment ug/Kg dw    50   101.   
+## 6 mercury  water    ug/L       162     0.003
+## 7 selenium sediment ug/Kg dw    37   225.   
+## 8 selenium water    ug/L       274     0.264
 ```
 
 
@@ -815,20 +807,20 @@ OrganoP %>%
 ```
 ## # A tibble: 12 x 5
 ## # Groups:   Analyte, Matrix [12]
-##    Analyte      Matrix   Unit      n    mean
-##    <chr>        <chr>    <chr> <int>   <dbl>
-##  1 chlorpyrifos sediment ppb     402 0.112  
-##  2 chlorpyrifos water    ppb    2229 0.00733
-##  3 diazinon     sediment ppb     361 0      
-##  4 diazinon     water    ppb    1878 0.00681
-##  5 diazoxon     sediment ppb      48 0      
-##  6 diazoxon     water    ppb     295 0      
-##  7 dichlorvos   sediment ppb      24 0      
-##  8 dichlorvos   water    ppb     434 0.00242
-##  9 malathion    sediment ppb     328 0      
-## 10 malathion    water    ppb    1617 0.00607
-## 11 phorate      sediment ppb      48 0      
-## 12 phorate      water    ppb     958 0.00406
+##    Analyte      Matrix   Unit      n     mean
+##    <chr>        <chr>    <chr> <int>    <dbl>
+##  1 chlorpyrifos sediment ppb     363 0.178   
+##  2 chlorpyrifos water    ppb    4374 0.00787 
+##  3 diazinon     sediment ppb     321 0       
+##  4 diazinon     water    ppb    4066 0.0486  
+##  5 diazoxon     sediment ppb      48 0       
+##  6 diazoxon     water    ppb     340 0       
+##  7 dichlorvos   sediment ppb      13 0       
+##  8 dichlorvos   water    ppb     335 0.00312 
+##  9 malathion    sediment ppb     292 0       
+## 10 malathion    water    ppb    3712 0.00253 
+## 11 phorate      sediment ppb      31 0       
+## 12 phorate      water    ppb    2056 0.000741
 ```
 
 
@@ -870,21 +862,21 @@ Pyre %>%
 ```
 
 ```
-## # A tibble: 26 x 5
+## # A tibble: 21 x 5
 ## # Groups:   Analyte, Matrix [10]
-##    Analyte    Matrix   Unit         n         mean
-##    <chr>      <chr>    <chr>    <int>        <dbl>
-##  1 bifenthrin sediment ng/g dw    111    17.0     
-##  2 bifenthrin sediment ppb        390     3.87    
-##  3 bifenthrin sediment ug/Kg dw    21     0.118   
-##  4 bifenthrin water    ng/L       275     0.669   
-##  5 bifenthrin water    pg/L         8 77162.      
-##  6 bifenthrin water    ppb        662     0.00133 
-##  7 bifenthrin water    ug/L        73     0.000347
-##  8 cyfluthrin sediment ng/g dw    111     2.06    
-##  9 cyfluthrin sediment ppb        390     0.486   
-## 10 cyfluthrin sediment ug/Kg dw    21     0       
-## # ... with 16 more rows
+##    Analyte    Matrix   Unit         n     mean
+##    <chr>      <chr>    <chr>    <int>    <dbl>
+##  1 bifenthrin sediment ng/g dw     51 3.91    
+##  2 bifenthrin sediment ppb        366 2.66    
+##  3 bifenthrin sediment ug/Kg dw    21 0.118   
+##  4 bifenthrin water    ng/L       157 0.198   
+##  5 bifenthrin water    ppb       1073 0.000698
+##  6 bifenthrin water    ug/L        39 0.00175 
+##  7 cyfluthrin sediment ng/g dw     51 0.0188  
+##  8 cyfluthrin sediment ppb        369 0.314   
+##  9 cyfluthrin sediment ug/Kg dw    21 0       
+## 10 cyfluthrin water    ng/L       127 0.105   
+## # ... with 11 more rows
 ```
 
 #### cyfluthrin - ppb
@@ -1047,12 +1039,12 @@ Pyre %>%
 ## # Groups:   Analyte, Matrix [6]
 ##   Analyte       Matrix   Unit      n     mean
 ##   <chr>         <chr>    <chr> <int>    <dbl>
-## 1 bifenthrin    sediment ppb     522 6.51    
-## 2 bifenthrin    water    ppb    1018 0.00168 
-## 3 cyfluthrin    sediment ppb     522 0.800   
-## 4 cyfluthrin    water    ppb     915 0.000184
-## 5 esfenvalerate sediment ppb     523 0.914   
-## 6 esfenvalerate water    ppb     892 0.000127
+## 1 bifenthrin    sediment ppb     438 2.68    
+## 2 bifenthrin    water    ppb    1269 0.000668
+## 3 cyfluthrin    sediment ppb     441 0.265   
+## 4 cyfluthrin    water    ppb    1279 0.000102
+## 5 esfenvalerate sediment ppb     445 1.20    
+## 6 esfenvalerate water    ppb    1130 0.000412
 ```
 
 
@@ -1339,16 +1331,16 @@ GABA %>%
 ## # Groups:   Analyte, Matrix [10]
 ##    Analyte                   Matrix   Unit      n      mean
 ##    <chr>                     <chr>    <chr> <int>     <dbl>
-##  1 fipronil                  sediment ppb     383 0.00763  
-##  2 fipronil                  water    ppb     659 0.00114  
-##  3 fipronil_desulfinyl       sediment ppb     396 0.0549   
-##  4 fipronil_desulfinyl       water    ppb     649 0.000370 
-##  5 fipronil_desulfinyl_amide sediment ppb     299 0        
-##  6 fipronil_desulfinyl_amide water    ppb     522 0.0000759
-##  7 fipronil_sulfide          sediment ppb     176 0.361    
-##  8 fipronil_sulfide          water    ppb     244 0.000237 
-##  9 fipronil_sulfone          sediment ppb     174 0.450    
-## 10 fipronil_sulfone          water    ppb     321 0.00108
+##  1 fipronil                  sediment ppb     316 0.00124  
+##  2 fipronil                  water    ppb     899 0.000531 
+##  3 fipronil_desulfinyl       sediment ppb     337 0.00867  
+##  4 fipronil_desulfinyl       water    ppb     889 0.000201 
+##  5 fipronil_desulfinyl_amide sediment ppb     248 0        
+##  6 fipronil_desulfinyl_amide water    ppb     767 0.0000366
+##  7 fipronil_sulfide          sediment ppb     135 0.0306   
+##  8 fipronil_sulfide          water    ppb     136 0.000276 
+##  9 fipronil_sulfone          sediment ppb     125 0.0446   
+## 10 fipronil_sulfone          water    ppb     327 0.000473
 ```
 
 
@@ -1501,13 +1493,13 @@ Other %>%
 ```
 ## # A tibble: 5 x 5
 ## # Groups:   Analyte, Matrix [5]
-##   Analyte      Matrix   Unit      n     mean
-##   <chr>        <chr>    <chr> <int>    <dbl>
-## 1 atrazine     sediment ppb      88 0       
-## 2 atrazine     water    ppb     462 0.00525 
-## 3 clothianidin water    ppb     204 0.000162
-## 4 glyphosate   water    ppb     216 0.857   
-## 5 imidacloprid water    ppb     266 0.00255
+##   Analyte      Matrix   Unit      n      mean
+##   <chr>        <chr>    <chr> <int>     <dbl>
+## 1 atrazine     sediment ppb      77 0        
+## 2 atrazine     water    ppb    1124 0.00432  
+## 3 clothianidin water    ppb     201 0.0000139
+## 4 glyphosate   water    ppb     355 1.23     
+## 5 imidacloprid water    ppb     264 0.00145
 ```
 
 
@@ -1620,21 +1612,21 @@ Herbicide %>%
 ```
 ## # A tibble: 13 x 5
 ## # Groups:   Analyte, Matrix [13]
-##    Analyte             Matrix   Unit      n       mean
-##    <chr>               <chr>    <chr> <int>      <dbl>
-##  1 dinoseb             water    ppb      97 0.0714    
-##  2 diuron              water    ppb    1729 0.0963    
-##  3 linuron             water    ppb    1226 0.00492   
-##  4 molinate            sediment ppb     218 0         
-##  5 molinate            water    ppb     555 0.00000955
-##  6 oxyfluorfen         sediment ppb     249 0.00134   
-##  7 oxyfluorfen         water    ppb    1109 0.00248   
-##  8 paraquat_dichloride water    ppb     227 0.00542   
-##  9 propanil            sediment ppb     264 0         
-## 10 propanil            water    ppb     793 0.00395   
-## 11 thiobencarb         sediment ppb     264 0         
-## 12 thiobencarb         water    ppb    1036 0.0166    
-## 13 triclopyr           water    ppb     379 0.00417
+##    Analyte             Matrix   Unit      n     mean
+##    <chr>               <chr>    <chr> <int>    <dbl>
+##  1 dinoseb             water    ppb     144 0.0481  
+##  2 diuron              water    ppb    2185 0.152   
+##  3 linuron             water    ppb    2038 0.00464 
+##  4 molinate            sediment ppb     207 0       
+##  5 molinate            water    ppb    2245 0.0137  
+##  6 oxyfluorfen         sediment ppb     232 0.000172
+##  7 oxyfluorfen         water    ppb    1253 0.000870
+##  8 paraquat_dichloride water    ppb     454 0.0106  
+##  9 propanil            sediment ppb     247 0       
+## 10 propanil            water    ppb    1386 0.00226 
+## 11 thiobencarb         sediment ppb     247 0       
+## 12 thiobencarb         water    ppb    2798 0.00273 
+## 13 triclopyr           water    ppb     613 0.00454
 ```
 
 ### Late addition: OrganoChlorines
@@ -1721,18 +1713,18 @@ OrganoCh %>%
 ## # Groups:   Analyte, Matrix [12]
 ##    Analyte            Matrix   Unit      n     mean
 ##    <chr>              <chr>    <chr> <int>    <dbl>
-##  1 ddd                sediment ppb     138 0.469   
-##  2 ddd                water    ppb     306 0.000238
-##  3 dde                sediment ppb     138 4.03    
-##  4 dde                water    ppb     306 0.000256
-##  5 ddt                sediment ppb     115 0.0477  
-##  6 ddt                water    ppb     306 0.000248
-##  7 endosulfan         sediment ppb     106 0       
-##  8 endosulfan         water    ppb     333 0.00173 
-##  9 endosulfan_sulfate sediment ppb      45 0       
-## 10 endosulfan_sulfate water    ppb      97 0.000736
-## 11 pyridaben          sediment ppb     264 0       
-## 12 pyridaben          water    ppb     480 0
+##  1 ddd                sediment ppb      90 0.332   
+##  2 ddd                water    ppb     258 0.000282
+##  3 dde                sediment ppb      90 0.582   
+##  4 dde                water    ppb     323 0.000243
+##  5 ddt                sediment ppb      67 0.0354  
+##  6 ddt                water    ppb     270 0.0438  
+##  7 endosulfan         sediment ppb     106 0.0115  
+##  8 endosulfan         water    ppb    1020 0.000570
+##  9 endosulfan_sulfate sediment ppb      38 0       
+## 10 endosulfan_sulfate water    ppb     301 0.000694
+## 11 pyridaben          sediment ppb     245 0       
+## 12 pyridaben          water    ppb     478 0
 ```
 
 
@@ -1844,15 +1836,14 @@ Fungi %>%
 ```
 
 ```
-## # A tibble: 5 x 5
-## # Groups:   Analyte, Matrix [5]
+## # A tibble: 4 x 5
+## # Groups:   Analyte, Matrix [4]
 ##   Analyte      Matrix   Unit      n     mean
 ##   <chr>        <chr>    <chr> <int>    <dbl>
-## 1 dichloran    water    ppb       5 0       
-## 2 myclobutanil sediment ppb     252 0       
-## 3 myclobutanil water    ppb     616 0.000114
-## 4 triadimefon  sediment ppb     264 0       
-## 5 triadimefon  water    ppb     479 0
+## 1 myclobutanil sediment ppb     247 0       
+## 2 myclobutanil water    ppb     868 0.000468
+## 3 triadimefon  sediment ppb     247 0       
+## 4 triadimefon  water    ppb     387 0
 ```
 
 
@@ -1892,7 +1883,7 @@ length(unique(Limited$Analyte))
 ```
 
 ```
-## [1] 51
+## [1] 50
 ```
 
 ```r
@@ -1922,27 +1913,27 @@ Limited %>%
 ```
 ## # A tibble: 19 x 4
 ## # Groups:   SelectList [11]
-##    SelectList  Unit         n          mean
-##    <chr>       <chr>    <int>         <dbl>
-##  1 Atrazine    ppb        550     0.00441  
-##  2 Fungicide   ppb       1616     0.0000433
-##  3 GABA        ppb       3823     0.0440   
-##  4 Glyphosate  ppb        216     0.857    
-##  5 Herbicide   ppb       8146     0.0252   
-##  6 Metal       ug/Kg dw   284 12365.       
-##  7 Metal       ug/L      1323     1.97     
-##  8 Neon        ppb        470     0.00151  
-##  9 OrganoCh    ppb       2634     0.238    
-## 10 OrganoP     ppb       8622     0.0103   
-## 11 Pyrethroids ppb       4392     0.978    
-## 12 WQP         % dw        39     0.102    
-## 13 WQP         Deg C     3694    19.7      
-## 14 WQP         mg/Kg dw    34   770.       
-## 15 WQP         mg/L      6990     4.59     
-## 16 WQP         none      3637     7.75     
-## 17 WQP         NTU       1628    30.3      
-## 18 WQP         ppt        370     4.37     
-## 19 WQP         uS/cm       91   355.
+##    SelectList  Unit         n         mean
+##    <chr>       <chr>    <int>        <dbl>
+##  1 Atrazine    ppb       1201     0.00405 
+##  2 Fungicide   ppb       1749     0.000232
+##  3 GABA        ppb       4179     0.00333 
+##  4 Glyphosate  ppb        355     1.23    
+##  5 Herbicide   ppb      14049     0.0284  
+##  6 Metal       ug/Kg dw   187 10819.      
+##  7 Metal       ug/L      1199     1.49    
+##  8 Neon        ppb        465     0.000830
+##  9 OrganoCh    ppb       3286     0.0300  
+## 10 OrganoP     ppb      15951     0.0193  
+## 11 Pyrethroids ppb       5002     0.365   
+## 12 WQP         % dw        37     0.107   
+## 13 WQP         Deg C     2683    19.9     
+## 14 WQP         mg/Kg dw    23   799.      
+## 15 WQP         mg/L      5327     4.47    
+## 16 WQP         none      2832     7.77    
+## 17 WQP         NTU        854    23.0     
+## 18 WQP         ppt        283     5.64    
+## 19 WQP         uS/cm       78   298.
 ```
 
 

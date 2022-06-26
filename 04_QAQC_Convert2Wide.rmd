@@ -1,7 +1,7 @@
 ---
 title: "Conversions"
 author: "Erika W"
-date: "4/5/2021"
+date: "6/25/2021"
 output:
   html_document:
     code_download: true
@@ -50,19 +50,12 @@ Because NETICA requires the nodes to be columns, this data needs to be transform
 
 ## 1. Load Data
 
-```{r, eval = F}
-# OLD WAY TO LOAD DATA / PUBLIC REPO
-
-# Load data
-CEDENSURF <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURF_Limited.csv") %>% select(Analyte, Result, Unit,CollectionMethod, Matrix, Date, Subregion, StationName, Latitude, Longitude,SelectList)
-```
-
 ```{r}
 # Load CEDEN Data
 
 tmp <- tempfile()
 
-CEDENSURF <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURF_Limited.csv",
+CEDENSURF <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/CEDENSURF_Limited.csv",
                    .token = gh_token(), 
                    .destfile = tmp)
 
