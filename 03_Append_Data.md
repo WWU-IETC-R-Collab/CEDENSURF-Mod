@@ -27,11 +27,20 @@ library(tidyverse)
 
 ```r
 # packages b/c accessing private repo
-
-library(httr)
-library(tidyverse)
 library(gh)
+library(httr)
 library(gitcreds)
+gh::gh_whoami()
+```
+
+```
+## {
+##   "name": "Erika Whitney",
+##   "login": "whitneyerika",
+##   "html_url": "https://github.com/whitneyerika",
+##   "scopes": "gist, repo, user, workflow",
+##   "token": "ghp_...p1ar"
+## }
 ```
 
 ## Intro
@@ -52,44 +61,9 @@ Start with merged CEDEN and SURF data, with duplicates found and removed per the
 
 
 ```r
-# Previous way to load data - does not work for private repo
-
 # Load CEDEN Data
-CEDENSURF <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURFMod.csv")
+CEDENSURF <- fread("Data/Output/CEDENSURFMod.csv")
 ```
-
-
-
-```r
-# Load Data - Compatible with private repository
-
-tmp <- tempfile()
-
-CEDENSURF <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURFMod.csv",
-                   .token = gh_token(), 
-                   .destfile = tmp)
-
-CEDENSURF <- read_csv(tmp) # works for me!
-```
-
-```
-## Rows: 210208 Columns: 33
-```
-
-```
-## -- Column specification --------------------------------------------------------
-## Delimiter: ","
-## chr  (22): Agency, Analyte, CollectionMethod, County, Data.source, Datum, ge...
-## dbl  (10): Latitude, Longitude, LOQ, MDL, rb_number, Record_id, Result, RL, ...
-## date  (1): Date
-```
-
-```
-## 
-## i Use `spec()` to retrieve the full column specification for this data.
-## i Specify the column types or set `show_col_types = FALSE` to quiet this message.
-```
-
 
 
 ```r
@@ -201,13 +175,15 @@ We later added additional categories to account for chemicals that were identifi
 ```
 
 ```
-##  [1] "ddd(o,p')"                   "ddd(p,p')"                  
-##  [3] "dde(o,p')"                   "dde(p,p')"                  
-##  [5] "ddmu(p,p')"                  "ddt(o,p')"                  
-##  [7] "ddt(p,p')"                   "ddvp"                       
-##  [9] "dechlorane plus mono adduct" "hpcdd"                      
-## [11] "hxcdd"                       "ocdd"                       
-## [13] "pecdd"                       "tcdd"
+##  [1] "ddd"                         "ddd(o,p')"                  
+##  [3] "ddd(p,p')"                   "dde"                        
+##  [5] "dde(o,p')"                   "dde(p,p')"                  
+##  [7] "ddmu(p,p')"                  "ddt"                        
+##  [9] "ddt(o,p')"                   "ddt(p,p')"                  
+## [11] "ddvp"                        "dechlorane plus mono adduct"
+## [13] "hpcdd"                       "hxcdd"                      
+## [15] "ocdd"                        "pecdd"                      
+## [17] "tcdd"
 ```
 
 ```r
@@ -335,7 +311,7 @@ write.csv(x = AnalyteTable,
 CEDENSURF<- CEDENSURF %>% filter(!is.na(SelectList))
 ```
 
-The result is 51373 records, all appended with appropriate selection categories according to the conceptual model
+The result is 64066 records, all appended with appropriate selection categories according to the conceptual model
 
 
 ```r
@@ -343,15 +319,27 @@ head(CEDENSURF %>% select(Date, Analyte, Result, Unit, StationName, SelectList))
 ```
 
 ```
-## # A tibble: 6 x 6
-##   Date       Analyte                            Result Unit  StationName SelectList
-##   <date>     <chr>                               <dbl> <chr> <chr>       <chr>     
-## 1 2009-10-14 turbidity                        15.4     NTU   Montezuma ~ WQP       
-## 2 2009-10-14 turbidity                        10.4     NTU   Suisun Bay~ WQP       
-## 3 2009-10-15 turbidity                        21.7     NTU   Suisun at ~ WQP       
-## 4 2009-10-16 mercury                           0.00023 ug/L  Mallard Is~ Metal     
-## 5 2009-10-16 suspended sediment concentration 11       mg/L  Mallard Is~ WQP       
-## 6 2009-10-21 turbidity                        15.9     NTU   Sacramento~ WQP
+##          Date                          Analyte   Result Unit
+## 1: 2009-10-14                        turbidity 15.40000  NTU
+## 2: 2009-10-14                        turbidity 10.40000  NTU
+## 3: 2009-10-15                        turbidity 21.70000  NTU
+## 4: 2009-10-16                          mercury  0.00023 ug/L
+## 5: 2009-10-16 suspended sediment concentration 11.00000 mg/L
+## 6: 2009-10-21                        turbidity 15.90000  NTU
+##                                                            StationName
+## 1:                                    Montezuma Slough at Nurse Slough
+## 2: Suisun Bay, off Chipps Island, opposite Sacramento North ferry slip
+## 3:                                                Suisun at Rush Ranch
+## 4:                                                   Mallard Island-MI
+## 5:                                                   Mallard Island-MI
+## 6:                                Sacramento River at Point Sacramento
+##    SelectList
+## 1:        WQP
+## 2:        WQP
+## 3:        WQP
+## 4:      Metal
+## 5:        WQP
+## 6:        WQP
 ```
 
 
@@ -382,48 +370,28 @@ head(AnalyteTable)
 ```
 
 ```
-## # A tibble: 6 x 2
-##   Analyte                          SelectList
-##   <chr>                            <chr>     
-## 1 turbidity                        WQP       
-## 2 mercury                          Metal     
-## 3 suspended sediment concentration WQP       
-## 4 oxygen                           WQP       
-## 5 temperature                      WQP       
-## 6 ph                               WQP
+##                             Analyte SelectList
+## 1:                        turbidity        WQP
+## 2:                          mercury      Metal
+## 3: suspended sediment concentration        WQP
+## 4:                           oxygen        WQP
+## 5:                      temperature        WQP
+## 6:                               ph        WQP
 ```
 
 ```r
-# Load CEDEN Data
+# Load CEDEN - SURF Data
 
-tmp <- tempfile()
+CEDENSURF2 <- fread("Data/Output/CEDENSURFMod.csv")
 
-CEDENSURF <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURFMod.csv",
-                   .token = gh_token(), 
-                   .destfile = tmp)
+#tmp <- tempfile()
 
-CEDENSURF2 <- read_csv(tmp)
-```
+#CEDENSURF <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/CEDENSURFMod.csv",
+#                   .token = gh_token(), 
+#                   .destfile = tmp)
 
-```
-## Rows: 210208 Columns: 33
-```
+#CEDENSURF2 <- read_csv(tmp)
 
-```
-## -- Column specification --------------------------------------------------------
-## Delimiter: ","
-## chr  (22): Agency, Analyte, CollectionMethod, County, Data.source, Datum, ge...
-## dbl  (10): Latitude, Longitude, LOQ, MDL, rb_number, Record_id, Result, RL, ...
-## date  (1): Date
-```
-
-```
-## 
-## i Use `spec()` to retrieve the full column specification for this data.
-## i Specify the column types or set `show_col_types = FALSE` to quiet this message.
-```
-
-```r
 # Following code is the old way to load data / pre private repository
 # CEDENSURF2 <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURFMod.csv")
 ```
@@ -438,23 +406,23 @@ head(CEDENSURF2 %>% select(Date, Analyte, Result, StationName, SelectList))
 ```
 
 ```
-##         Date  Analyte Result
-## 1 2011-04-26 atrazine      0
-## 2 2013-08-20 atrazine      0
-## 3 2012-03-27 atrazine      0
-## 4 2013-01-15 atrazine      0
-## 5 2017-06-28 atrazine      0
-## 6 2015-06-04 atrazine      0
-##                                                  StationName SelectList
-## 1                                              Middle Ground   Atrazine
-## 2                                   Empire Tract @ 8 Mile Rd   Atrazine
-## 3 Grizzly Bay at Dolphin nr. Suisun Slough. CEDEN: 207SNB0D7   Atrazine
-## 4                     Bishop Cut at Eight Mile Rd (in Delta)   Atrazine
-## 5                Cache Slough at Ryer Island Road (in Delta)   Atrazine
-## 6               Sacramento River at Freeport (USGS-11447650)   Atrazine
+##          Date  Analyte Result                              StationName
+## 1: 2011-04-05 atrazine      0                               Roe Island
+## 2: 2011-04-05 atrazine      0 Grizzly Bay at Dolphin nr. Suisun Slough
+## 3: 2011-04-05 atrazine      0                                Pittsburg
+## 4: 2011-04-05 atrazine      0                                Avon Pier
+## 5: 2011-04-05 atrazine      0                            Middle Ground
+## 6: 2011-04-12 atrazine      0 Grizzly Bay at Dolphin nr. Suisun Slough
+##    SelectList
+## 1:   Atrazine
+## 2:   Atrazine
+## 3:   Atrazine
+## 4:   Atrazine
+## 5:   Atrazine
+## 6:   Atrazine
 ```
 
-The result is  records, all appended with appropriate selection categories according to the conceptual model
+The result is 64066 records, all appended with appropriate selection categories according to the conceptual model
 
 <br>
 
