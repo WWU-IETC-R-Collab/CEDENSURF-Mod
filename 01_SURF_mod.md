@@ -51,15 +51,15 @@ SURF.Sed <- fread("Data/SURF_SED.csv") # 1970 - 2020, n = 150,516
 SURF.WQ <- fread("Data/SURF_water.csv") # 1925 - 2020, n = 829,527
 #summary(SURF.WQ)
 
-# Filter to ~30 YR subset
+# Filter to start at 1995 (as requested to match other's data)
 
 SURF.Sed <-SURF.Sed %>% 
   filter(between(Sample_date, 
-        as_date("1989-01-01"),as_date("2019-12-31"))) # filter dates before transform to sf, otherwise errors arise. 
+        as_date("1995-01-01"),as_date("2019-12-31"))) # filter dates before transform to sf, otherwise errors arise. 
 
 SURF.WQ <- SURF.WQ %>% 
   filter(between(Sample_date, 
-        as_date("1989-01-01"),as_date("2019-12-31")))
+        as_date("1995-01-01"),as_date("2019-12-31")))
 ```
 
 <br>
@@ -209,7 +209,7 @@ ggplot() +
 ```
 
 ```
-## [1] 34968
+## [1] 34893
 ```
 
 ```r
@@ -217,7 +217,7 @@ ggplot() +
 ```
 
 ```
-## [1] 183290
+## [1] 159485
 ```
 
 
@@ -283,3 +283,341 @@ write_csv(SURF.WQ.sf, "Data/Output/SURFMod_water.csv") # Note: coerces empty dat
 write_csv(SURF.Sed.sf, "Data/Output/SURFMod_SED.csv") # Note: coerces empty data fields to NA
 ```
 
+## Compare Old and New {.tabset}
+
+### CEDEN
+
+#### Load Data
+
+```r
+library(gh)
+library(httr)
+library(gitcreds)
+gh::gh_whoami()
+```
+
+```
+## {
+##   "name": "Erika Whitney",
+##   "login": "whitneyerika",
+##   "html_url": "https://github.com/whitneyerika",
+##   "scopes": "gist, repo, user, workflow",
+##   "token": "ghp_...p1ar"
+## }
+```
+
+```r
+# Load Old CEDENMOD Data
+
+tmp <- tempfile()
+
+CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/main/Data/Output/CEDENMod_Toxicity.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+CEDENMod_OldTox <- read_csv(tmp) 
+
+rm(tmp, CEDENMod) #Clean up to avoid overwrite issues
+
+# Load Old RR
+
+USFE.OLDRR <-  st_read("Data/USFE_RiskRegions_9292020/RiskRegions_DWSC_Update_9292020.shp")%>%
+    st_transform(., "NAD83")
+```
+
+```
+## Reading layer `RiskRegions_DWSC_Update_9292020' from data source 
+##   `C:\Users\Erika\Documents\GitHub\CEDENSURF-mod\Data\USFE_RiskRegions_9292020\RiskRegions_DWSC_Update_9292020.shp' 
+##   using driver `ESRI Shapefile'
+## Simple feature collection with 6 features and 6 fields
+## Geometry type: POLYGON
+## Dimension:     XYZ
+## Bounding box:  xmin: -122.1431 ymin: 37.62499 xmax: -121.1967 ymax: 38.58916
+## z_range:       zmin: 0 zmax: 0
+## Geodetic CRS:  WGS 84
+```
+
+```r
+st_crs(USFE.OLDRR)
+```
+
+```
+## Coordinate Reference System:
+##   User input: NAD83 
+##   wkt:
+## GEOGCRS["NAD83",
+##     DATUM["North American Datum 1983",
+##         ELLIPSOID["GRS 1980",6378137,298.257222101,
+##             LENGTHUNIT["metre",1]]],
+##     PRIMEM["Greenwich",0,
+##         ANGLEUNIT["degree",0.0174532925199433]],
+##     CS[ellipsoidal,2],
+##         AXIS["geodetic latitude (Lat)",north,
+##             ORDER[1],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##         AXIS["geodetic longitude (Lon)",east,
+##             ORDER[2],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##     ID["EPSG",4269]]
+```
+
+```r
+# Load New CEDENMOD Data
+
+tmp <- tempfile()
+
+CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS/Data/Output/CEDENMod_Toxicity_26JUN2022.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+CEDENMod_Tox <- read_csv(tmp) 
+
+rm(tmp, CEDENMod) #Clean up
+
+
+# Load NEW Risk Regions
+USFE.regions <-  st_read("Data/Subregions/Subregions.shp") %>% 
+  rename(Subregion = SUBREGION)
+```
+
+```
+## Reading layer `subregions' from data source 
+##   `C:\Users\Erika\Documents\GitHub\CEDENSURF-mod\Data\subregions\subregions.shp' 
+##   using driver `ESRI Shapefile'
+## Simple feature collection with 12 features and 17 fields
+## Geometry type: POLYGON
+## Dimension:     XY
+## Bounding box:  xmin: -122.1485 ymin: 37.53355 xmax: -120.9861 ymax: 38.60452
+## Geodetic CRS:  NAD83
+```
+
+```r
+st_crs(USFE.regions) #NAD83
+```
+
+```
+## Coordinate Reference System:
+##   User input: NAD83 
+##   wkt:
+## GEOGCRS["NAD83",
+##     DATUM["North American Datum 1983",
+##         ELLIPSOID["GRS 1980",6378137,298.257222101,
+##             LENGTHUNIT["metre",1]]],
+##     PRIMEM["Greenwich",0,
+##         ANGLEUNIT["degree",0.0174532925199433]],
+##     CS[ellipsoidal,2],
+##         AXIS["latitude",north,
+##             ORDER[1],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##         AXIS["longitude",east,
+##             ORDER[2],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##     ID["EPSG",4269]]
+```
+#### Details
+
+
+```r
+min(as.Date(CEDENMod_OldTox$Date))
+```
+
+```
+## [1] "2009-10-06"
+```
+
+```r
+min(as.Date(CEDENMod_Tox$Date))
+```
+
+```
+## [1] "1995-02-14"
+```
+
+#### Plot Data
+
+
+```r
+# Convert ToxOld table to sf
+CedToxOld.sf <- st_as_sf(CEDENMod_OldTox,
+      coords = c("Longitude", "Latitude"), 
+                remove = F, # Keep coordinate columns
+                crs = "NAD83") # Assumed NAD83 Datum
+  
+# Convert ToxNew table to sf
+CedToxNew.sf <- st_as_sf(CEDENMod_Tox,
+      coords = c("Longitude", "Latitude"), 
+                remove = F, # Keep coordinate columns
+                crs = "NAD83") # Assumed NAD83 Datum,
+```
+
+
+```r
+# Map Check - Compare RR
+ggplot() +
+  geom_sf(data = USFE.regions, color = "blue", fill= NA)+
+  geom_sf(data = USFE.OLDRR, fill = NA) +
+  geom_sf(data = CedToxNew.sf, color = "orange") +
+  geom_sf(data = CedToxOld.sf, )
+```
+
+![](01_SURF_Mod_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
+### SURF
+
+#### Load Data
+
+```r
+library(gh)
+library(httr)
+library(gitcreds)
+gh::gh_whoami()
+```
+
+```
+## {
+##   "name": "Erika Whitney",
+##   "login": "whitneyerika",
+##   "html_url": "https://github.com/whitneyerika",
+##   "scopes": "gist, repo, user, workflow",
+##   "token": "ghp_...p1ar"
+## }
+```
+
+```r
+# Load Old CEDENMOD Data
+
+tmp <- tempfile()
+
+SURFMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/SURFMod_SED.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+SURFMod_OldSed <- read_csv(tmp) 
+
+rm(tmp, SURFMod) #Clean up to avoid overwrite issues
+
+# Load Old RR
+
+USFE.OLDRR <-  st_read("Data/USFE_RiskRegions_9292020/RiskRegions_DWSC_Update_9292020.shp")%>%
+    st_transform(., "NAD83")
+```
+
+```
+## Reading layer `RiskRegions_DWSC_Update_9292020' from data source 
+##   `C:\Users\Erika\Documents\GitHub\CEDENSURF-mod\Data\USFE_RiskRegions_9292020\RiskRegions_DWSC_Update_9292020.shp' 
+##   using driver `ESRI Shapefile'
+## Simple feature collection with 6 features and 6 fields
+## Geometry type: POLYGON
+## Dimension:     XYZ
+## Bounding box:  xmin: -122.1431 ymin: 37.62499 xmax: -121.1967 ymax: 38.58916
+## z_range:       zmin: 0 zmax: 0
+## Geodetic CRS:  WGS 84
+```
+
+```r
+st_crs(USFE.OLDRR)
+```
+
+```
+## Coordinate Reference System:
+##   User input: NAD83 
+##   wkt:
+## GEOGCRS["NAD83",
+##     DATUM["North American Datum 1983",
+##         ELLIPSOID["GRS 1980",6378137,298.257222101,
+##             LENGTHUNIT["metre",1]]],
+##     PRIMEM["Greenwich",0,
+##         ANGLEUNIT["degree",0.0174532925199433]],
+##     CS[ellipsoidal,2],
+##         AXIS["geodetic latitude (Lat)",north,
+##             ORDER[1],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##         AXIS["geodetic longitude (Lon)",east,
+##             ORDER[2],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##     ID["EPSG",4269]]
+```
+
+```r
+# Load New CEDENMOD Data
+
+tmp <- tempfile()
+
+SURFMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/SURFMod_SED.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+SURFMod_sed <- read_csv(tmp) 
+
+rm(tmp, SURFMod) #Clean up
+
+
+# Load NEW Risk Regions
+USFE.regions <-  st_read("Data/Subregions/Subregions.shp") %>% 
+  rename(Subregion = SUBREGION)
+```
+
+```
+## Reading layer `subregions' from data source 
+##   `C:\Users\Erika\Documents\GitHub\CEDENSURF-mod\Data\subregions\subregions.shp' 
+##   using driver `ESRI Shapefile'
+## Simple feature collection with 12 features and 17 fields
+## Geometry type: POLYGON
+## Dimension:     XY
+## Bounding box:  xmin: -122.1485 ymin: 37.53355 xmax: -120.9861 ymax: 38.60452
+## Geodetic CRS:  NAD83
+```
+
+```r
+st_crs(USFE.regions) #NAD83
+```
+
+```
+## Coordinate Reference System:
+##   User input: NAD83 
+##   wkt:
+## GEOGCRS["NAD83",
+##     DATUM["North American Datum 1983",
+##         ELLIPSOID["GRS 1980",6378137,298.257222101,
+##             LENGTHUNIT["metre",1]]],
+##     PRIMEM["Greenwich",0,
+##         ANGLEUNIT["degree",0.0174532925199433]],
+##     CS[ellipsoidal,2],
+##         AXIS["latitude",north,
+##             ORDER[1],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##         AXIS["longitude",east,
+##             ORDER[2],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##     ID["EPSG",4269]]
+```
+
+#### Prep Data
+
+
+```r
+# Convert Old table to sf
+SURFSedOld.sf<- st_as_sf(SURFMod_OldSed,
+      coords = c("Longitude", "Latitude"), 
+                remove = F, # Keep coordinate columns
+                crs = "NAD83") # Assumed NAD83 Datum
+
+# Convert New table to sf
+SURFSedNew.sf<- st_as_sf(SURFMod_sed,
+      coords = c("Longitude", "Latitude"), 
+                remove = F, # Keep coordinate columns
+                crs = "NAD83") # Assumed NAD83 Datum
+```
+
+#### Plot Overlay
+
+```r
+# Map Check - Compare RR
+ggplot() +
+  geom_sf(data = USFE.regions, color = "blue", fill= NA)+
+  geom_sf(data = USFE.OLDRR, fill = NA) +
+  geom_sf(data = SURFSedNew.sf, color = "orange") +
+  geom_sf(data = SURFSedOld.sf, )
+```
+
+![](01_SURF_Mod_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
