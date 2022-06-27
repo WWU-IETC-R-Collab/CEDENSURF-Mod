@@ -311,7 +311,7 @@ write.csv(x = AnalyteTable,
 CEDENSURF<- CEDENSURF %>% filter(!is.na(SelectList))
 ```
 
-The result is 102306 records, all appended with appropriate selection categories according to the conceptual model
+The result is 94814 records, all appended with appropriate selection categories according to the conceptual model
 
 
 ```r
@@ -405,7 +405,7 @@ head(CEDENSURF2 %>% select(Date, Analyte, Result, StationName, SelectList))
 ## 6:   Atrazine
 ```
 
-The result is 102306 records, all appended with appropriate selection categories according to the conceptual model
+The result is 94814 records, all appended with appropriate selection categories according to the conceptual model
 
 <br>
 

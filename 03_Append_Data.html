@@ -495,7 +495,7 @@ write.csv(x = AnalyteTable,
 <h3>Save Categorized, Limited CEDENSURF</h3>
 <pre class="r"><code>## Remove rows with irrelevant Analytes?
 CEDENSURF&lt;- CEDENSURF %&gt;% filter(!is.na(SelectList))</code></pre>
-<p>The result is 102306 records, all appended with appropriate selection categories according to the conceptual model</p>
+<p>The result is 94814 records, all appended with appropriate selection categories according to the conceptual model</p>
 <pre class="r"><code>head(CEDENSURF %&gt;% select(Date, Analyte, Result, Unit, StationName, SelectList))</code></pre>
 <pre><code>##          Date      Analyte      Result Unit        StationName SelectList
 ## 1: 1995-02-14     diazinon 7100.000000 pg/L Grizzly Bay (BF20)    OrganoP
@@ -558,7 +558,7 @@ head(CEDENSURF2 %&gt;% select(Date, Analyte, Result, StationName, SelectList))</
 ## 4:   Atrazine
 ## 5:   Atrazine
 ## 6:   Atrazine</code></pre>
-<p>The result is 102306 records, all appended with appropriate selection categories according to the conceptual model</p>
+<p>The result is 94814 records, all appended with appropriate selection categories according to the conceptual model</p>
 <p><br></p>
 </div>
 </div>
