@@ -311,7 +311,7 @@ write.csv(x = AnalyteTable,
 CEDENSURF<- CEDENSURF %>% filter(!is.na(SelectList))
 ```
 
-The result is 64171 records, all appended with appropriate selection categories according to the conceptual model
+The result is 102306 records, all appended with appropriate selection categories according to the conceptual model
 
 
 ```r
@@ -319,27 +319,13 @@ head(CEDENSURF %>% select(Date, Analyte, Result, Unit, StationName, SelectList))
 ```
 
 ```
-##          Date                          Analyte   Result Unit
-## 1: 2009-10-14                        turbidity 15.40000  NTU
-## 2: 2009-10-14                        turbidity 10.40000  NTU
-## 3: 2009-10-15                        turbidity 21.70000  NTU
-## 4: 2009-10-16                          mercury  0.00023 ug/L
-## 5: 2009-10-16 suspended sediment concentration 11.00000 mg/L
-## 6: 2009-10-21                        turbidity 15.90000  NTU
-##                                                            StationName
-## 1:                                    Montezuma Slough at Nurse Slough
-## 2: Suisun Bay, off Chipps Island, opposite Sacramento North ferry slip
-## 3:                                                Suisun at Rush Ranch
-## 4:                                                   Mallard Island-MI
-## 5:                                                   Mallard Island-MI
-## 6:                                Sacramento River at Point Sacramento
-##    SelectList
-## 1:        WQP
-## 2:        WQP
-## 3:        WQP
-## 4:      Metal
-## 5:        WQP
-## 6:        WQP
+##          Date      Analyte      Result Unit        StationName SelectList
+## 1: 1995-02-14     diazinon 7100.000000 pg/L Grizzly Bay (BF20)    OrganoP
+## 2: 1995-02-14     selenium    0.134000 ug/L Grizzly Bay (BF20)      Metal
+## 3: 1995-02-14      mercury    0.000970 ug/L Grizzly Bay (BF20)      Metal
+## 4: 1995-02-14      cadmium    0.004700 ug/L Grizzly Bay (BF20)      Metal
+## 5: 1995-02-14 nitrate as n    0.367102 mg/L Grizzly Bay (BF20)        WQP
+## 6: 1995-02-14 chlorpyrifos   67.000000 pg/L Grizzly Bay (BF20)    OrganoP
 ```
 
 
@@ -370,13 +356,13 @@ head(AnalyteTable)
 ```
 
 ```
-##                             Analyte SelectList
-## 1:                        turbidity        WQP
-## 2:                          mercury      Metal
-## 3: suspended sediment concentration        WQP
-## 4:                           oxygen        WQP
-## 5:                      temperature        WQP
-## 6:                               ph        WQP
+##         Analyte SelectList
+## 1:     diazinon    OrganoP
+## 2:     selenium      Metal
+## 3:      mercury      Metal
+## 4:      cadmium      Metal
+## 5: nitrate as n        WQP
+## 6: chlorpyrifos    OrganoP
 ```
 
 ```r
@@ -386,14 +372,11 @@ CEDENSURF2 <- fread("Data/Output/CEDENSURFMod.csv")
 
 #tmp <- tempfile()
 
+### Too large to push online, so now references locally from creation of 02_CSMerge. Old code when wrote to online:
+
 #CEDENSURF <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/CEDENSURFMod.csv",
 #                   .token = gh_token(), 
 #                   .destfile = tmp)
-
-#CEDENSURF2 <- read_csv(tmp)
-
-# Following code is the old way to load data / pre private repository
-# CEDENSURF2 <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURFMod.csv")
 ```
 
 With this, we could append the category to the original data using a merge
@@ -407,12 +390,12 @@ head(CEDENSURF2 %>% select(Date, Analyte, Result, StationName, SelectList))
 
 ```
 ##          Date  Analyte Result                              StationName
-## 1: 2011-04-05 atrazine      0                               Roe Island
+## 1: 2005-09-15 atrazine      0                               CAN05-0011
 ## 2: 2011-04-05 atrazine      0 Grizzly Bay at Dolphin nr. Suisun Slough
 ## 3: 2011-04-05 atrazine      0                                Pittsburg
-## 4: 2011-04-05 atrazine      0                                Avon Pier
-## 5: 2011-04-05 atrazine      0                            Middle Ground
-## 6: 2011-04-12 atrazine      0 Grizzly Bay at Dolphin nr. Suisun Slough
+## 4: 2011-04-05 atrazine      0                               Roe Island
+## 5: 2011-04-05 atrazine      0                                Avon Pier
+## 6: 2011-04-05 atrazine      0                            Middle Ground
 ##    SelectList
 ## 1:   Atrazine
 ## 2:   Atrazine
@@ -422,7 +405,7 @@ head(CEDENSURF2 %>% select(Date, Analyte, Result, StationName, SelectList))
 ## 6:   Atrazine
 ```
 
-The result is 64171 records, all appended with appropriate selection categories according to the conceptual model
+The result is 102306 records, all appended with appropriate selection categories according to the conceptual model
 
 <br>
 

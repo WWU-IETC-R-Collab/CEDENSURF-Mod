@@ -52,7 +52,7 @@ This original data set can be found within the IETC Tox Box at: Upper San Franci
 
 tmp <- tempfile()
 
-CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS/Data/Output/CEDENMod_Toxicity.csv",
+CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS/Data/Output/CEDENMod_Toxicity_26JUN2022.csv",
                  .token = gh_token(),
                  .destfile = tmp)
   
@@ -62,7 +62,7 @@ rm(tmp, CEDENMod) #Clean up to avoid overwrite issues
 
 tmp <- tempfile()
 
-CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS/Data/Output/CEDENMod_WQ.csv",
+CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS/Data/Output/CEDENMod_WQ_26JUN2022.csv",
                  .token = gh_token(),
                  .destfile = tmp)
   
@@ -263,7 +263,7 @@ CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL, Date, Analyte, CollectionMethod, Sta
 
 Further assessment revealed problematic data duplication that was not caught when requiring Collection Methods to be equal. We corrected the majority of these errors by:
 
-1. Removing records where Collection Method = "Not Recorded" (Of 305 samples labeled "not recorded" in the entire CEDEN dataset, 153 were duplicated data with non-zero results)
+1. Removing records where Collection Method = "Not Recorded"
 
 2. *(Add another bullet & code if we take action on Sediment Core vs Grab issues)*
 
@@ -303,7 +303,7 @@ CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>%
 CEDEN_ALL_DupChecked$Analyte <- tolower(CEDEN_ALL_DupChecked$Analyte)
 
 # Preview
-head(sort(unique(CEDEN_ALL_DupChecked$Analyte))) # 908 unique Analytes total
+head(sort(unique(CEDEN_ALL_DupChecked$Analyte)))
 
 # Looks like requiring the separation from extra to analyte to contain a comma and a space allowed the full names to be retained. Without that, the separation led to an analyte "1" which should have been 1,2-bis(2,4,6- tribromophenoxy)ethane, etc.
 ```
@@ -461,22 +461,11 @@ write_csv(CEDENSURF, "IssueDocumentation/CEDENSURF_IssueInvestigation.csv") # No
 
 There are `r nrow(CEDENSURF)` total records in the initial merge of CEDEN with SURF.
 
-Due to initial barriers to removing duplicates between the datasets (see below), I will simply filter out data identified as being sourced from CEDEN within SURF to eliminate duplicates. This is not an ideal solution though, because there is a large amount of data identified as coming from CEDEN which is not present in our CEDEN WQ data (again, see below).
-
-```{r}
-SURFMod_NC <- filter(SURF_ALL_DupChecked, Data.source != "CEDEN")
-
-CEDENSURFModNC <- rbind(SURFMod_NC, CEDEN_ALL_DupChecked)
-
-#  THE CURRENT CEDENSURFMOD CSV, THAT SAID< NOW CAN DETECT DUPLICATION BETWEEN DATASETS> PREFER TO WRITE FROM FINISHED METHODS BELOW. write_csv(CEDENSURFModNC, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
-```
-
 <br>
 
 # Next Steps
 
 #### 1. Investigate barriers to duplicate removal {.tabset}
-*(area of active investigation)*
 
 Because the station names differ between these databases, we used Lat and Long in lieu of StationName to detect duplicates.
 

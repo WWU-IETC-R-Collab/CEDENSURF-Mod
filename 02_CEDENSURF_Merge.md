@@ -61,7 +61,7 @@ This original data set can be found within the IETC Tox Box at: Upper San Franci
 
 tmp <- tempfile()
 
-CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS/Data/Output/CEDENMod_Toxicity.csv",
+CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS/Data/Output/CEDENMod_Toxicity_26JUN2022.csv",
                  .token = gh_token(),
                  .destfile = tmp)
   
@@ -71,7 +71,7 @@ rm(tmp, CEDENMod) #Clean up to avoid overwrite issues
 
 tmp <- tempfile()
 
-CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS/Data/Output/CEDENMod_WQ.csv",
+CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS/Data/Output/CEDENMod_WQ_26JUN2022.csv",
                  .token = gh_token(),
                  .destfile = tmp)
   
@@ -104,9 +104,9 @@ CEDENMod_WQ$Matrix[CEDENMod_WQ$CollectionMethod == "Sediment_Grab"]<- "sediment"
 ```
 Two files - one with tox data, and one with wq data
 
-CEDEN water data contains 74778 records, between 2009-10-06 to 2019-08-20
+CEDEN water data contains 271379 records, between 1995-01-03 to 2019-12-04
 
-CEDEN tox data contains 59827 records, between 2009-10-06 to 2019-09-25
+CEDEN tox data contains 94052 records, between 1995-02-14 to 2019-12-04
 
 <br> 
 
@@ -156,7 +156,7 @@ Two files - one with wq data, and one with sediment data
 
 SURF water contains 183290 records, from 1989-01-09 to 2019-12-19
 
-SURF sediment contains 34968 records, from from NA to 2019-09-17
+SURF sediment contains 34893 records, from from NA to 2019-09-17
 
 <br>
 
@@ -224,7 +224,7 @@ NoDup_Tox <- NoDup_Tox %>% filter(Analyte != "Survival") %>%
 
 <br>
 
-After CEDEN data prep, there are 28349 unique, useful records in the tox dataset, and 73440 unique records in the WQ dataset.
+After CEDEN data prep, there are 41921 unique, useful records in the tox dataset, and 264468 unique records in the WQ dataset.
 
 <br>
 
@@ -277,7 +277,7 @@ CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL, Date, Analyte, CollectionMethod, Sta
 
 Further assessment revealed problematic data duplication that was not caught when requiring Collection Methods to be equal. We corrected the majority of these errors by:
 
-1. Removing records where Collection Method = "Not Recorded" (Of 305 samples labeled "not recorded" in the entire CEDEN dataset, 153 were duplicated data with non-zero results)
+1. Removing records where Collection Method = "Not Recorded"
 
 2. *(Add another bullet & code if we take action on Sediment Core vs Grab issues)*
 
@@ -319,7 +319,7 @@ CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>%
 CEDEN_ALL_DupChecked$Analyte <- tolower(CEDEN_ALL_DupChecked$Analyte)
 
 # Preview
-head(sort(unique(CEDEN_ALL_DupChecked$Analyte))) # 908 unique Analytes total
+head(sort(unique(CEDEN_ALL_DupChecked$Analyte)))
 ```
 
 ```
@@ -349,7 +349,7 @@ CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, Collection
 
 #### **CEDEN merge result**
 
-Using these QA/QC methods, 97834 unique records are available through the CEDEN datasets. 
+Using these QA/QC methods, 274987 unique records are available through the CEDEN datasets. 
 
 <br>
 
@@ -377,7 +377,7 @@ NoDup_SED <- distinct(SURFMod_SED, Date, Analyte, CollectionMethod, StationName,
 ```
 
 This results in 155877 unique records in the WQ dataset
-and 29784 unique records in the SED dataset, prior to merging.
+and 29709 unique records in the SED dataset, prior to merging.
 
 <br>
 
@@ -443,7 +443,7 @@ SURF_ALL_DupChecked <- filter(SURF_ALL_DupChecked, Study_cd != "305")
 
 #### **SURF merge result**
 
-There are 185597 unique records available through SURF.
+There are 185522 unique records available through SURF.
 
 
 ```r
@@ -452,9 +452,9 @@ There are 185597 unique records available through SURF.
 SURF_ALL_NC <- filter(SURF_ALL_DupChecked, Data.source != "CEDEN")
 ```
 
-That said, 185597 of these records are listed as having been sourced from CEDEN.
+That said, 185522 of these records are listed as having been sourced from CEDEN.
 
-In theory only 143931 unique records will be contributed through the SURF dataset. Rather than filter these out ahead of the merge, I am retaining them and then using the identification of those records as a test to see whether there are other differentiating factors (such as persisting differences in naming) between the merged dataset that will inhibit our analyses
+In theory only 143878 unique records will be contributed through the SURF dataset. Rather than filter these out ahead of the merge, I am retaining them and then using the identification of those records as a test to see whether there are other differentiating factors (such as persisting differences in naming) between the merged dataset that will inhibit our analyses
 
 <br>
 
@@ -497,25 +497,13 @@ CEDENSURF <- rbind(CEDEN_ALL_DupChecked, SURF_ALL_DupChecked)
 write_csv(CEDENSURF, "IssueDocumentation/CEDENSURF_IssueInvestigation.csv") # Note: coerces empty data fields to NA
 ```
 
-There are 283431 total records in the initial merge of CEDEN with SURF.
-
-Due to initial barriers to removing duplicates between the datasets (see below), I will simply filter out data identified as being sourced from CEDEN within SURF to eliminate duplicates. This is not an ideal solution though, because there is a large amount of data identified as coming from CEDEN which is not present in our CEDEN WQ data (again, see below).
-
-
-```r
-SURFMod_NC <- filter(SURF_ALL_DupChecked, Data.source != "CEDEN")
-
-CEDENSURFModNC <- rbind(SURFMod_NC, CEDEN_ALL_DupChecked)
-
-#  THE CURRENT CEDENSURFMOD CSV, THAT SAID< NOW CAN DETECT DUPLICATION BETWEEN DATASETS> PREFER TO WRITE FROM FINISHED METHODS BELOW. write_csv(CEDENSURFModNC, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
-```
+There are 460509 total records in the initial merge of CEDEN with SURF.
 
 <br>
 
 # Next Steps
 
 #### 1. Investigate barriers to duplicate removal {.tabset}
-*(area of active investigation)*
 
 Because the station names differ between these databases, we used Lat and Long in lieu of StationName to detect duplicates.
 
@@ -568,14 +556,18 @@ unique(CEDENSURF$Unit)
 ```
 
 ```
-##  [1] "mg/L"       "NTU"        "ug/L"       "pg/L"       "ng/L"      
-##  [6] "uS/cm"      "Deg C"      "none"       "%"          "mg/Kg dw"  
-## [11] "ug/Kg dw"   "mL"         "% vol"      "% dw"       "g"         
-## [16] "ppt"        "m"          "mg/m3"      "psu"        "ng/g dw"   
-## [21] "% ww"       "MPN/100 mL" "cfs"        "1/cm"       "umhos/cm"  
-## [26] "gc/mL"      "ueq/L"      "CU"         "pCi/L"      "g/m2"      
-## [31] "mg/m2"      "oocysts/L"  "cysts/L"    "ft/s"       "mf/L"      
-## [36] "ppb"
+##  [1] "pg/L"           "ug/L"           "mg/L"           "none"          
+##  [5] "ppt"            "mg/m3"          "Deg C"          "uS/cm"         
+##  [9] "m"              "mg/Kg dw"       "ug/Kg dw"       "%"             
+## [13] "% dw"           "mg"             "ng/L"           "psu"           
+## [17] "mL"             "g"              "% recovery"     "ug/g dw"       
+## [21] "ng/g dw"        "NTU"            "% vol"          "% ww"          
+## [25] "MPN/100 mL"     "umhos/cm"       "IFA+/100L"      "oocysts/L"     
+## [29] "cysts/L"        "g/m2"           "mg/m2"          "ueq/L"         
+## [33] "CU"             "1/cm"           "m/s"            "%V/V"          
+## [37] "ft/s"           "cfs"            "gc/mL"          "pCi/L"         
+## [41] "mf/L"           "mL/L/hr"        "Num/Rep"        "neonates/adult"
+## [45] "cm"             "ppb"
 ```
 
 <br>
