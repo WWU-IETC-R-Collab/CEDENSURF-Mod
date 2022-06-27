@@ -85,9 +85,7 @@ rm(tmp, CEDENMod)
 
 CEDENMod_Tox <- CEDENMod_Tox %>% 
       mutate(Source = "CEDEN")%>%
-      mutate(Matrix = "water") %>% 
-  filter(between(Date, 
-        as_date("1989-01-01"),as_date("2019-12-31"))) # filter dates before transform to sf, otherwise errors arise. 
+      mutate(Matrix = "water")
 
 # 3 of 4 values in MatrixName reference water, so starting with that and then editing those that are sediment values to read sediment
 
@@ -95,9 +93,7 @@ CEDENMod_Tox$Matrix[CEDENMod_Tox$MatrixName == "sediment"] <- "sediment"
 
 CEDENMod_WQ <- CEDENMod_WQ %>% 
       mutate(Source = "CEDEN")%>% 
-      mutate(Matrix = "water")%>% 
-  filter(between(Date, 
-        as_date("1989-01-01"),as_date("2019-12-31"))) # filter dates before transform to sf, otherwise errors arise. 
+      mutate(Matrix = "water") 
 
 # SedimentGrab should have Matrix == "sediment".
 CEDENMod_WQ$Matrix[CEDENMod_WQ$CollectionMethod == "Sediment_Grab"]<- "sediment"
@@ -154,7 +150,7 @@ SURFMod_WQ <- SURFMod_WQ %>%
 
 Two files - one with wq data, and one with sediment data
 
-SURF water contains 183290 records, from 1989-01-09 to 2019-12-19
+SURF water contains 159485 records, from 1995-01-09 to 2019-12-19
 
 SURF sediment contains 34893 records, from from NA to 2019-09-17
 
@@ -376,7 +372,7 @@ NoDup_WQ <- distinct(SURFMod_WQ, Date, Analyte, CollectionMethod, StationName, M
 NoDup_SED <- distinct(SURFMod_SED, Date, Analyte, CollectionMethod, StationName, Matrix, Result, .keep_all= TRUE)
 ```
 
-This results in 155877 unique records in the WQ dataset
+This results in 133437 unique records in the WQ dataset
 and 29709 unique records in the SED dataset, prior to merging.
 
 <br>
@@ -443,7 +439,7 @@ SURF_ALL_DupChecked <- filter(SURF_ALL_DupChecked, Study_cd != "305")
 
 #### **SURF merge result**
 
-There are 185522 unique records available through SURF.
+There are 163082 unique records available through SURF.
 
 
 ```r
@@ -452,9 +448,9 @@ There are 185522 unique records available through SURF.
 SURF_ALL_NC <- filter(SURF_ALL_DupChecked, Data.source != "CEDEN")
 ```
 
-That said, 185522 of these records are listed as having been sourced from CEDEN.
+That said, 163082 of these records are listed as having been sourced from CEDEN.
 
-In theory only 143878 unique records will be contributed through the SURF dataset. Rather than filter these out ahead of the merge, I am retaining them and then using the identification of those records as a test to see whether there are other differentiating factors (such as persisting differences in naming) between the merged dataset that will inhibit our analyses
+In theory only 121612 unique records will be contributed through the SURF dataset. Rather than filter these out ahead of the merge, I am retaining them and then using the identification of those records as a test to see whether there are other differentiating factors (such as persisting differences in naming) between the merged dataset that will inhibit our analyses
 
 <br>
 
@@ -497,7 +493,7 @@ CEDENSURF <- rbind(CEDEN_ALL_DupChecked, SURF_ALL_DupChecked)
 write_csv(CEDENSURF, "IssueDocumentation/CEDENSURF_IssueInvestigation.csv") # Note: coerces empty data fields to NA
 ```
 
-There are 460509 total records in the initial merge of CEDEN with SURF.
+There are 438069 total records in the initial merge of CEDEN with SURF.
 
 <br>
 
