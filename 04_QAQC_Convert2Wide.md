@@ -45,6 +45,168 @@ Because NETICA requires the nodes to be columns, this data needs to be transform
 
 3. Summarize into wide format
 
+
+This markdown/ branch utilizes a wider date range than the original and different risk regions. To compare:
+
+#### Load Data
+
+```r
+library(gh)
+library(httr)
+library(gitcreds)
+gh::gh_whoami()
+```
+
+```
+## {
+##   "name": "Erika Whitney",
+##   "login": "whitneyerika",
+##   "html_url": "https://github.com/whitneyerika",
+##   "scopes": "gist, repo, user, workflow",
+##   "token": "ghp_...p1ar"
+## }
+```
+
+```r
+# Load Old Data
+
+tmp <- tempfile()
+
+Limited <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURF_Limited.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+Limited.old <- read_csv(tmp) 
+
+rm(tmp, Limited) #Clean up to avoid overwrite issues
+
+# Load Old RR
+
+USFE.OLDRR <-  st_read("Data/USFE_RiskRegions_9292020/RiskRegions_DWSC_Update_9292020.shp")%>%
+    st_transform(., "NAD83")
+```
+
+```
+## Reading layer `RiskRegions_DWSC_Update_9292020' from data source 
+##   `C:\Users\Erika\Documents\GitHub\CEDENSURF-mod\Data\USFE_RiskRegions_9292020\RiskRegions_DWSC_Update_9292020.shp' 
+##   using driver `ESRI Shapefile'
+## Simple feature collection with 6 features and 6 fields
+## Geometry type: POLYGON
+## Dimension:     XYZ
+## Bounding box:  xmin: -122.1431 ymin: 37.62499 xmax: -121.1967 ymax: 38.58916
+## z_range:       zmin: 0 zmax: 0
+## Geodetic CRS:  WGS 84
+```
+
+```r
+st_crs(USFE.OLDRR)
+```
+
+```
+## Coordinate Reference System:
+##   User input: NAD83 
+##   wkt:
+## GEOGCRS["NAD83",
+##     DATUM["North American Datum 1983",
+##         ELLIPSOID["GRS 1980",6378137,298.257222101,
+##             LENGTHUNIT["metre",1]]],
+##     PRIMEM["Greenwich",0,
+##         ANGLEUNIT["degree",0.0174532925199433]],
+##     CS[ellipsoidal,2],
+##         AXIS["geodetic latitude (Lat)",north,
+##             ORDER[1],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##         AXIS["geodetic longitude (Lon)",east,
+##             ORDER[2],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##     ID["EPSG",4269]]
+```
+
+```r
+# Load New Data
+
+tmp <- tempfile()
+
+Limited <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/CEDENSURF_Limited.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+Limited.new <- read_csv(tmp) 
+
+rm(tmp, Limited) #Clean up
+
+
+# Load NEW Risk Regions
+USFE.regions <-  st_read("Data/Subregions/Subregions.shp") %>% 
+  rename(Subregion = SUBREGION)
+```
+
+```
+## Reading layer `subregions' from data source 
+##   `C:\Users\Erika\Documents\GitHub\CEDENSURF-mod\Data\subregions\subregions.shp' 
+##   using driver `ESRI Shapefile'
+## Simple feature collection with 12 features and 17 fields
+## Geometry type: POLYGON
+## Dimension:     XY
+## Bounding box:  xmin: -122.1485 ymin: 37.53355 xmax: -120.9861 ymax: 38.60452
+## Geodetic CRS:  NAD83
+```
+
+```r
+st_crs(USFE.regions) #NAD83
+```
+
+```
+## Coordinate Reference System:
+##   User input: NAD83 
+##   wkt:
+## GEOGCRS["NAD83",
+##     DATUM["North American Datum 1983",
+##         ELLIPSOID["GRS 1980",6378137,298.257222101,
+##             LENGTHUNIT["metre",1]]],
+##     PRIMEM["Greenwich",0,
+##         ANGLEUNIT["degree",0.0174532925199433]],
+##     CS[ellipsoidal,2],
+##         AXIS["latitude",north,
+##             ORDER[1],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##         AXIS["longitude",east,
+##             ORDER[2],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##     ID["EPSG",4269]]
+```
+
+#### Prep Data
+
+
+```r
+# Convert Old table to sf
+Limited.old <- st_as_sf(Limited.old,
+      coords = c("Longitude", "Latitude"), 
+                remove = F, # Keep coordinate columns
+                crs = "NAD83") # Assumed NAD83 Datum
+
+# Convert New table to sf
+Limited.new<- st_as_sf(Limited.new,
+      coords = c("Longitude", "Latitude"), 
+                remove = F, # Keep coordinate columns
+                crs = "NAD83") # Assumed NAD83 Datum
+```
+
+#### Plot Overlay
+
+```r
+# Map Check - Compare RR
+ggplot() +
+  geom_sf(data = USFE.regions, color = "blue", fill= NA)+
+  geom_sf(data = USFE.OLDRR, fill = NA) +
+  geom_sf(data = Limited.new, color = "orange") +
+  geom_sf(data = Limited.old, )
+```
+
+![](04_QAQC_Convert2Wide_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+
 # Unit Conversions
 
 ## 1. Load Data
@@ -63,7 +225,7 @@ CEDENSURF <- read_csv(tmp)
 ```
 
 ```
-## Rows: 64066 Columns: 34
+## Rows: 64171 Columns: 34
 ```
 
 ```
@@ -100,14 +262,14 @@ CEDENSURF %>%
 ##    Analyte            Matrix   coverage     n
 ##    <chr>              <chr>       <int> <int>
 ##  1 atrazine           sediment        5   248
-##  2 atrazine           water           9  3366
+##  2 atrazine           water           9  3375
 ##  3 atrazine degradate water           2   211
 ##  4 bifenthrin         sediment       10   438
 ##  5 bifenthrin         water           8  1269
 ##  6 cadmium            sediment        7    50
 ##  7 cadmium            water           9   314
 ##  8 chlorpyrifos       sediment        8   363
-##  9 chlorpyrifos       water          10  4374
+##  9 chlorpyrifos       water          10  4379
 ## 10 clothianidin       water           8   552
 ## # ... with 93 more rows
 ```
@@ -810,17 +972,17 @@ OrganoP %>%
 ##    Analyte      Matrix   Unit      n     mean
 ##    <chr>        <chr>    <chr> <int>    <dbl>
 ##  1 chlorpyrifos sediment ppb     363 0.178   
-##  2 chlorpyrifos water    ppb    4374 0.00787 
+##  2 chlorpyrifos water    ppb    4379 0.00787 
 ##  3 diazinon     sediment ppb     321 0       
-##  4 diazinon     water    ppb    4066 0.0486  
+##  4 diazinon     water    ppb    4074 0.0485  
 ##  5 diazoxon     sediment ppb      48 0       
 ##  6 diazoxon     water    ppb     340 0       
 ##  7 dichlorvos   sediment ppb      13 0       
 ##  8 dichlorvos   water    ppb     335 0.00312 
 ##  9 malathion    sediment ppb     292 0       
-## 10 malathion    water    ppb    3712 0.00253 
+## 10 malathion    water    ppb    3725 0.00252 
 ## 11 phorate      sediment ppb      31 0       
-## 12 phorate      water    ppb    2056 0.000741
+## 12 phorate      water    ppb    2058 0.000741
 ```
 
 
@@ -1332,11 +1494,11 @@ GABA %>%
 ##    Analyte                   Matrix   Unit      n      mean
 ##    <chr>                     <chr>    <chr> <int>     <dbl>
 ##  1 fipronil                  sediment ppb     316 0.00124  
-##  2 fipronil                  water    ppb     899 0.000531 
+##  2 fipronil                  water    ppb     904 0.000528 
 ##  3 fipronil_desulfinyl       sediment ppb     337 0.00867  
-##  4 fipronil_desulfinyl       water    ppb     889 0.000201 
+##  4 fipronil_desulfinyl       water    ppb     894 0.000200 
 ##  5 fipronil_desulfinyl_amide sediment ppb     248 0        
-##  6 fipronil_desulfinyl_amide water    ppb     767 0.0000366
+##  6 fipronil_desulfinyl_amide water    ppb     772 0.0000364
 ##  7 fipronil_sulfide          sediment ppb     135 0.0306   
 ##  8 fipronil_sulfide          water    ppb     136 0.000276 
 ##  9 fipronil_sulfone          sediment ppb     125 0.0446   
@@ -1495,11 +1657,11 @@ Other %>%
 ## # Groups:   Analyte, Matrix [5]
 ##   Analyte      Matrix   Unit      n      mean
 ##   <chr>        <chr>    <chr> <int>     <dbl>
-## 1 atrazine     sediment ppb      77 0        
-## 2 atrazine     water    ppb    1124 0.00432  
-## 3 clothianidin water    ppb     201 0.0000139
-## 4 glyphosate   water    ppb     355 1.23     
-## 5 imidacloprid water    ppb     264 0.00145
+## 1 atrazine     sediment ppb      75 0        
+## 2 atrazine     water    ppb    1136 0.00424  
+## 3 clothianidin water    ppb     197 0.0000142
+## 4 glyphosate   water    ppb     344 1.25     
+## 5 imidacloprid water    ppb     263 0.00262
 ```
 
 
@@ -1615,8 +1777,8 @@ Herbicide %>%
 ##    Analyte             Matrix   Unit      n     mean
 ##    <chr>               <chr>    <chr> <int>    <dbl>
 ##  1 dinoseb             water    ppb     144 0.0481  
-##  2 diuron              water    ppb    2185 0.152   
-##  3 linuron             water    ppb    2038 0.00464 
+##  2 diuron              water    ppb    2190 0.152   
+##  3 linuron             water    ppb    2043 0.00463 
 ##  4 molinate            sediment ppb     207 0       
 ##  5 molinate            water    ppb    2245 0.0137  
 ##  6 oxyfluorfen         sediment ppb     232 0.000172
@@ -1625,8 +1787,8 @@ Herbicide %>%
 ##  9 propanil            sediment ppb     247 0       
 ## 10 propanil            water    ppb    1386 0.00226 
 ## 11 thiobencarb         sediment ppb     247 0       
-## 12 thiobencarb         water    ppb    2798 0.00273 
-## 13 triclopyr           water    ppb     613 0.00454
+## 12 thiobencarb         water    ppb    2803 0.00273 
+## 13 triclopyr           water    ppb     618 0.00480
 ```
 
 ### Late addition: OrganoChlorines
@@ -1719,8 +1881,8 @@ OrganoCh %>%
 ##  4 dde                water    ppb     323 0.000243
 ##  5 ddt                sediment ppb      67 0.0354  
 ##  6 ddt                water    ppb     270 0.0438  
-##  7 endosulfan         sediment ppb     106 0.0115  
-##  8 endosulfan         water    ppb    1020 0.000570
+##  7 endosulfan         sediment ppb     115 0.0106  
+##  8 endosulfan         water    ppb    1028 0.000566
 ##  9 endosulfan_sulfate sediment ppb      38 0       
 ## 10 endosulfan_sulfate water    ppb     301 0.000694
 ## 11 pyridaben          sediment ppb     245 0       
@@ -1841,7 +2003,7 @@ Fungi %>%
 ##   Analyte      Matrix   Unit      n     mean
 ##   <chr>        <chr>    <chr> <int>    <dbl>
 ## 1 myclobutanil sediment ppb     247 0       
-## 2 myclobutanil water    ppb     868 0.000468
+## 2 myclobutanil water    ppb     873 0.000465
 ## 3 triadimefon  sediment ppb     247 0       
 ## 4 triadimefon  water    ppb     387 0
 ```
@@ -1915,16 +2077,16 @@ Limited %>%
 ## # Groups:   SelectList [11]
 ##    SelectList  Unit         n         mean
 ##    <chr>       <chr>    <int>        <dbl>
-##  1 Atrazine    ppb       1201     0.00405 
-##  2 Fungicide   ppb       1749     0.000232
-##  3 GABA        ppb       4179     0.00333 
-##  4 Glyphosate  ppb        355     1.23    
-##  5 Herbicide   ppb      14049     0.0284  
+##  1 Atrazine    ppb       1211     0.00397 
+##  2 Fungicide   ppb       1754     0.000231
+##  3 GABA        ppb       4194     0.00331 
+##  4 Glyphosate  ppb        344     1.25    
+##  5 Herbicide   ppb      14069     0.0284  
 ##  6 Metal       ug/Kg dw   187 10819.      
 ##  7 Metal       ug/L      1199     1.49    
-##  8 Neon        ppb        465     0.000830
-##  9 OrganoCh    ppb       3286     0.0300  
-## 10 OrganoP     ppb      15951     0.0193  
+##  8 Neon        ppb        460     0.00150 
+##  9 OrganoCh    ppb       3303     0.0298  
+## 10 OrganoP     ppb      15979     0.0193  
 ## 11 Pyrethroids ppb       5002     0.365   
 ## 12 WQP         % dw        37     0.107   
 ## 13 WQP         Deg C     2683    19.9     
@@ -2000,3 +2162,5 @@ Wide.seddf <- Limited %>% filter(!Matrix == "water") %>%
 write.csv(x = Wide.seddf, file = "Data/Output/Allsed.Wide.csv", 
           row.names = F)
 ```
+
+
