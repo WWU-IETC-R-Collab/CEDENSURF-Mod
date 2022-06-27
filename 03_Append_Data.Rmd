@@ -302,14 +302,11 @@ CEDENSURF2 <- fread("Data/Output/CEDENSURFMod.csv")
 
 #tmp <- tempfile()
 
+### Too large to push online, so now references locally from creation of 02_CSMerge. Old code when wrote to online:
+
 #CEDENSURF <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/CEDENSURFMod.csv",
 #                   .token = gh_token(), 
 #                   .destfile = tmp)
-
-#CEDENSURF2 <- read_csv(tmp)
-
-# Following code is the old way to load data / pre private repository
-# CEDENSURF2 <- fread("https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/raw/main/Data/Output/CEDENSURFMod.csv")
 ```
 
 With this, we could append the category to the original data using a merge
