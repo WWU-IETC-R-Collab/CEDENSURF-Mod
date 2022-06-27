@@ -61,7 +61,7 @@ gh::gh_whoami()
 
 tmp <- tempfile()
 
-Limited <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURF_Limited.csv",
+Limited <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURF_Limited_FixedUnits.csv",
                  .token = gh_token(),
                  .destfile = tmp)
   
@@ -81,7 +81,7 @@ st_crs(USFE.OLDRR)
 
 tmp <- tempfile()
 
-Limited <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/CEDENSURF_Limited.csv",
+Limited <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/CEDENSURF_Limited_FixedUnits.csv",
                  .token = gh_token(),
                  .destfile = tmp)
   
@@ -96,6 +96,17 @@ USFE.regions <-  st_read("Data/Subregions/Subregions.shp") %>%
 
 st_crs(USFE.regions) #NAD83
 ```
+
+#### Summary
+
+**Old Limited Dataset**
+- `r nrow(Limited.old)`records
+- Dates: `r min(as.Date(Limited.old$Date))` to `r max(as.Date(Limited.old$Date))`
+
+**New Limited Dataset**
+- `r nrow(Limited.new)`records
+- Dates: `r min(as.Date(Limited.new$Date))` to `r max(as.Date(Limited.new$Date))`
+
 
 #### Prep Data
 
