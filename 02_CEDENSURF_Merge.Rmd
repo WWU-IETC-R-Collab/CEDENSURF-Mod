@@ -126,7 +126,7 @@ SURFMod_WQ <- read_csv(tmp)
 
 rm(tmp, SURFMod) #Clean up to avoid overwrite issues
 
-
+min(as.Date(SURFMod_SED$Date))
 # Append with source
 # Identify sample matrix
 
