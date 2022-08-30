@@ -1,0 +1,137 @@
+---
+title: "ForEricNetica"
+author: "Erika W"
+date: '2022-08-29'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+```{r, warning=F, message=F}
+# load packages
+
+rm(list = ls())
+
+library(data.table)
+library(lubridate)
+library(sf)
+library(tidyverse)
+
+# packages b/c accessing private repo
+
+library(httr)
+library(tidyverse)
+library(gh)
+library(gitcreds)
+
+```
+
+## Load Data
+
+```{r}
+# Load Old Data
+
+tmp <- tempfile()
+
+Limited <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURF_Limited_FixedUnits.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+Limited <- read_csv(tmp) 
+
+```
+
+## Simplify to required data
+
+```{r}
+# Define Seasons
+
+Limited <- tidyr::separate(Limited, Date, c('Year', 'Month', 'Day')) # Split original date column by Year, Month, and Day
+
+Limited<- Limited %>% 
+  mutate(Season = case_when(
+    Month %in% c('01', '02', '12') ~ 'Winter',
+    Month %in% c('03', '04', '05') ~ 'Spring',
+    Month %in% c('06', '07', '08') ~ 'Summer',
+    Month %in% c('09', '10', '11') ~ 'Fall'
+  ))
+
+# Select only water column data, and needed columns
+
+Limited<- Limited %>%
+  filter(Matrix == "water") %>%
+  select(Subregion, Season, Result, Analyte, Unit)
+
+```
+
+## Transform for Netica
+
+The analytes requested for inputs to Netica are:
+
+- Temperature
+- Turbidity
+- DDE
+- DDD
+- Copper
+
+### Temperature
+```{r}
+Temp <- Limited %>% 
+  filter(Analyte == "temperature") 
+
+Temp <- Temp %>% rename(Temperature_Celcius = Result)
+
+write.csv(x = Temp , file = "Data/Output/Netica/Temperature.csv", 
+          row.names = F)
+```
+
+### Turbidity
+```{r}
+Temp <- Limited %>% 
+  filter(Analyte == "turbidity") 
+
+Temp <- Temp %>% rename(Turbidity_NTU = Result)
+
+write.csv(x = Temp , file = "Data/Output/Netica/Turbidity.csv", 
+          row.names = F)
+```
+
+### DDE
+
+```{r}
+Temp <- Limited %>% 
+  filter(Analyte == "dde") 
+
+Temp <- Temp %>% rename(DDE_ppb = Result)
+
+write.csv(x = Temp , file = "Data/Output/Netica/DDE.csv", 
+          row.names = F)
+```
+
+## DDD
+
+```{r}
+Temp <- Limited %>% 
+  filter(Analyte == "ddd") 
+
+Temp <- Temp %>% rename(DDD_ppb = Result)
+
+write.csv(x = Temp , file = "Data/Output/Netica/DDD.csv", 
+          row.names = F)
+```
+
+### Copper
+
+```{r}
+Temp <- Limited %>% 
+  filter(Analyte == "copper") 
+
+Temp <- Temp %>% rename(Copper_ppb = Result)
+
+write.csv(x = Temp , file = "Data/Output/Netica/Copper.csv", 
+          row.names = F)
+```
