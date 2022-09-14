@@ -1,5 +1,5 @@
 ---
-title: "CEDENSURF Merge"
+title: "CEDENSURF Merge3"
 author: "Erika W"
 date: "2/23/2021"
 output:
@@ -61,7 +61,7 @@ This original data set can be found within the IETC Tox Box at: Upper San Franci
 
 tmp <- tempfile()
 
-CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS/Data/Output/CEDENMod_Toxicity_26JUN2022.csv",
+CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS-OrigRR/Data/Output/CEDENMod_Toxicity_14SEPT2022.csv",
                  .token = gh_token(),
                  .destfile = tmp)
   
@@ -71,7 +71,7 @@ rm(tmp, CEDENMod) #Clean up to avoid overwrite issues
 
 tmp <- tempfile()
 
-CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS/Data/Output/CEDENMod_WQ_26JUN2022.csv",
+CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS-OrigRR/Data/Output/CEDENMod_WQ_14SEPT2022.csv",
                  .token = gh_token(),
                  .destfile = tmp)
   
@@ -100,15 +100,15 @@ CEDENMod_WQ$Matrix[CEDENMod_WQ$CollectionMethod == "Sediment_Grab"]<- "sediment"
 ```
 Two files - one with tox data, and one with wq data
 
-CEDEN water data contains 271379 records, between 1995-01-03 to 2019-12-04
+CEDEN water data contains 59719 records, between 2009-10-06 to 2019-09-25
 
-CEDEN tox data contains 94052 records, between 1995-02-14 to 2019-12-04
+CEDEN tox data contains 60531 records, between 2009-10-06 to 2019-09-25
 
 <br> 
 
 ## SURF
 
-**SURF** Data was acquired at the DPR SURF database web page as CSVs via FTP download on 2/17/2021, then spatially and temporally restricted via methods outlined in https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/blob/main/CEDENSURF.md prior to this work.
+**SURF** Data was acquired at the DPR SURF database web page as CSVs via FTP download on 2/17/2021, then spatially and temporally restricted via methods outlined in https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/blob/30YRS-OrigRR/CEDENSURF.md prior to this work.
 
 This original data set can be found within the IETC Tox Box at: Upper San Francisco Project\Data & Analyses\Original\SURF.
 
@@ -117,7 +117,7 @@ This original data set can be found within the IETC Tox Box at: Upper San Franci
 # Load Data
 tmp <- tempfile()
 
-SURFMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/SURFMod_SED.csv",
+SURFMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS-OrigRR/Data/Output/SURFMod_SED.csv",
                  .token = gh_token(),
                  .destfile = tmp)
 
@@ -127,7 +127,7 @@ rm(tmp, SURFMod) #Clean up to avoid overwrite issues
 
 tmp <- tempfile()
 
-SURFMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/SURFMod_water.csv",
+SURFMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS-OrigRR/Data/Output/SURFMod_water.csv",
                  .token = gh_token(),
                  .destfile = tmp)
 
@@ -135,7 +135,14 @@ SURFMod_WQ <- read_csv(tmp)
 
 rm(tmp, SURFMod) #Clean up to avoid overwrite issues
 
+min(as.Date(SURFMod_SED$Date))
+```
 
+```
+## [1] "1995-02-16"
+```
+
+```r
 # Append with source
 # Identify sample matrix
 
@@ -150,9 +157,9 @@ SURFMod_WQ <- SURFMod_WQ %>%
 
 Two files - one with wq data, and one with sediment data
 
-SURF water contains 159485 records, from 1995-01-09 to 2019-12-19
+SURF water contains 119067 records, from 1995-01-09 to 2019-12-05
 
-SURF sediment contains 34893 records, from from NA to 2019-09-17
+SURF sediment contains 35987 records, from from NA to 2019-09-17
 
 <br>
 
@@ -220,7 +227,7 @@ NoDup_Tox <- NoDup_Tox %>% filter(Analyte != "Survival") %>%
 
 <br>
 
-After CEDEN data prep, there are 41921 unique, useful records in the tox dataset, and 264468 unique records in the WQ dataset.
+After CEDEN data prep, there are 28731 unique, useful records in the tox dataset, and 36613 unique records in the WQ dataset.
 
 <br>
 
@@ -319,12 +326,9 @@ head(sort(unique(CEDEN_ALL_DupChecked$Analyte)))
 ```
 
 ```
-## [1] "1,2-bis(2,4,6- tribromophenoxy)ethane"     
-## [2] "2-ethyl-1-hexyl-2,3,4,5-tetrabromobenzoate"
-## [3] "2-ethylhexyl-diphenyl phosphate"           
-## [4] "2,4,6-tribromophenyl allyl ether"          
-## [5] "acenaphthene"                              
-## [6] "acenaphthenes"
+## [1] "alkalinity as caco3"     "ammonia as n"           
+## [3] "ammonia as nh3"          "ash free dry mass"      
+## [5] "biomass (wt/orig indiv)" "electricalconductivity"
 ```
 
 ```r
@@ -345,7 +349,7 @@ CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, Collection
 
 #### **CEDEN merge result**
 
-Using these QA/QC methods, 274987 unique records are available through the CEDEN datasets. 
+Using these QA/QC methods, 36847 unique records are available through the CEDEN datasets. 
 
 <br>
 
@@ -372,8 +376,8 @@ NoDup_WQ <- distinct(SURFMod_WQ, Date, Analyte, CollectionMethod, StationName, M
 NoDup_SED <- distinct(SURFMod_SED, Date, Analyte, CollectionMethod, StationName, Matrix, Result, .keep_all= TRUE)
 ```
 
-This results in 133437 unique records in the WQ dataset
-and 29709 unique records in the SED dataset, prior to merging.
+This results in 101493 unique records in the WQ dataset
+and 31867 unique records in the SED dataset, prior to merging.
 
 <br>
 
@@ -439,7 +443,7 @@ SURF_ALL_DupChecked <- filter(SURF_ALL_DupChecked, Study_cd != "305")
 
 #### **SURF merge result**
 
-There are 163082 unique records available through SURF.
+There are 133296 unique records available through SURF.
 
 
 ```r
@@ -448,9 +452,9 @@ There are 163082 unique records available through SURF.
 SURF_ALL_NC <- filter(SURF_ALL_DupChecked, Data.source != "CEDEN")
 ```
 
-That said, 163082 of these records are listed as having been sourced from CEDEN.
+That said, 133296 of these records are listed as having been sourced from CEDEN.
 
-In theory only 121612 unique records will be contributed through the SURF dataset. Rather than filter these out ahead of the merge, I am retaining them and then using the identification of those records as a test to see whether there are other differentiating factors (such as persisting differences in naming) between the merged dataset that will inhibit our analyses
+In theory only 88444 unique records will be contributed through the SURF dataset. Rather than filter these out ahead of the merge, I am retaining them and then using the identification of those records as a test to see whether there are other differentiating factors (such as persisting differences in naming) between the merged dataset that will inhibit our analyses
 
 <br>
 
@@ -493,7 +497,7 @@ CEDENSURF <- rbind(CEDEN_ALL_DupChecked, SURF_ALL_DupChecked)
 write_csv(CEDENSURF, "IssueDocumentation/CEDENSURF_IssueInvestigation.csv") # Note: coerces empty data fields to NA
 ```
 
-There are 438069 total records in the initial merge of CEDEN with SURF.
+There are 170143 total records in the initial merge of CEDEN with SURF.
 
 <br>
 
@@ -552,18 +556,8 @@ unique(CEDENSURF$Unit)
 ```
 
 ```
-##  [1] "pg/L"           "ug/L"           "mg/L"           "none"          
-##  [5] "ppt"            "mg/m3"          "Deg C"          "uS/cm"         
-##  [9] "m"              "mg/Kg dw"       "ug/Kg dw"       "%"             
-## [13] "% dw"           "mg"             "ng/L"           "psu"           
-## [17] "mL"             "g"              "% recovery"     "ug/g dw"       
-## [21] "ng/g dw"        "NTU"            "% vol"          "% ww"          
-## [25] "MPN/100 mL"     "umhos/cm"       "IFA+/100L"      "oocysts/L"     
-## [29] "cysts/L"        "g/m2"           "mg/m2"          "ueq/L"         
-## [33] "CU"             "1/cm"           "m/s"            "%V/V"          
-## [37] "ft/s"           "cfs"            "gc/mL"          "pCi/L"         
-## [41] "mf/L"           "mL/L/hr"        "Num/Rep"        "neonates/adult"
-## [45] "cm"             "ppb"
+##  [1] "mg/L"     "none"     "Deg C"    "%"        "ppt"      "uS/cm"   
+##  [7] "mg/ind"   "Num/Rep"  "cells/ml" "NTU"      "ppb"
 ```
 
 <br>

@@ -52,7 +52,7 @@ This original data set can be found within the IETC Tox Box at: Upper San Franci
 
 tmp <- tempfile()
 
-CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS/Data/Output/CEDENMod_Toxicity_26JUN2022.csv",
+CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS-OrigRR/Data/Output/CEDENMod_Toxicity_14SEPT2022.csv",
                  .token = gh_token(),
                  .destfile = tmp)
   
@@ -62,7 +62,7 @@ rm(tmp, CEDENMod) #Clean up to avoid overwrite issues
 
 tmp <- tempfile()
 
-CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS/Data/Output/CEDENMod_WQ_26JUN2022.csv",
+CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS-OrigRR/Data/Output/CEDENMod_WQ_14SEPT2022.csv",
                  .token = gh_token(),
                  .destfile = tmp)
   
@@ -99,7 +99,7 @@ CEDEN tox data contains `r nrow(CEDENMod_Tox)` records, between `r min(as.Date(C
 
 ## SURF
 
-**SURF** Data was acquired at the DPR SURF database web page as CSVs via FTP download on 2/17/2021, then spatially and temporally restricted via methods outlined in https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/blob/main/CEDENSURF.md prior to this work.
+**SURF** Data was acquired at the DPR SURF database web page as CSVs via FTP download on 2/17/2021, then spatially and temporally restricted via methods outlined in https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/blob/30YRS-OrigRR/CEDENSURF.md prior to this work.
 
 This original data set can be found within the IETC Tox Box at: Upper San Francisco Project\Data & Analyses\Original\SURF.
 
@@ -108,7 +108,7 @@ This original data set can be found within the IETC Tox Box at: Upper San Franci
 # Load Data
 tmp <- tempfile()
 
-SURFMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/SURFMod_SED.csv",
+SURFMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS-OrigRR/Data/Output/SURFMod_SED.csv",
                  .token = gh_token(),
                  .destfile = tmp)
 
@@ -118,7 +118,7 @@ rm(tmp, SURFMod) #Clean up to avoid overwrite issues
 
 tmp <- tempfile()
 
-SURFMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/SURFMod_water.csv",
+SURFMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS-OrigRR/Data/Output/SURFMod_water.csv",
                  .token = gh_token(),
                  .destfile = tmp)
 
