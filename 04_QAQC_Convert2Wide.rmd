@@ -1,7 +1,7 @@
 ---
 title: "Conversions"
 author: "Erika W"
-date: "6/25/2021"
+date: "9/14/2022"
 output:
   html_document:
     code_download: true
@@ -46,97 +46,7 @@ Because NETICA requires the nodes to be columns, this data needs to be transform
 
 3. Summarize into wide format
 
-
-This markdown/ branch utilizes a wider date range than the original and different risk regions. To compare:
-
-#### Load Data
-```{r, warning = F, message = F}
-
-library(gh)
-library(httr)
-library(gitcreds)
-gh::gh_whoami()
-
-# Load Old Data
-
-tmp <- tempfile()
-
-Limited <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURF_Limited_FixedUnits.csv",
-                 .token = gh_token(),
-                 .destfile = tmp)
-  
-Limited.old <- read_csv(tmp) 
-
-rm(tmp, Limited) #Clean up to avoid overwrite issues
-
-# Load Old RR
-
-USFE.OLDRR <-  st_read("Data/USFE_RiskRegions_9292020/RiskRegions_DWSC_Update_9292020.shp")%>%
-    st_transform(., "NAD83")
-
-st_crs(USFE.OLDRR)
-
-
-# Load New Data
-
-tmp <- tempfile()
-
-Limited <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/CEDENSURF_Limited_FixedUnits.csv",
-                 .token = gh_token(),
-                 .destfile = tmp)
-  
-Limited.new <- read_csv(tmp) 
-
-rm(tmp, Limited) #Clean up
-
-
-# Load NEW Risk Regions
-USFE.regions <-  st_read("Data/Subregions/Subregions.shp") %>% 
-  rename(Subregion = SUBREGION)
-
-st_crs(USFE.regions) #NAD83
-```
-
-#### Summary
-
-**Old Limited Dataset**
-- `r nrow(Limited.old)`records
-- Dates: `r min(as.Date(Limited.old$Date))` to `r max(as.Date(Limited.old$Date))`
-
-**New Limited Dataset**
-- `r nrow(Limited.new)`records
-- Dates: `r min(as.Date(Limited.new$Date))` to `r max(as.Date(Limited.new$Date))`
-
-
-#### Prep Data
-
-```{r}
-
-# Convert Old table to sf
-Limited.old <- st_as_sf(Limited.old,
-      coords = c("Longitude", "Latitude"), 
-                remove = F, # Keep coordinate columns
-                crs = "NAD83") # Assumed NAD83 Datum
-
-# Convert New table to sf
-Limited.new<- st_as_sf(Limited.new,
-      coords = c("Longitude", "Latitude"), 
-                remove = F, # Keep coordinate columns
-                crs = "NAD83") # Assumed NAD83 Datum
-
-```
-
-#### Plot Overlay
-```{r}
-
-# Map Check - Compare RR
-ggplot() +
-  geom_sf(data = USFE.regions, color = "blue", fill= NA)+
-  geom_sf(data = USFE.OLDRR, fill = NA) +
-  geom_sf(data = Limited.new, color = "orange") +
-  geom_sf(data = Limited.old, )
-```
-
+**This markdown/ branch utilizes a wider date range than the original** . 
 
 # Unit Conversions
 
@@ -147,7 +57,7 @@ ggplot() +
 
 tmp <- tempfile()
 
-CEDENSURF <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/CEDENSURF_Limited.csv",
+CEDENSURF <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS-OrigRR/Data/Output/CEDENSURF_Limited.csv",
                    .token = gh_token(), 
                    .destfile = tmp)
 
