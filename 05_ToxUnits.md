@@ -69,7 +69,7 @@ Start with the midpoint of 04_QAQC_Convert2Wide (long-format) because it is easi
 
 tmp <- tempfile()
 
-CS_Limited <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURF_Limited_FixedUnits.csv",
+CS_Limited <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS-OrigRR/Data/Output/CEDENSURF_Limited_FixedUnits.csv",
                    .token = gh_token(), 
                    .destfile = tmp)
 
@@ -77,21 +77,21 @@ Limited <- read_csv(tmp) # works for me!
 ```
 
 ```
-## 
+## Rows: 30990 Columns: 34
+```
+
+```
 ## -- Column specification --------------------------------------------------------
-## cols(
-##   Analyte = col_character(),
-##   Result = col_double(),
-##   Unit = col_character(),
-##   CollectionMethod = col_character(),
-##   Matrix = col_character(),
-##   Date = col_date(format = ""),
-##   Subregion = col_character(),
-##   StationName = col_character(),
-##   Latitude = col_double(),
-##   Longitude = col_double(),
-##   SelectList = col_character()
-## )
+## Delimiter: ","
+## chr  (24): Agency, Analyte, CollectionMethod, County, Data.source, Datum, ge...
+## dbl   (9): Latitude, Longitude, LOQ, MDL, rb_number, Record_id, Result, Stud...
+## date  (1): Date
+```
+
+```
+## 
+## i Use `spec()` to retrieve the full column specification for this data.
+## i Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
 
@@ -126,12 +126,20 @@ MM <- read_csv(tmp) # works for me!
 ```
 
 ```
-## 
+## Rows: 38 Columns: 2
+```
+
+```
 ## -- Column specification --------------------------------------------------------
-## cols(
-##   Analyte = col_character(),
-##   MW = col_double()
-## )
+## Delimiter: ","
+## chr (1): Analyte
+## dbl (1): MW
+```
+
+```
+## 
+## i Use `spec()` to retrieve the full column specification for this data.
+## i Specify the column types or set `show_col_types = FALSE` to quiet this message.
 ```
 
 ```r
@@ -182,20 +190,20 @@ ToxUnits %>%
 ```
 
 ```
-## # A tibble: 37 x 3
+## # A tibble: 31 x 3
 ##    Analyte          n    MW
-##  * <chr>        <int> <dbl>
-##  1 atrazine       594 216. 
-##  2 bifenthrin    1540 423. 
-##  3 cadmium        392 112. 
-##  4 chlorpyrifos  2631 351. 
-##  5 clothianidin   223 250. 
-##  6 copper         678  63.6
-##  7 cyfluthrin    1437 434. 
-##  8 ddd            444 320  
-##  9 dde            444 318  
-## 10 ddt            421 354. 
-## # ... with 27 more rows
+##    <chr>        <int> <dbl>
+##  1 atrazine       575  216.
+##  2 bifenthrin    1413  423.
+##  3 chlorpyrifos  2399  351.
+##  4 clothianidin   159  250.
+##  5 cyfluthrin    1429  434.
+##  6 dde             28  318 
+##  7 ddt             12  354.
+##  8 diazinon      2177  304.
+##  9 diazoxon       233  288.
+## 10 dinoseb         24  240.
+## # ... with 21 more rows
 ```
 
 ```r
@@ -231,7 +239,7 @@ Because the EC50 is organism specific, we will have a separate table output for 
 ### DONT HAVE EC50 YET, BUT WILL SOON
 
 # Merge
-ToxUnits <- merge(ToxUnits, EC50, by = "Analyte")
+ToxUnits2 <- merge(ToxUnits, EC50, by = "Analyte")
 
 # Convert
 ToxUnits<- ToxUnits %>% 
@@ -250,7 +258,12 @@ ToxUnits<- ToxUnits %>%
 ```r
 # Add back on WQP Units? Makes more sense to keep fully separate, because will not sum WQP by the same. Will save together for this intermediate step. 
 
-WQP <- Limited %>% filter(SelectList == "WQP")
+WQP <- Limited %>% 
+  filter(SelectList == "WQP") %>%
+  select(Analyte, Result, Unit, Matrix, Date, 
+         Subregion, StationName, Latitude, Longitude,
+         CollectionMethod, SelectList)
+  
 
 Limited_ToxUnits <- rbind(ToxUnits, WQP)
 
@@ -346,18 +359,18 @@ head(Wide.df)
 ```
 
 ```
-## # A tibble: 6 x 15
+## # A tibble: 6 x 14
 ## # Groups:   Date, Subregion, Latitude, Longitude, Matrix [6]
-##   Date       Subregion Latitude Longitude Matrix Unit  OrganoCh Herbicide  Metal
-##   <date>     <chr>        <dbl>     <dbl> <chr>  <chr>    <dbl>     <dbl>  <dbl>
-## 1 2009-10-06 Central ~     38.0     -121. water  nM/L         0    NA     NA    
-## 2 2009-10-06 Central ~     38.1     -122. water  nM/L         0     0      0.886
-## 3 2009-10-06 Central ~     38.1     -121. water  nM/L         0    NA     NA    
-## 4 2009-10-06 Central ~     38.1     -121. water  nM/L         0    NA     NA    
-## 5 2009-10-06 Sacramen~     38.4     -122. water  nM/L        NA     0     NA    
-## 6 2009-10-06 Sacramen~     38.4     -122. water  nM/L        NA     0.610 15.6  
-## # ... with 6 more variables: OrganoP <dbl>, Pyrethroids <dbl>, Atrazine <dbl>,
-## #   Glyphosate <dbl>, GABA <dbl>, Neon <dbl>
+##   Date       Subregion        Latitude Longitude Matrix Unit  Herbicide  OrganoP
+##   <date>     <chr>               <dbl>     <dbl> <chr>  <chr>     <dbl>    <dbl>
+## 1 1995-01-09 Sacramento River     38.6     -122. water  nM/L          0  0      
+## 2 1995-02-14 Suisun Bay           38.1     -122. water  nM/L         NA  1.91e-4
+## 3 1995-02-15 Confluence           38.0     -122. water  nM/L         NA  3.71e-5
+## 4 1995-02-15 Confluence           38.1     -122. water  nM/L         NA  1.29e+1
+## 5 1995-04-18 Confluence           38.0     -122. water  nM/L         NA  6.85e-4
+## 6 1995-04-18 Confluence           38.1     -122. water  nM/L         NA  6.49e+0
+## # ... with 6 more variables: OrganoCh <dbl>, Pyrethroids <dbl>, Atrazine <dbl>,
+## #   GABA <dbl>, Glyphosate <dbl>, Neon <dbl>
 ```
 
 ```r
@@ -365,7 +378,7 @@ sessionInfo()
 ```
 
 ```
-## R version 4.0.3 (2020-10-10)
+## R version 4.1.0 (2021-05-18)
 ## Platform: x86_64-w64-mingw32/x64 (64-bit)
 ## Running under: Windows 10 x64 (build 19043)
 ## 
@@ -382,25 +395,28 @@ sessionInfo()
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] gitcreds_0.1.1    gh_1.2.1          httr_1.4.2        forcats_0.5.0    
-##  [5] stringr_1.4.0     dplyr_1.0.3       purrr_0.3.4       readr_1.4.0      
-##  [9] tidyr_1.1.2       tibble_3.0.5      ggplot2_3.3.3     tidyverse_1.3.0  
-## [13] sf_0.9-7          lubridate_1.7.9.2 data.table_1.13.6
+##  [1] gitcreds_0.1.1    gh_1.3.0          httr_1.4.2        forcats_0.5.1    
+##  [5] stringr_1.4.0     dplyr_1.0.7       purrr_0.3.4       readr_2.0.0      
+##  [9] tidyr_1.1.3       tibble_3.1.3      ggplot2_3.3.5     tidyverse_1.3.1  
+## [13] sf_1.0-2          lubridate_1.7.10  data.table_1.14.0
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] tidyselect_1.1.0   xfun_0.20          haven_2.3.1        colorspace_2.0-0  
-##  [5] vctrs_0.3.6        generics_0.1.0     htmltools_0.5.0    yaml_2.2.1        
-##  [9] utf8_1.1.4         rlang_0.4.10       e1071_1.7-4        pillar_1.4.7      
-## [13] withr_2.4.1        glue_1.4.2         DBI_1.1.1          dbplyr_2.0.0      
-## [17] modelr_0.1.8       readxl_1.3.1       lifecycle_1.0.0    munsell_0.5.0     
-## [21] gtable_0.3.0       cellranger_1.1.0   rvest_0.3.6        evaluate_0.14     
-## [25] knitr_1.30         curl_4.3           class_7.3-17       fansi_0.4.2       
-## [29] broom_0.7.3        Rcpp_1.0.5         KernSmooth_2.23-17 backports_1.2.0   
-## [33] scales_1.1.1       classInt_0.4-3     jsonlite_1.7.2     fs_1.5.0          
-## [37] hms_1.0.0          digest_0.6.27      stringi_1.5.3      grid_4.0.3        
-## [41] cli_2.4.0          tools_4.0.3        magrittr_2.0.1     crayon_1.3.4      
-## [45] pkgconfig_2.0.3    ellipsis_0.3.1     xml2_1.3.2         reprex_0.3.0      
-## [49] rstudioapi_0.13    assertthat_0.2.1   rmarkdown_2.6      R6_2.5.0          
-## [53] units_0.6-7        compiler_4.0.3
+##  [1] Rcpp_1.0.7         class_7.3-19       assertthat_0.2.1   digest_0.6.27     
+##  [5] utf8_1.2.2         R6_2.5.0           cellranger_1.1.0   backports_1.2.1   
+##  [9] reprex_2.0.1       evaluate_0.14      e1071_1.7-8        pillar_1.6.2      
+## [13] rlang_0.4.11       curl_4.3.2         readxl_1.3.1       rstudioapi_0.13   
+## [17] jquerylib_0.1.4    rmarkdown_2.16     bit_4.0.4          munsell_0.5.0     
+## [21] proxy_0.4-26       broom_0.7.9        compiler_4.1.0     modelr_0.1.8      
+## [25] xfun_0.24          pkgconfig_2.0.3    htmltools_0.5.3    tidyselect_1.1.1  
+## [29] fansi_0.5.0        crayon_1.4.1       tzdb_0.1.2         dbplyr_2.1.1      
+## [33] withr_2.4.2        grid_4.1.0         jsonlite_1.7.2     gtable_0.3.0      
+## [37] lifecycle_1.0.0    DBI_1.1.1          magrittr_2.0.1     units_0.7-2       
+## [41] scales_1.1.1       KernSmooth_2.23-20 vroom_1.5.3        cli_3.0.1         
+## [45] stringi_1.7.3      cachem_1.0.5       fs_1.5.0           xml2_1.3.2        
+## [49] bslib_0.4.0        ellipsis_0.3.2     generics_0.1.0     vctrs_0.3.8       
+## [53] tools_4.1.0        bit64_4.0.5        glue_1.4.2         hms_1.1.0         
+## [57] parallel_4.1.0     fastmap_1.1.0      yaml_2.2.1         colorspace_2.0-2  
+## [61] rvest_1.0.1        classInt_0.4-3     knitr_1.33         haven_2.4.3       
+## [65] sass_0.4.2
 ```
 

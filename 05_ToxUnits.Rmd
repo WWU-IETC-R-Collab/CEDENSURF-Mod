@@ -69,7 +69,7 @@ Start with the midpoint of 04_QAQC_Convert2Wide (long-format) because it is easi
 
 tmp <- tempfile()
 
-CS_Limited <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURF_Limited_FixedUnits.csv",
+CS_Limited <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS-OrigRR/Data/Output/CEDENSURF_Limited_FixedUnits.csv",
                    .token = gh_token(), 
                    .destfile = tmp)
 
@@ -180,7 +180,7 @@ Because the EC50 is organism specific, we will have a separate table output for 
 ### DONT HAVE EC50 YET, BUT WILL SOON
 
 # Merge
-ToxUnits <- merge(ToxUnits, EC50, by = "Analyte")
+ToxUnits2 <- merge(ToxUnits, EC50, by = "Analyte")
 
 # Convert
 ToxUnits<- ToxUnits %>% 
@@ -198,7 +198,12 @@ ToxUnits<- ToxUnits %>%
 ```{r}
 # Add back on WQP Units? Makes more sense to keep fully separate, because will not sum WQP by the same. Will save together for this intermediate step. 
 
-WQP <- Limited %>% filter(SelectList == "WQP")
+WQP <- Limited %>% 
+  filter(SelectList == "WQP") %>%
+  select(Analyte, Result, Unit, Matrix, Date, 
+         Subregion, StationName, Latitude, Longitude,
+         CollectionMethod, SelectList)
+  
 
 Limited_ToxUnits <- rbind(ToxUnits, WQP)
 
