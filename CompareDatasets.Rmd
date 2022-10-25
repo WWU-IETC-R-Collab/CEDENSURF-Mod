@@ -9,180 +9,28 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Compare Old and New {.tabset}
+```{r, warning=F, message=F}
+rm(list = ls())
+library(data.table)
+library(lubridate)
+library(sf)
+library(tidyverse)
+```
 
-### CEDEN
-
-#### Load Data
-```{r}
-
+```{r, warning=F, message=F}
+# packages b/c accessing private repo
 library(gh)
 library(httr)
 library(gitcreds)
 gh::gh_whoami()
-
-# Load Old CEDENMOD Data
-
-tmp <- tempfile()
-
-CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/main/Data/Output/CEDENMod_Toxicity.csv",
-                 .token = gh_token(),
-                 .destfile = tmp)
-  
-CEDENMod_OldTox <- read_csv(tmp) 
-
-rm(tmp, CEDENMod) #Clean up to avoid overwrite issues
-
-# Load Old RR
-
-USFE.OLDRR <-  st_read("Data/USFE_RiskRegions_9292020/RiskRegions_DWSC_Update_9292020.shp")%>%
-    st_transform(., "NAD83")
-
-st_crs(USFE.OLDRR)
-
-
-# Load New CEDENMOD Data
-
-tmp <- tempfile()
-
-CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS/Data/Output/CEDENMod_Toxicity_26JUN2022.csv",
-                 .token = gh_token(),
-                 .destfile = tmp)
-  
-CEDENMod_Tox <- read_csv(tmp) 
-
-rm(tmp, CEDENMod) #Clean up
-
-
-# Load NEW Risk Regions
-USFE.regions <-  st_read("Data/Subregions/Subregions.shp") %>% 
-  rename(Subregion = SUBREGION)
-
-st_crs(USFE.regions) #NAD83
 ```
-#### Details
+The final output is not larger as expected, but smaller. Need to find where/how this error arose.
 
-```{r}
-min(as.Date(CEDENMod_OldTox$Date))
-min(as.Date(CEDENMod_Tox$Date))
-```
+## Compare MAIN output and 30YRS ORIG RR {.tabset}
 
-#### Plot Data
+### 04 OUTPUT: CEDENSURF_Limited_FixedUnits.csv
 
-```{r}
-
-# Convert ToxOld table to sf
-CedToxOld.sf <- st_as_sf(CEDENMod_OldTox,
-      coords = c("Longitude", "Latitude"), 
-                remove = F, # Keep coordinate columns
-                crs = "NAD83") # Assumed NAD83 Datum
-  
-# Convert ToxNew table to sf
-CedToxNew.sf <- st_as_sf(CEDENMod_Tox,
-      coords = c("Longitude", "Latitude"), 
-                remove = F, # Keep coordinate columns
-                crs = "NAD83") # Assumed NAD83 Datum,
-
-```
-
-```{r}
-# Map Check - Compare RR
-ggplot() +
-  geom_sf(data = USFE.regions, color = "blue", fill= NA)+
-  geom_sf(data = USFE.OLDRR, fill = NA) +
-  geom_sf(data = CedToxNew.sf, color = "orange") +
-  geom_sf(data = CedToxOld.sf, )
-```
-
-### SURF
-
-#### Load Data
-```{r}
-
-library(gh)
-library(httr)
-library(gitcreds)
-gh::gh_whoami()
-
-# Load Old CEDENMOD Data
-
-tmp <- tempfile()
-
-SURFMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/SURFMod_SED.csv",
-                 .token = gh_token(),
-                 .destfile = tmp)
-  
-SURFMod_OldSed <- read_csv(tmp) 
-
-rm(tmp, SURFMod) #Clean up to avoid overwrite issues
-
-# Load Old RR
-
-USFE.OLDRR <-  st_read("Data/USFE_RiskRegions_9292020/RiskRegions_DWSC_Update_9292020.shp")%>%
-    st_transform(., "NAD83")
-
-st_crs(USFE.OLDRR)
-
-
-# Load New CEDENMOD Data
-
-tmp <- tempfile()
-
-SURFMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/SURFMod_SED.csv",
-                 .token = gh_token(),
-                 .destfile = tmp)
-  
-SURFMod_sed <- read_csv(tmp) 
-
-rm(tmp, SURFMod) #Clean up
-
-
-# Load NEW Risk Regions
-USFE.regions <-  st_read("Data/Subregions/Subregions.shp") %>% 
-  rename(Subregion = SUBREGION)
-
-st_crs(USFE.regions) #NAD83
-```
-
-#### Prep Data
-
-```{r}
-
-# Convert Old table to sf
-SURFSedOld.sf<- st_as_sf(SURFMod_OldSed,
-      coords = c("Longitude", "Latitude"), 
-                remove = F, # Keep coordinate columns
-                crs = "NAD83") # Assumed NAD83 Datum
-
-# Convert New table to sf
-SURFSedNew.sf<- st_as_sf(SURFMod_sed,
-      coords = c("Longitude", "Latitude"), 
-                remove = F, # Keep coordinate columns
-                crs = "NAD83") # Assumed NAD83 Datum
-
-```
-
-#### Plot Overlay
-```{r}
-
-# Map Check - Compare RR
-ggplot() +
-  geom_sf(data = USFE.regions, color = "blue", fill= NA)+
-  geom_sf(data = USFE.OLDRR, fill = NA) +
-  geom_sf(data = SURFSedNew.sf, color = "orange") +
-  geom_sf(data = SURFSedOld.sf, )
-```
-
-
-To compare:
-
-#### Load Data
 ```{r, warning = F, message = F}
-
-library(gh)
-library(httr)
-library(gitcreds)
-gh::gh_whoami()
 
 # Load Old Data
 
@@ -195,14 +43,6 @@ Limited <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod
 Limited.old <- read_csv(tmp) 
 
 rm(tmp, Limited) #Clean up to avoid overwrite issues
-
-# Load Old RR
-
-USFE.OLDRR <-  st_read("Data/USFE_RiskRegions_9292020/RiskRegions_DWSC_Update_9292020.shp")%>%
-    st_transform(., "NAD83")
-
-st_crs(USFE.OLDRR)
-
 
 # Load New Data
 
@@ -218,7 +58,13 @@ rm(tmp, Limited) #Clean up
 
 ```
 
-#### Summary
+```{r, echo=FALSE}
+nrow(Limited.old)
+nrow(Limited.new)
+
+min(as.Date(Limited.old$Date))
+min(as.Date(Limited.new$Date))
+```
 
 **Old Limited Dataset**
 - `r nrow(Limited.old)`records
@@ -228,31 +74,289 @@ rm(tmp, Limited) #Clean up
 - `r nrow(Limited.new)`records
 - Dates: `r min(as.Date(Limited.new$Date))` to `r max(as.Date(Limited.new$Date))`
 
+### 03 OUTPUT: CEDENSURF_Limited.csv
 
-#### Prep Data
+```{r, warning = F, message = F}
 
-```{r}
+# Load Old Data
 
-# Convert Old table to sf
-Limited.old <- st_as_sf(Limited.old,
-      coords = c("Longitude", "Latitude"), 
-                remove = F, # Keep coordinate columns
-                crs = "NAD83") # Assumed NAD83 Datum
+tmp <- tempfile()
 
-# Convert New table to sf
-Limited.new<- st_as_sf(Limited.new,
-      coords = c("Longitude", "Latitude"), 
-                remove = F, # Keep coordinate columns
-                crs = "NAD83") # Assumed NAD83 Datum
+Limited <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURF_Limited.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+Limited.old <- read_csv(tmp) 
+
+rm(tmp, Limited) #Clean up to avoid overwrite issues
+
+# Load New Data
+
+tmp <- tempfile()
+
+Limited <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS-OrigRR/Data/Output/CEDENSURF_Limited.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+Limited.new <- read_csv(tmp) 
+
+rm(tmp, Limited) #Clean up
 
 ```
 
-#### Plot Overlay
+```{r, echo=FALSE}
+nrow(Limited.old)
+nrow(Limited.new)
+
+min(as.Date(Limited.old$Date)) #10/2009
+min(as.Date(Limited.new$Date)) #01/1995
+```
+
+
+**Old Limited Dataset**
+- `r nrow(Limited.old)`records
+- Dates: `r min(as.Date(Limited.old$Date))` to `r max(as.Date(Limited.old$Date))`
+
+**New Limited Dataset - Expanded Time Frame**
+- `r nrow(Limited.new)`records
+- Dates: `r min(as.Date(Limited.new$Date))` to `r max(as.Date(Limited.new$Date))`
+
+### 02 OUTPUT: CEDENSURFMOD.csv
+
+```{r, warning = F, message = F}
+
+# Load Old Data
+
+tmp <- tempfile()
+
+CSMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/CEDENSURFMod.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+CSMod.old <- read_csv(tmp) 
+
+rm(tmp, Limited) #Clean up to avoid overwrite issues
+
+# Load New Data
+
+tmp <- tempfile()
+
+CSMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS-OrigRR/Data/Output/CEDENSURFMod.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+CSMod.new <- read_csv(tmp) 
+
+rm(tmp, Limited) #Clean up
+
+```
+
+```{r, echo=FALSE}
+nrow(CSMod.old)
+nrow(CSMod.new)
+
+min(as.Date(CSMod.old$Date)) #10/2009
+min(as.Date(CSMod.new$Date)) #01/1995
+```
+
+**Old CSMod Dataset**
+- `r nrow(CSMod.old)`records
+- Dates: `r min(as.Date(CSMod.old$Date))` to `r max(as.Date(CSMod.old$Date))`
+
+**New CSMod Dataset - Expanded Time Frame**
+- `r nrow(CSMod.new)`records
+- Dates: `r min(as.Date(CSMod.new$Date))` to `r max(as.Date(CSMod.new$Date))`
+
+
+### 01 OUTPUT: SURFMod_SED and SURFMod_water
+
+No issue here - new is larger (or equal as in the case of the sediment sampling), dates are correct
+```{r, warning = F, message = F}
+
+# Load Old Data
+
+tmp <- tempfile()
+
+SURF_SED <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/SURFMod_SED.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+SURF_SED.old <- read_csv(tmp) 
+
+rm(tmp, Limited) #Clean up to avoid overwrite issues
+
+tmp <- tempfile()
+
+SURF_water <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/main/Data/Output/SURFMod_water.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+SURF_water.old <- read_csv(tmp) 
+
+rm(tmp, Limited) #Clean up to avoid overwrite issues
+
+# Load New Data
+
+tmp <- tempfile()
+
+SURF_SED <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS-OrigRR/Data/Output/SURFMod_SED.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+SURF_SED.new <- read_csv(tmp) 
+
+rm(tmp, Limited) #Clean up to avoid overwrite issues
+
+tmp <- tempfile()
+
+SURF_water <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS-OrigRR/Data/Output/SURFMod_water.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+SURF_water.new <- read_csv(tmp) 
+
+rm(tmp, Limited) #Clean up to avoid overwrite issues
+```
+
+```{r, echo=FALSE}
+nrow(SURF_water.old)
+nrow(SURF_water.new)
+
+min(as.Date(SURF_water.old$Date)) #10/2009
+min(as.Date(SURF_water.new$Date)) #01/1995
+
+nrow(SURF_SED.old)
+nrow(SURF_SED.new)
+
+min(as.Date(SURF_SED.old$Date)) #02/2009
+min(as.Date(SURF_SED.new$Date)) #02/1995
+```
+
+**Old SURFMod Dataset**
+- `r nrow(SURF_water.old)`records
+- Dates: `r min(as.Date(SURF_water.old$Date))` to `r max(as.Date(SURF_water.old$Date))`
+
+**New SURFMod Dataset - Expanded Time Frame**
+- `r nrow(SURF_water.new)`records
+- Dates: `r min(as.Date(SURF_water.new$Date))` to `r max(as.Date(SURF_water.new$Date))`
+
+### 00 OUTPUT: CEDENMOD.csv
+
+Looks like the date expansion did not occur for CEDEN data. Output is constricted and somehow resulting data are fewer for WQ. 
+
+Check source Mikayla pulled and try to re-run? YES THATS THE ISSUE! SKYLER RE-DOWNLOADED THE DATA TO EXPAND THE AVAILABLE DATE RANGE IN THE RAW DATA BACK IN JUNE. NEED TO USE THAT AS THE NEW INPUT. 
+
+```{r, warning = F, message = F}
+
+# Load Old Data
+
+tmp <- tempfile()
+
+Tox <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/main/Data/Output/CEDENMod_Toxicity.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+Tox.old <- read_csv(tmp) 
+
+rm(tmp) #Clean up to avoid overwrite issues
+
+tmp <- tempfile()
+
+WQ <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/main/Data/Output/CEDENMod_WQ.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+WQ.old <- read_csv(tmp) 
+
+rm(tmp) #Clean up to avoid overwrite issues
+
+
+# Load New Data
+
+tmp <- tempfile()
+
+Tox <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS-OrigRR/Data/Output/CEDENMod_Toxicity_20OCT2022.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+Tox.new <- read_csv(tmp) 
+
+rm(tmp) #Clean up
+
+tmp <- tempfile()
+
+WQ <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS-OrigRR/Data/Output/CEDENMod_WQ_20OCT2022.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+WQ.new <- read_csv(tmp) 
+
+rm(tmp) #Clean up to avoid overwrite issues
+```
+
+```{r}
+nrow(Tox.old)
+nrow(Tox.new)
+
+min(as.Date(Tox.old$Date)) #10/2009
+min(as.Date(Tox.new$Date)) #10/2009
+
+max(as.Date(Tox.old$Date)) #09/2019
+max(as.Date(Tox.new$Date)) #09/2019
+```
+
+
+```{r}
+nrow(WQ.old)
+nrow(WQ.new)
+
+min(as.Date(WQ.old$Date)) #10/2009
+min(as.Date(WQ.new$Date)) #10/2009
+
+max(as.Date(WQ.old$Date)) #09/2019
+max(as.Date(WQ.new$Date)) #09/2019
+```
+
+### Did the 30YRS run done with expanded regions also fail to use expanded dates?
+
+```{r}
+# Load newRR Data
+
+tmp <- tempfile()
+
+Tox <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS/Data/Output/CEDENMod_Toxicity_26JUN2022.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+Tox.newRR <- read_csv(tmp) 
+
+rm(tmp) #Clean up
+
+tmp <- tempfile()
+
+WQ <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS/Data/Output/CEDENMod_WQ_26JUN2022.csv",
+                 .token = gh_token(),
+                 .destfile = tmp)
+  
+WQ.newRR <- read_csv(tmp) 
+
+rm(tmp) #Clean up to avoid overwrite issues
+```
+
+
+```{r}
+nrow(WQ.newRR)
+
+min(as.Date(WQ.newRR$Date)) #10/2009
+
+max(as.Date(WQ.newRR$Date)) #09/2019
+```
+
 ```{r}
 
-# Map Check - Compare Data + RR
-ggplot() +
-  geom_sf(data = USFE.OLDRR, fill = NA) +
-  geom_sf(data = Limited.new, color = "orange") +
-  geom_sf(data = Limited.old, )
+nrow(Tox.newRR)
+
+min(as.Date(Tox.newRR$Date)) #10/2009
+
+max(as.Date(Tox.newRR$Date)) #09/2019
 ```

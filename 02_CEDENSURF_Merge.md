@@ -61,7 +61,7 @@ This original data set can be found within the IETC Tox Box at: Upper San Franci
 
 tmp <- tempfile()
 
-CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS-OrigRR/Data/Output/CEDENMod_Toxicity_14SEPT2022.csv",
+CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS-OrigRR/Data/Output/CEDENMod_Toxicity_20OCT2022.csv",
                  .token = gh_token(),
                  .destfile = tmp)
   
@@ -71,7 +71,7 @@ rm(tmp, CEDENMod) #Clean up to avoid overwrite issues
 
 tmp <- tempfile()
 
-CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS-OrigRR/Data/Output/CEDENMod_WQ_14SEPT2022.csv",
+CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS-OrigRR/Data/Output/CEDENMod_WQ_20OCT2022.csv",
                  .token = gh_token(),
                  .destfile = tmp)
   
@@ -100,9 +100,9 @@ CEDENMod_WQ$Matrix[CEDENMod_WQ$CollectionMethod == "Sediment_Grab"]<- "sediment"
 ```
 Two files - one with tox data, and one with wq data
 
-CEDEN water data contains 59719 records, between 2009-10-06 to 2019-09-25
+CEDEN water data contains 278361 records, between 1995-01-03 to 2019-12-19
 
-CEDEN tox data contains 60531 records, between 2009-10-06 to 2019-09-25
+CEDEN tox data contains 93682 records, between 1995-02-14 to 2019-12-04
 
 <br> 
 
@@ -227,7 +227,7 @@ NoDup_Tox <- NoDup_Tox %>% filter(Analyte != "Survival") %>%
 
 <br>
 
-After CEDEN data prep, there are 28731 unique, useful records in the tox dataset, and 36613 unique records in the WQ dataset.
+After CEDEN data prep, there are 42042 unique, useful records in the tox dataset, and 271210 unique records in the WQ dataset.
 
 <br>
 
@@ -326,9 +326,12 @@ head(sort(unique(CEDEN_ALL_DupChecked$Analyte)))
 ```
 
 ```
-## [1] "alkalinity as caco3"     "ammonia as n"           
-## [3] "ammonia as nh3"          "ash free dry mass"      
-## [5] "biomass (wt/orig indiv)" "electricalconductivity"
+## [1] "1,2-bis(2,4,6- tribromophenoxy)ethane"     
+## [2] "2-ethyl-1-hexyl-2,3,4,5-tetrabromobenzoate"
+## [3] "2-ethylhexyl-diphenyl phosphate"           
+## [4] "2,4,6-tribromophenyl allyl ether"          
+## [5] "abamectin"                                 
+## [6] "acenaphthene"
 ```
 
 ```r
@@ -349,7 +352,7 @@ CEDEN_ALL_DupChecked <- distinct(CEDEN_ALL_DupChecked, Date, Analyte, Collection
 
 #### **CEDEN merge result**
 
-Using these QA/QC methods, 36847 unique records are available through the CEDEN datasets. 
+Using these QA/QC methods, 280396 unique records are available through the CEDEN datasets. 
 
 <br>
 
@@ -497,7 +500,7 @@ CEDENSURF <- rbind(CEDEN_ALL_DupChecked, SURF_ALL_DupChecked)
 write_csv(CEDENSURF, "IssueDocumentation/CEDENSURF_IssueInvestigation.csv") # Note: coerces empty data fields to NA
 ```
 
-There are 170143 total records in the initial merge of CEDEN with SURF.
+There are 413692 total records in the initial merge of CEDEN with SURF.
 
 <br>
 
@@ -556,8 +559,18 @@ unique(CEDENSURF$Unit)
 ```
 
 ```
-##  [1] "mg/L"     "none"     "Deg C"    "%"        "ppt"      "uS/cm"   
-##  [7] "mg/ind"   "Num/Rep"  "cells/ml" "NTU"      "ppb"
+##  [1] "pg/L"           "ug/L"           "mg/L"           "none"          
+##  [5] "ppt"            "mg/m3"          "Deg C"          "uS/cm"         
+##  [9] "m"              "mg/Kg dw"       "ug/Kg dw"       "%"             
+## [13] "% dw"           "mg"             "ng/L"           "psu"           
+## [17] "NTU"            "ft/s"           "mL"             "g"             
+## [21] "% recovery"     "MPN/100 mL"     "ug/g dw"        "ng/g dw"       
+## [25] "% vol"          "% ww"           "umhos/cm"       "IFA+/100L"     
+## [29] "oocysts/L"      "cysts/L"        "1/cm"           "m/s"           
+## [33] "%V/V"           "cfs"            "gc/mL"          "mg/m2"         
+## [37] "g/m2"           "ueq/L"          "CU"             "pCi/L"         
+## [41] "mf/L"           "mL/L/hr"        "Num/Rep"        "neonates/adult"
+## [45] "cm"             "ppb"
 ```
 
 <br>

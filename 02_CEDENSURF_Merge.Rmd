@@ -52,7 +52,7 @@ This original data set can be found within the IETC Tox Box at: Upper San Franci
 
 tmp <- tempfile()
 
-CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS-OrigRR/Data/Output/CEDENMod_Toxicity_14SEPT2022.csv",
+CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS-OrigRR/Data/Output/CEDENMod_Toxicity_20OCT2022.csv",
                  .token = gh_token(),
                  .destfile = tmp)
   
@@ -62,7 +62,7 @@ rm(tmp, CEDENMod) #Clean up to avoid overwrite issues
 
 tmp <- tempfile()
 
-CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS-OrigRR/Data/Output/CEDENMod_WQ_14SEPT2022.csv",
+CEDENMod <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDEN-mod/30YRS-OrigRR/Data/Output/CEDENMod_WQ_20OCT2022.csv",
                  .token = gh_token(),
                  .destfile = tmp)
   
