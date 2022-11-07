@@ -278,47 +278,4 @@ write.csv(x = CEDENSURF, file = "Data/Output/CEDENSURF_Limited.csv",
 ```
 
 
-### Method 2: Table
-
-#### Load Data
-
-Two files:
-
-1. Merged CEDEN and SURF data, with duplicates found and removed per the QA/QC protocol outlined at: https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/blob/main/CEDENSURF_Merge.md
-
-2. Table containing analyte names and selection categories. This would be made externally, but for this example I'll use a "mock table" adapted from my output above. 
-
-A suggested structure of this table is:
-```{r}
-# Load external table (Mock Data)
-
-AnalyteTable <- CEDENSURF %>% select(Analyte, SelectList) %>% distinct(Analyte, .keep_all = T) # 44 records
-
-head(AnalyteTable)
-
-# Load CEDEN - SURF Data
-
-CEDENSURF2 <- fread("Data/Output/CEDENSURFMod.csv")
-
-#tmp <- tempfile()
-
-### Too large to push online, so now references locally from creation of 02_CSMerge. Old code when wrote to online:
-
-#CEDENSURF <- gh("https://raw.githubusercontent.com/WWU-IETC-R-Collab/CEDENSURF-mod/30YRS/Data/Output/CEDENSURFMod.csv",
-#                   .token = gh_token(), 
-#                   .destfile = tmp)
-```
-
-With this, we could append the category to the original data using a merge
-
-```{r}
-CEDENSURF2 <- merge(x = CEDENSURF2, y = AnalyteTable) # removes rows of x with no match in Y
-
-head(CEDENSURF2 %>% select(Date, Analyte, Result, StationName, SelectList))
-```
-
-The result is `r nrow(CEDENSURF)` records, all appended with appropriate selection categories according to the conceptual model
-
-<br>
-
 
