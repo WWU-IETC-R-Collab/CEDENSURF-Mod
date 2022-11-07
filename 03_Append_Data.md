@@ -57,7 +57,7 @@ If it's most simple to have a transparent list of analytes included in each cate
 
 #### Load Data
 
-Start with merged CEDEN and SURF data, with duplicates found and removed per the QA/QC protocol outlined at: https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/blob/main/CEDENSURF_Merge.md **30YRS-OrigRR branch for this run actually**
+Start with merged CEDEN and SURF data, with duplicates found and removed per the QA/QC protocol outlined at: https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/blob/main/CEDENSURF_Merge.md **30YRS-OrigRR branch for this run actually, but raw output from the merge (02) has to be saved and loaded locally because too large for github **
 
 
 ```r
@@ -175,7 +175,14 @@ We later added additional categories to account for chemicals that were identifi
 ```
 
 ```
-## [1] "dde"  "ddt"  "ddvp"
+##  [1] "ddd(o,p')"                   "ddd(p,p')"                  
+##  [3] "dde"                         "dde(o,p')"                  
+##  [5] "dde(p,p')"                   "ddmu(p,p')"                 
+##  [7] "ddt"                         "ddt(o,p')"                  
+##  [9] "ddt(p,p')"                   "ddvp"                       
+## [11] "dechlorane plus mono adduct" "hpcdd"                      
+## [13] "hxcdd"                       "ocdd"                       
+## [15] "pecdd"                       "tcdd"
 ```
 
 ```r
@@ -220,7 +227,7 @@ We later added additional categories to account for chemicals that were identifi
 ```
 
 ```
-## character(0)
+## [1] "dinitrophenol"
 ```
 
 ```r
@@ -303,7 +310,7 @@ write.csv(x = AnalyteTable,
 CEDENSURF<- CEDENSURF %>% filter(!is.na(SelectList))
 ```
 
-The result is 33213 records, all appended with appropriate selection categories according to the conceptual model
+The result is 87863 records, all appended with appropriate selection categories according to the conceptual model
 
 
 ```r
@@ -311,13 +318,13 @@ head(CEDENSURF %>% select(Date, Analyte, Result, Unit, StationName, SelectList))
 ```
 
 ```
-##          Date     Analyte Result  Unit        StationName SelectList
-## 1: 2010-02-09      oxygen   8.78  mg/L Grizzly Bay (BF21)        WQP
-## 2: 2010-02-09          ph   8.21  none Grizzly Bay (BF21)        WQP
-## 3: 2010-02-09 temperature  24.00 Deg C Grizzly Bay (BF21)        WQP
-## 4: 2010-02-09    salinity  30.44   ppt Grizzly Bay (BF21)        WQP
-## 5: 2010-02-09          ph   8.37  none Grizzly Bay (BF21)        WQP
-## 6: 2010-02-09 temperature  23.80 Deg C Grizzly Bay (BF21)        WQP
+##          Date      Analyte      Result Unit        StationName SelectList
+## 1: 1995-02-14     diazinon 7100.000000 pg/L Grizzly Bay (BF20)    OrganoP
+## 2: 1995-02-14     selenium    0.134000 ug/L Grizzly Bay (BF20)      Metal
+## 3: 1995-02-14      mercury    0.000970 ug/L Grizzly Bay (BF20)      Metal
+## 4: 1995-02-14      cadmium    0.004700 ug/L Grizzly Bay (BF20)      Metal
+## 5: 1995-02-14 nitrate as n    0.367102 mg/L Grizzly Bay (BF20)        WQP
+## 6: 1995-02-14 chlorpyrifos   67.000000 pg/L Grizzly Bay (BF20)    OrganoP
 ```
 
 
@@ -348,13 +355,13 @@ head(AnalyteTable)
 ```
 
 ```
-##                   Analyte SelectList
-## 1:                 oxygen        WQP
-## 2:                     ph        WQP
-## 3:            temperature        WQP
-## 4:               salinity        WQP
-## 5: electricalconductivity        WQP
-## 6:              turbidity        WQP
+##         Analyte SelectList
+## 1:     diazinon    OrganoP
+## 2:     selenium      Metal
+## 3:      mercury      Metal
+## 4:      cadmium      Metal
+## 5: nitrate as n        WQP
+## 6: chlorpyrifos    OrganoP
 ```
 
 ```r
@@ -381,13 +388,13 @@ head(CEDENSURF2 %>% select(Date, Analyte, Result, StationName, SelectList))
 ```
 
 ```
-##          Date  Analyte Result                                    StationName
-## 1: 1999-02-26 atrazine      0   Sacramento River at Freeport (USGS-11447650)
-## 2: 2015-03-16 atrazine      0   Sacramento River at Freeport (USGS-11447650)
-## 3: 2005-04-27 atrazine      0   Sacramento River at Freeport (USGS-11447650)
-## 4: 2015-07-06 atrazine      0 Cache Slough A Hass Slough Nr Liberty Farms Ca
-## 5: 2015-02-25 atrazine      0   Sacramento River at Freeport (USGS-11447650)
-## 6: 2011-08-10 atrazine      0   Sacramento River at Freeport (USGS-11447650)
+##          Date  Analyte Result                              StationName
+## 1: 2002-04-10 atrazine      0                                 Cordelia
+## 2: 2005-09-15 atrazine      0                               CAN05-0011
+## 3: 2011-04-05 atrazine      0 Grizzly Bay at Dolphin nr. Suisun Slough
+## 4: 2011-04-05 atrazine      0                                Pittsburg
+## 5: 2011-04-05 atrazine      0                               Roe Island
+## 6: 2011-04-05 atrazine      0                                Avon Pier
 ##    SelectList
 ## 1:   Atrazine
 ## 2:   Atrazine
@@ -397,7 +404,7 @@ head(CEDENSURF2 %>% select(Date, Analyte, Result, StationName, SelectList))
 ## 6:   Atrazine
 ```
 
-The result is 33213 records, all appended with appropriate selection categories according to the conceptual model
+The result is 87863 records, all appended with appropriate selection categories according to the conceptual model
 
 <br>
 

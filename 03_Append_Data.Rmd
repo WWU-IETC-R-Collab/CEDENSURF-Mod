@@ -47,7 +47,7 @@ If it's most simple to have a transparent list of analytes included in each cate
 
 #### Load Data
 
-Start with merged CEDEN and SURF data, with duplicates found and removed per the QA/QC protocol outlined at: https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/blob/main/CEDENSURF_Merge.md **30YRS-OrigRR branch for this run actually**
+Start with merged CEDEN and SURF data, with duplicates found and removed per the QA/QC protocol outlined at: https://github.com/WWU-IETC-R-Collab/CEDENSURF-mod/blob/main/CEDENSURF_Merge.md **30YRS-OrigRR branch for this run actually, but raw output from the merge (02) has to be saved and loaded locally because too large for github **
 
 ```{r}
 # Load CEDEN Data

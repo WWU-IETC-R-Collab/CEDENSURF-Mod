@@ -451,11 +451,26 @@ CEDEN_ALL_DupChecked <- CEDEN_ALL_DupChecked %>% select(all_of(C))
 ## MERGE ##
 
 CEDENSURF <- rbind(CEDEN_ALL_DupChecked, SURF_ALL_DupChecked)
-
-write_csv(CEDENSURF, "IssueDocumentation/CEDENSURF_IssueInvestigation.csv") # Note: coerces empty data fields to NA
 ```
 
-There are `r nrow(CEDENSURF)` total records in the initial merge of CEDEN with SURF.
+#### Check for duplicates between the datasets
+```{r}
+# Remove duplicate rows of the dataframe using multiple variables
+
+CEDENSURF_DupChecked <- distinct(CEDENSURF, Date, Analyte, CollectionMethod, Latitude, Longitude, Matrix, .keep_all= TRUE)
+
+nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
+
+#THIS IS PREFERRED: 
+write_csv(CEDENSURF_DupChecked, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
+```
+
+```{r}
+# Save record of data prior to duplicate removal?
+# write_csv(CEDENSURF, "IssueDocumentation/CEDENSURF_IssueInvestigation.csv") # Note: coerces empty data fields to NA
+```
+
+There are `r nrow(CEDENSURF_DupChecked)` records in the initial merge of CEDEN with SURF.
 
 <br>
 
@@ -473,16 +488,7 @@ Because all values in SURF are in units PPB, while units of records in CEDEN var
 
 We must assume that records of the same analyte collected by the same method on the same date at the same station are duplicates. Through this, we find 30,608 duplicates - just over the number expected given those labeled as from CEDEN.
 
-```{r, results = "hide"}
-# Remove duplicate rows of the dataframe using multiple variables
 
-CEDENSURF_DupChecked <- distinct(CEDENSURF, Date, Analyte, CollectionMethod, Latitude, Longitude, Matrix, .keep_all= TRUE)
-
-nrow(CEDENSURF)-nrow(CEDENSURF_DupChecked)
-
-#THIS IS PREFERRED: 
-write_csv(CEDENSURF_DupChecked, "Data/Output/CEDENSURFMod.csv") # Note: coerces empty data fields to NA
-```
 **Causes of these records being retained include:**
 
 A. No match actually exists in CEDEN. Record SHOULD be retained.
@@ -520,4 +526,13 @@ If we decide to remove them, determine how to identify.
 In CEDEN, might be able to locate by CollectionMethod OR CollectionDeviceDescription
 
 ie: "7 day auto sampler" and "AutoSampler" collection methods may indicate composite over time, or "depth-integrating" collection device description may indivate composite over depths.
+
+## Map View
+
+```{r}
+ggplot() +
+  geom_sf(data = USFE.RiskRegions, fill = NA) +
+  ggtitle("Risk Regions")
+
+```
 
