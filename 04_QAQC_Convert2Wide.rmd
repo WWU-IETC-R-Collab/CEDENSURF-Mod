@@ -1491,53 +1491,28 @@ Limited %>%
 
 
 
-
-<br/>
-
-# Convert to Wide
-
-## 3. Summarize into wide format
-
-I used pivot_wider to summarize analyte results by date and subregion within each matrix. 
-
-Because column names are the means by which Netica differentiates nodes, I made the wide format data from the water-matrix contain just the analyte as the column name, while the sediment data includes analyte_sediment as the column names
-
-Allwater.Wide.csv contains the final summarized analytes in wide format (one row per date/location; one column per analyte)
-
-Allsed.Wide.csv contains the final summarized analytes in wide format (one row per date/location; one column per analyte)
+## Check Plots
 
 ```{r}
-## Subset: Water Matrix
+## Load risk regions from shp file
+USFE.RiskRegions <- st_read("Data/USFE_RiskRegions_9292020/RiskRegions_DWSC_Update_9292020.shp")
+st_crs(USFE.RiskRegions)
 
-# Convert long to wide
-Wide.waterdf <- Limited %>% filter(!Matrix == "sediment") %>%
-  group_by(Date, Latitude, Longitude, Analyte, Matrix) %>%
-  summarize(Subregion = first(Subregion),
-            Mean = mean(Result, na.rm = T)) %>%
-  pivot_wider(names_from = Analyte,
-              names_repair = "check_unique",
-              values_from = Mean) # Values to fill columns
+## Convert data to sf
+  
+Limited.shp<- Limited %>%
+  st_as_sf(coords=c("Longitude", "Latitude"), 
+           crs = "WGS84", remove = F)
+st_crs(Limited.shp)
 
-# save document
-write.csv(x = Wide.waterdf, file = "Data/Output/Allwater.Wide.csv", 
-          row.names = F)
-```
+## Plot
 
-```{r}
-## Subset: Water Matrix
-
-# Convert long to wide
-Wide.seddf <- Limited %>% filter(!Matrix == "water") %>%
-  group_by(Date, Latitude, Longitude, Analyte, Matrix) %>%
-  summarize(Subregion = first(Subregion),
-            Mean = mean(Result, na.rm = T)) %>%
-  pivot_wider(names_from = c(Analyte,Matrix),
-              names_repair = "check_unique",
-              values_from = Mean) # Values to fill columns
-
-# save document
-write.csv(x = Wide.seddf, file = "Data/Output/Allsed.Wide.csv", 
-          row.names = F)
+ggplot() +
+  geom_sf(data = USFE.RiskRegions, fill = NA) +
+  ggtitle("Data Coverage Preview")+
+  geom_point(data = Limited.shp,
+             aes(x = Longitude, y = Latitude, color = Subregion), 
+             fill = NA)
 ```
 
 

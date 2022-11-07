@@ -1943,67 +1943,90 @@ Limited %>%
 
 
 
-
-<br/>
-
-# Convert to Wide
-
-## 3. Summarize into wide format
-
-I used pivot_wider to summarize analyte results by date and subregion within each matrix. 
-
-Because column names are the means by which Netica differentiates nodes, I made the wide format data from the water-matrix contain just the analyte as the column name, while the sediment data includes analyte_sediment as the column names
-
-Allwater.Wide.csv contains the final summarized analytes in wide format (one row per date/location; one column per analyte)
-
-Allsed.Wide.csv contains the final summarized analytes in wide format (one row per date/location; one column per analyte)
+## Check Plots
 
 
 ```r
-## Subset: Water Matrix
-
-# Convert long to wide
-Wide.waterdf <- Limited %>% filter(!Matrix == "sediment") %>%
-  group_by(Date, Latitude, Longitude, Analyte, Matrix) %>%
-  summarize(Subregion = first(Subregion),
-            Mean = mean(Result, na.rm = T)) %>%
-  pivot_wider(names_from = Analyte,
-              names_repair = "check_unique",
-              values_from = Mean) # Values to fill columns
+## Load risk regions from shp file
+USFE.RiskRegions <- st_read("Data/USFE_RiskRegions_9292020/RiskRegions_DWSC_Update_9292020.shp")
 ```
 
 ```
-## `summarise()` has grouped output by 'Date', 'Latitude', 'Longitude', 'Analyte'. You can override using the `.groups` argument.
-```
-
-```r
-# save document
-write.csv(x = Wide.waterdf, file = "Data/Output/Allwater.Wide.csv", 
-          row.names = F)
-```
-
-
-```r
-## Subset: Water Matrix
-
-# Convert long to wide
-Wide.seddf <- Limited %>% filter(!Matrix == "water") %>%
-  group_by(Date, Latitude, Longitude, Analyte, Matrix) %>%
-  summarize(Subregion = first(Subregion),
-            Mean = mean(Result, na.rm = T)) %>%
-  pivot_wider(names_from = c(Analyte,Matrix),
-              names_repair = "check_unique",
-              values_from = Mean) # Values to fill columns
-```
-
-```
-## `summarise()` has grouped output by 'Date', 'Latitude', 'Longitude', 'Analyte'. You can override using the `.groups` argument.
+## Reading layer `RiskRegions_DWSC_Update_9292020' from data source 
+##   `C:\Users\Erika\Documents\GitHub\CEDENSURF-mod\Data\USFE_RiskRegions_9292020\RiskRegions_DWSC_Update_9292020.shp' 
+##   using driver `ESRI Shapefile'
+## Simple feature collection with 6 features and 6 fields
+## Geometry type: POLYGON
+## Dimension:     XYZ
+## Bounding box:  xmin: -122.1431 ymin: 37.62499 xmax: -121.1967 ymax: 38.58916
+## z_range:       zmin: 0 zmax: 0
+## Geodetic CRS:  WGS 84
 ```
 
 ```r
-# save document
-write.csv(x = Wide.seddf, file = "Data/Output/Allsed.Wide.csv", 
-          row.names = F)
+st_crs(USFE.RiskRegions)
 ```
+
+```
+## Coordinate Reference System:
+##   User input: WGS 84 
+##   wkt:
+## GEOGCRS["WGS 84",
+##     DATUM["World Geodetic System 1984",
+##         ELLIPSOID["WGS 84",6378137,298.257223563,
+##             LENGTHUNIT["metre",1]]],
+##     PRIMEM["Greenwich",0,
+##         ANGLEUNIT["degree",0.0174532925199433]],
+##     CS[ellipsoidal,2],
+##         AXIS["latitude",north,
+##             ORDER[1],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##         AXIS["longitude",east,
+##             ORDER[2],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##     ID["EPSG",4326]]
+```
+
+```r
+## Convert data to sf
+  
+Limited.shp<- Limited %>%
+  st_as_sf(coords=c("Longitude", "Latitude"), 
+           crs = "WGS84", remove = F)
+st_crs(Limited.shp)
+```
+
+```
+## Coordinate Reference System:
+##   User input: WGS84 
+##   wkt:
+## GEOGCRS["WGS 84",
+##     DATUM["World Geodetic System 1984",
+##         ELLIPSOID["WGS 84",6378137,298.257223563,
+##             LENGTHUNIT["metre",1]]],
+##     PRIMEM["Greenwich",0,
+##         ANGLEUNIT["degree",0.0174532925199433]],
+##     CS[ellipsoidal,2],
+##         AXIS["geodetic latitude (Lat)",north,
+##             ORDER[1],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##         AXIS["geodetic longitude (Lon)",east,
+##             ORDER[2],
+##             ANGLEUNIT["degree",0.0174532925199433]],
+##     ID["EPSG",4326]]
+```
+
+```r
+## Plot
+
+ggplot() +
+  geom_sf(data = USFE.RiskRegions, fill = NA) +
+  ggtitle("Data Coverage Preview")+
+  geom_point(data = Limited.shp,
+             aes(x = Longitude, y = Latitude, color = Subregion), 
+             fill = NA)
+```
+
+![](04_QAQC_Convert2Wide_files/figure-html/unnamed-chunk-68-1.png)<!-- -->
 
 
